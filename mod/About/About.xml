@@ -3,6 +3,7 @@
     <name>Xenogerm Planner</name>
     <author>Escarval</author>
     <packageId>escarval.xenogermplanner</packageId>
+    <modVersion>1.1.0</modVersion>
     <modDependencies>
         <li>
             <packageId>Ludeon.RimWorld.Biotech</packageId>
@@ -14,11 +15,15 @@
     </supportedVersions>
     <description>Xenogerm Planner is a planning and tracking mod for RimWorld's Biotech genetics system. It lets you create xenogerm plans before you own every genepack and track your progress as your colony collects the genes you need.
 
-Create plans using all genes available in your game, import existing vanilla xenogerm templates, duplicate or copy and paste plans, and choose between All planned genes and Exact gene set modes. See which genes and genepacks are still missing, inspect available genepacks, review prerequisite genes and possible conflicts, and track useful genetic stats while editing.
+Create plans from scratch, from existing xenogerm templates, or from premade and saved xenotypes, then review and edit the selected genes before saving. Edit, duplicate, copy, and paste existing plans, and choose between All planned genes and Exact gene set modes.
 
-Select a Gene Assembler to check whether it can assemble a plan right now, find pawns who may provide missing genes through a Gene Extractor, create normal RimWorld xenogerm templates once a plan is ready, and receive optional readiness notifications.
+Track available and missing genes and genepacks, inspect individual genepacks, review prerequisite genes and possible conflicts, and see complexity, metabolic efficiency, hunger rate, and required Archite Capsules while editing.
 
-Planning currently covers the active map. Genepacks in caravans, on other maps, or still being offered by traders do not count toward plan readiness.
+Select a Gene Assembler to check whether it can assemble a plan right now, find pawns who may provide missing genes through a Gene Extractor, create normal RimWorld xenogerm templates from ready plans, and receive optional notifications when a plan becomes ready.
+
+Xenogerm Planner can also notify you when orbital traders or visiting trader caravans offer genepacks containing genes useful for unfinished plans. Trader offers remain advisory and do not count toward a plan until you actually acquire the genepack.
+
+Planning currently covers the active map. Genepacks in caravans, on other maps, or still being offered by traders do not count toward your plans until they become available on the active map.
 
 Optional Settlement Trade Overview integration can highlight genepacks for sale that contain genes useful for unfinished plans. Settlement Trade Overview is not required for normal Xenogerm Planner functionality.
 
