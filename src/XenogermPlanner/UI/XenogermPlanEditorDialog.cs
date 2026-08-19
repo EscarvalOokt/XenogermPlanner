@@ -920,11 +920,11 @@ namespace XenogermPlanner.UI
 
             var matchingCategories = new HashSet<GeneCategoryDef>();
 
-            foreach (GeneDef gene in _catalogGenes)
+            foreach (GeneCategoryDef category in _collapsedCategories.Keys)
             {
-                if (CategoryMatchesSearch(gene.displayCategory, query))
+                if (CategoryMatchesSearch(category, query))
                 {
-                    matchingCategories.Add(gene.displayCategory);
+                    matchingCategories.Add(category);
                 }
             }
 

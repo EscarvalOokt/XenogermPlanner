@@ -56,6 +56,86 @@ namespace XenogermPlanner.Tests.UI
         }
 
         [Test]
+        public void Build_WithoutReferencedCompositionsDoesNotInspectSourceGenepacks()
+        {
+            GeneDef missing = CreateGene("Missing", "Missing");
+            var plan = new XenogermPlan("Plan", new[] { missing }, PlanReadinessMode.Coverage);
+            var coverage = new PlanGeneCoverageDiagnostic(
+                missing,
+                PlanGeneCoverageState.Missing,
+                Array.Empty<PlanGenepackCompositionDiagnostic>());
+            var readiness = PlanReadinessResult.CreateNotReady(
+                Array.Empty<GeneDef>(),
+                new[] { missing },
+                hasExactPayloadConflict: false,
+                geneCoverageDiagnostics: new[] { coverage });
+            Genepack source = GenepackInventoryTestData.CreateGenepack();
+            var getGenepackGenesCallCount = 0;
+
+            var projection = GeneCoverageTableProjection.Build(
+                plan,
+                readiness,
+                new[] { source },
+                null,
+                GeneCoverageSortState.Default,
+                _ =>
+                {
+                    getGenepackGenesCallCount++;
+                    throw new InvalidOperationException(
+                        "Source genepacks must not be inspected without referenced compositions.");
+                },
+                (_, __) => 0);
+
+            Assert.That(getGenepackGenesCallCount, Is.Zero);
+            Assert.That(projection.Rows, Has.Count.EqualTo(1));
+            Assert.That(projection.Rows[0].Row.Diagnostic, Is.SameAs(coverage));
+            Assert.That(projection.Rows[0].Row.AvailabilityState, Is.EqualTo(GeneCoverageAvailabilityState.Missing));
+            Assert.That(projection.Rows[0].SourceGroups, Is.Empty);
+        }
+
+        [Test]
+        public void Build_MatchesDistinctPhysicalCompositionWithDifferentOrderAndDuplicates()
+        {
+            GeneDef geneA = CreateGene("A", "A");
+            GeneDef geneB = CreateGene("B", "B");
+            var plan = new XenogermPlan("Plan", new[] { geneA, geneB }, PlanReadinessMode.Coverage);
+            var composition = new PlanGenepackCompositionDiagnostic(
+                new[] { geneA, geneB },
+                physicalPackCount: 1,
+                isExactPayloadEligible: true,
+                additionalGenes: Array.Empty<GeneDef>());
+            var coverageA = new PlanGeneCoverageDiagnostic(
+                geneA,
+                PlanGeneCoverageState.Available,
+                new[] { composition });
+            var coverageB = new PlanGeneCoverageDiagnostic(
+                geneB,
+                PlanGeneCoverageState.Available,
+                new[] { composition });
+            var readiness = PlanReadinessResult.CreateReady(new[] { geneA, geneB }, new[] { coverageA, coverageB });
+            Genepack pack = GenepackInventoryTestData.CreateGenepack();
+
+            var projection = GeneCoverageTableProjection.Build(
+                plan,
+                readiness,
+                new[] { pack },
+                null,
+                GeneCoverageSortState.Default,
+                _ => new[] { geneB, geneA, geneA },
+                (_, __) => 0);
+
+            GeneCoverageTablePresentationRow rowA = FindRow(projection, geneA);
+            GeneCoverageTablePresentationRow rowB = FindRow(projection, geneB);
+
+            Assert.That(rowA.SourceGroups, Has.Count.EqualTo(1));
+            Assert.That(rowA.SourceGroups[0].Composition, Is.SameAs(composition));
+            Assert.That(rowA.SourceGroups[0].Genepacks, Is.EqualTo(new[] { pack }));
+            Assert.That(rowB.SourceGroups, Has.Count.EqualTo(1));
+            Assert.That(rowB.SourceGroups[0].Composition, Is.SameAs(composition));
+            Assert.That(rowB.SourceGroups[0].Genepacks, Is.EqualTo(new[] { pack }));
+        }
+
+        [Test]
         public void Build_ExactPayloadConflictPreservesSourcesAndMapsAvailabilityState()
         {
             GeneDef gene = CreateGene("Gene", "Gene");

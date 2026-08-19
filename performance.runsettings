@@ -1,6 +1,12 @@
 <RunSettings>
     <NUnit>
-        <Where>test == XenogermPlanner.Tests.Analysis.PlanReadinessPerformanceTests</Where>
+        <Where>
+            test == XenogermPlanner.Tests.Analysis.PlanReadinessPerformanceTests ||
+            test == XenogermPlanner.Tests.Analysis.PlanGenepackRelevancePerformanceTests ||
+            test == XenogermPlanner.Tests.Assemblers.PlanAssemblerCandidateSearchPerformanceTests ||
+            test == XenogermPlanner.Tests.UI.GeneCoverageTableProjectionPerformanceTests ||
+            test == XenogermPlanner.Tests.Genes.PlanGeneBiostatPerformanceTests
+        </Where>
         <NumberOfTestWorkers>0</NumberOfTestWorkers>
         <Verbosity>4</Verbosity>
     </NUnit>

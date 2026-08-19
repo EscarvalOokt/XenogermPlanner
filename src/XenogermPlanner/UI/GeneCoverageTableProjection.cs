@@ -187,32 +187,93 @@ namespace XenogermPlanner.UI
                 Comparison<Genepack> comparePhysicalGenepacks)
         {
             var lookup = new Dictionary<PlanGenepackCompositionDiagnostic, IReadOnlyList<Genepack>>();
+            var matchingGenepacksByComposition = new Dictionary<PlanGenepackCompositionDiagnostic, List<Genepack>>();
+            var compositionsByGene = new Dictionary<GeneDef, List<PlanGenepackCompositionDiagnostic>>();
 
             foreach (PlanGeneCoverageDiagnostic diagnostic in readinessResult.GeneCoverageDiagnostics)
             {
                 foreach (PlanGenepackCompositionDiagnostic composition in diagnostic.SourceGenepackCompositions)
                 {
-                    if (lookup.ContainsKey(composition))
+                    if (matchingGenepacksByComposition.ContainsKey(composition))
                         continue;
 
-                    var matchingGenepacks = new List<Genepack>();
+                    matchingGenepacksByComposition.Add(composition, new List<Genepack>(composition.PhysicalPackCount));
 
-                    foreach (Genepack genepack in genepacks)
+                    foreach (GeneDef gene in composition.Genes)
                     {
-                        if (genepack == null)
-                            continue;
+                        if (!compositionsByGene.TryGetValue(
+                                gene,
+                                out List<PlanGenepackCompositionDiagnostic> compositions))
+                        {
+                            compositions = new List<PlanGenepackCompositionDiagnostic>();
+                            compositionsByGene.Add(gene, compositions);
+                        }
 
-                        IReadOnlyList<GeneDef> genes = getGenepackGenes(genepack);
+                        compositions.Add(composition);
+                    }
+                }
+            }
 
-                        if (genes != null && GenepackCompositionUtility.TryCompositionsMatch(genes, composition.Genes))
-                            matchingGenepacks.Add(genepack);
+            if (matchingGenepacksByComposition.Count == 0)
+                return lookup;
+
+            for (var index = 0; index < genepacks.Count; index++)
+            {
+                Genepack genepack = genepacks[index];
+
+                if (genepack == null)
+                    continue;
+
+                IReadOnlyList<GeneDef> genes = getGenepackGenes(genepack);
+
+                if (genes == null || genes.Count == 0)
+                    continue;
+
+                List<PlanGenepackCompositionDiagnostic> candidateCompositions = null;
+                var canMatchReferencedComposition = true;
+
+                for (var geneIndex = 0; geneIndex < genes.Count; geneIndex++)
+                {
+                    GeneDef gene = genes[geneIndex];
+
+                    if (gene == null || !compositionsByGene.TryGetValue(
+                            gene,
+                            out List<PlanGenepackCompositionDiagnostic> geneCompositions))
+                    {
+                        canMatchReferencedComposition = false;
+                        break;
                     }
 
-                    matchingGenepacks.Sort(comparePhysicalGenepacks);
-
-                    if (matchingGenepacks.Count > 0)
-                        lookup.Add(composition, matchingGenepacks.AsReadOnly());
+                    if (candidateCompositions == null || geneCompositions.Count < candidateCompositions.Count)
+                        candidateCompositions = geneCompositions;
                 }
+
+                if (!canMatchReferencedComposition || candidateCompositions == null)
+                    continue;
+
+                if (!GenepackCompositionUtility.TryCopyDistinctGenes(genes, out HashSet<GeneDef> packGenes) ||
+                    packGenes.Count == 0)
+                    continue;
+
+                for (var candidateIndex = 0; candidateIndex < candidateCompositions.Count; candidateIndex++)
+                {
+                    PlanGenepackCompositionDiagnostic composition = candidateCompositions[candidateIndex];
+
+                    if (packGenes.Count != composition.Genes.Count || !packGenes.SetEquals(composition.Genes))
+                        continue;
+
+                    matchingGenepacksByComposition[composition].Add(genepack);
+                }
+            }
+
+            foreach (KeyValuePair<PlanGenepackCompositionDiagnostic, List<Genepack>> pair in
+                     matchingGenepacksByComposition)
+            {
+                if (pair.Value.Count == 0)
+                    continue;
+
+                pair.Value.Sort(comparePhysicalGenepacks);
+                lookup.Add(pair.Key, pair.Value.AsReadOnly());
             }
 
             return lookup;

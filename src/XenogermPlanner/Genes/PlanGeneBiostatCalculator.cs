@@ -32,7 +32,9 @@ namespace XenogermPlanner.Genes
                 throw new InvalidOperationException("The non-overridden gene projection returned no collection.");
             }
 
-            var distinctGenes = new List<GeneDef>();
+            var complexity = 0;
+            var metabolism = 0;
+            var architeCapsules = 0;
             var seenGenes = new HashSet<GeneDef>();
 
             foreach (GeneDef gene in projectedGenes)
@@ -43,10 +45,14 @@ namespace XenogermPlanner.Genes
                 }
 
                 if (seenGenes.Add(gene))
-                    distinctGenes.Add(gene);
+                {
+                    complexity += gene.biostatCpx;
+                    metabolism += gene.biostatMet;
+                    architeCapsules += gene.biostatArc;
+                }
             }
 
-            return SumBiostats(distinctGenes);
+            return new PlanGeneBiostats(complexity, metabolism, architeCapsules);
         }
 
         private static List<GeneDef> CopyAndValidateGenes(IEnumerable<GeneDef> genes, string parameterName)

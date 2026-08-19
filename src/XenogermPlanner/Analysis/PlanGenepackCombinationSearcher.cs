@@ -19,10 +19,10 @@ namespace XenogermPlanner.Analysis
             internal bool IsExactPayloadEligible { get; }
             internal int PhysicalPackCount { get; set; }
 
-            internal CompositionGroup(HashSet<GeneDef> genes, HashSet<GeneDef> additionalGenes)
+            internal CompositionGroup(HashSet<GeneDef> ownedGenes, HashSet<GeneDef> ownedAdditionalGenes)
             {
-                Genes = new HashSet<GeneDef>(genes);
-                AdditionalGenes = new HashSet<GeneDef>(additionalGenes);
+                Genes = ownedGenes ?? throw new ArgumentNullException(nameof(ownedGenes));
+                AdditionalGenes = ownedAdditionalGenes ?? throw new ArgumentNullException(nameof(ownedAdditionalGenes));
                 IsExactPayloadEligible = AdditionalGenes.Count == 0;
                 PhysicalPackCount = 1;
             }

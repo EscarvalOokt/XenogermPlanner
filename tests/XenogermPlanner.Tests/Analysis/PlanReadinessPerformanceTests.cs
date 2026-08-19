@@ -1,8 +1,7 @@
-using System;
-using System.Diagnostics;
 using System.Linq;
 using NUnit.Framework;
 using XenogermPlanner.Analysis;
+using XenogermPlanner.Tests.Performance;
 
 namespace XenogermPlanner.Tests.Analysis
 {
@@ -11,9 +10,6 @@ namespace XenogermPlanner.Tests.Analysis
     [Explicit("Run locally in Release configuration to measure readiness analysis performance.")]
     public sealed class PlanReadinessPerformanceTests
     {
-        private const int WarmUpCount = 10;
-        private const int SampleCount = 100;
-
         [Test]
         public void Benchmark_LargeCoverageAnalysis()
         {
@@ -32,54 +28,30 @@ namespace XenogermPlanner.Tests.Analysis
             Measure("Large Exact Conflict", PlanReadinessStressScenario.CreateExactConflict());
         }
 
-        private static void Measure(string scenarioName, PlanReadinessStressScenario scenario)
+        [Test]
+        public void Benchmark_SmallTargetLargeHeterogeneousMissingAnalysis()
         {
-            PlanReadinessResult lastResult = null;
-
-            for (var index = 0; index < WarmUpCount; index++)
-                lastResult = Analyze(scenario);
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-
-            var samples = new double[SampleCount];
-
-            for (var index = 0; index < SampleCount; index++)
-            {
-                long startedAt = Stopwatch.GetTimestamp();
-
-                lastResult = Analyze(scenario);
-
-                long completedAt = Stopwatch.GetTimestamp();
-
-                samples[index] = (completedAt - startedAt) * 1000d / Stopwatch.Frequency;
-            }
-
-            double[] sortedSamples = samples.OrderBy(sample => sample).ToArray();
-
-            double median = (sortedSamples[SampleCount / 2 - 1] + sortedSamples[SampleCount / 2]) / 2d;
-
-            int p95Index = (int)Math.Ceiling(SampleCount * 0.95d) - 1;
-
-            double p95 = sortedSamples[p95Index];
-            double maximum = sortedSamples[SampleCount - 1];
-
-            TestContext.Progress.WriteLine(scenarioName);
-            TestContext.Progress.WriteLine($"Desired genes: {scenario.Plan.DesiredGenes.Count}");
-            TestContext.Progress.WriteLine($"Physical genepacks: {scenario.Packs.Length}");
-            TestContext.Progress.WriteLine($"Samples: {SampleCount}");
-            TestContext.Progress.WriteLine(string.Empty);
-            TestContext.Progress.WriteLine($"Median: {median:F3} ms");
-            TestContext.Progress.WriteLine($"P95:    {p95:F3} ms");
-            TestContext.Progress.WriteLine($"Max:    {maximum:F3} ms");
-
-            AssertResultMatchesScenario(scenario, lastResult);
+            Measure(
+                "Small Target / Large Heterogeneous Inventory / Missing",
+                PlanReadinessStressScenario.CreateSmallTargetLargeHeterogeneousMissing());
         }
 
-        private static PlanReadinessResult Analyze(PlanReadinessStressScenario scenario)
+        [Test]
+        public void Benchmark_MediumTargetLargeHeterogeneousMissingAnalysis()
         {
-            return PlanReadinessTestData.Analyze(scenario.Plan, scenario.Packs);
+            Measure(
+                "Medium Target / Large Heterogeneous Inventory / Missing",
+                PlanReadinessStressScenario.CreateMediumTargetLargeHeterogeneousMissing());
+        }
+
+        private static void Measure(string scenarioName, PlanReadinessStressScenario scenario)
+        {
+            PerformanceMeasurement.Measure(
+                scenarioName,
+                scenario.Analyze,
+                result => AssertResultMatchesScenario(scenario, result),
+                $"Desired genes: {scenario.Plan.DesiredGenes.Count}",
+                $"Physical genepacks: {scenario.Packs.Length}");
         }
 
         private static void AssertResultMatchesScenario(
@@ -91,6 +63,11 @@ namespace XenogermPlanner.Tests.Analysis
             Assert.That(result.CoveredGenes, Has.Count.EqualTo(scenario.ExpectedCoveredGeneCount));
             Assert.That(result.MissingGenes, Has.Count.EqualTo(scenario.ExpectedMissingGeneCount));
             Assert.That(result.HasExactPayloadConflict, Is.EqualTo(scenario.ExpectedExactPayloadConflict));
+            Assert.That(
+                result.GeneCoverageDiagnostics.Count(diagnostic =>
+                    diagnostic.State == PlanGeneCoverageState.ExactPayloadConflict),
+                Is.EqualTo(scenario.ExpectedExactPayloadConflictGeneCount));
+            Assert.That(result.GeneCoverageDiagnostics, Has.Count.EqualTo(scenario.ExpectedDesiredGeneCount));
         }
     }
 }

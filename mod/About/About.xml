@@ -3,7 +3,7 @@
     <name>Xenogerm Planner</name>
     <author>Escarval</author>
     <packageId>escarval.xenogermplanner</packageId>
-    <modVersion>1.1.0</modVersion>
+    <modVersion>1.1.1</modVersion>
     <modDependencies>
         <li>
             <packageId>Ludeon.RimWorld.Biotech</packageId>

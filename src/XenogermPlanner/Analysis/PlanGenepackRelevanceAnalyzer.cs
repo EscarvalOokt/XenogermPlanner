@@ -8,7 +8,9 @@ namespace XenogermPlanner.Analysis
 {
     internal sealed class PlanGenepackRelevanceAnalyzer
     {
-        private readonly IReadOnlyList<PlanCandidate> _candidates;
+        private readonly List<PlanCandidate> _candidates;
+        private bool _hasEvaluated;
+        private bool _candidatesSorted;
 
         internal PlanGenepackRelevanceAnalyzer(
             IReadOnlyList<XenogermPlan> plans,
@@ -30,26 +32,33 @@ namespace XenogermPlanner.Analysis
             if (analyzeReadiness == null)
                 throw new ArgumentNullException(nameof(analyzeReadiness));
 
-            _candidates = BuildCandidates(plans, inventory, analyzeReadiness).AsReadOnly();
+            _candidates = BuildCandidates(plans, inventory, analyzeReadiness);
         }
 
         internal IReadOnlyList<XenogermPlan> Evaluate(IReadOnlyCollection<GeneDef> offeredGenes)
         {
             HashSet<GeneDef> offeredGeneSet = CreateOfferedGeneSet(offeredGenes);
-            var matchingCandidates = new List<PlanCandidate>();
 
-            foreach (PlanCandidate candidate in _candidates)
+            if (_hasEvaluated && !_candidatesSorted)
             {
-                if (candidate.IsRelevant(offeredGeneSet))
-                    matchingCandidates.Add(candidate);
+                _candidates.Sort(CompareCandidates);
+                _candidatesSorted = true;
             }
 
-            matchingCandidates.Sort(CompareCandidates);
+            var matchingPlans = new List<XenogermPlan>();
 
-            var matchingPlans = new List<XenogermPlan>(matchingCandidates.Count);
+            for (var index = 0; index < _candidates.Count; index++)
+            {
+                PlanCandidate candidate = _candidates[index];
 
-            foreach (PlanCandidate candidate in matchingCandidates)
-                matchingPlans.Add(candidate.Plan);
+                if (candidate.IsRelevant(offeredGeneSet))
+                    matchingPlans.Add(candidate.Plan);
+            }
+
+            if (!_candidatesSorted)
+                matchingPlans.Sort(ComparePlans);
+
+            _hasEvaluated = true;
 
             return matchingPlans.AsReadOnly();
         }
@@ -137,9 +146,14 @@ namespace XenogermPlanner.Analysis
 
         private static int CompareCandidates(PlanCandidate left, PlanCandidate right)
         {
-            int nameComparison = StringComparer.OrdinalIgnoreCase.Compare(left.DisplayName, right.DisplayName);
+            return ComparePlans(left.Plan, right.Plan);
+        }
 
-            return nameComparison != 0 ? nameComparison : StringComparer.Ordinal.Compare(left.PlanId, right.PlanId);
+        private static int ComparePlans(XenogermPlan left, XenogermPlan right)
+        {
+            int nameComparison = StringComparer.OrdinalIgnoreCase.Compare(left.Name, right.Name);
+
+            return nameComparison != 0 ? nameComparison : StringComparer.Ordinal.Compare(left.Id, right.Id);
         }
 
         private sealed class PlanCandidate
@@ -150,19 +164,15 @@ namespace XenogermPlanner.Analysis
             internal PlanCandidate(XenogermPlan plan, HashSet<GeneDef> targetGenes, HashSet<GeneDef> neededGenes)
             {
                 Plan = plan ?? throw new ArgumentNullException(nameof(plan));
-                PlanId = plan.Id;
-                DisplayName = plan.Name;
                 ReadinessMode = plan.ReadinessMode;
                 _targetGenes = targetGenes ?? throw new ArgumentNullException(nameof(targetGenes));
                 _neededGenes = neededGenes ?? throw new ArgumentNullException(nameof(neededGenes));
             }
 
             internal XenogermPlan Plan { get; }
-            internal string PlanId { get; }
-            internal string DisplayName { get; }
             internal PlanReadinessMode ReadinessMode { get; }
 
-            internal bool IsRelevant(IReadOnlyCollection<GeneDef> offeredGenes)
+            internal bool IsRelevant(HashSet<GeneDef> offeredGenes)
             {
                 if (ReadinessMode == PlanReadinessMode.ExactPayload)
                 {

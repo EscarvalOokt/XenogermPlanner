@@ -1,3 +1,4 @@
+
 # Xenogerm Planner testing policy
 
 This document defines the accepted automated testing and runtime acceptance boundaries of Xenogerm Planner. The current baseline includes the completed shared UI and layout-cache migration, tint-aware icon call-site migration, normalized primary and button assets, collection-level unique-name policy, target-gene `ExactPayloadConflict` analysis and presentation, separately versioned read-only integration API version `1`, window-owned analysis caching, the validated unified plan-creation flow and the implemented trader advisory lifecycle. The external shared source is compiled into the Planner assembly and its ownership boundary has consumer integration coverage. Public reflection shape, DTO invariants, batch orchestration, Planner-owned relevance semantics, semantic integration, read-only API behavior, analysis-cache reuse and invalidation, source transformation and revalidation, xenotype source projection, trader current-stock transformation, reference-identity reconciliation, notification deduplication, delivery gating and cross-subsystem regression boundaries are covered. The final SVG sources and regenerated packaged PNG textures are present under the normalized paths. The current Release build, complete NUnit suite, repeated UI profiling and runtime regression validation, including trader advisory runtime scenarios, have been validated successfully.
@@ -372,18 +373,35 @@ Fast deterministic stress tests may run as regular tests when they protect:
 * large fixed-height and variable-height layout inputs without workstation-specific timing assertions;
 * large sets of API query compositions when a batch contract is selected, without workstation-specific timing assertions.
 
-Performance benchmarks are diagnostic tools.
+Performance benchmarks are diagnostic tools and remain separate from the regular regression suite.
 
 They should:
 
-* remain separate from the regular suite;
 * be explicit;
 * run locally in Release configuration;
-* report useful measurements such as median, p95 and maximum duration where appropriate.
+* use the same workload and measurement boundary for direct before/after comparisons;
+* keep timing and managed-allocation measurement in separate passes so allocation instrumentation does not become part of the timing boundary;
+* report timing Median as the primary duration metric, P95 as supporting evidence and Max as diagnostic data;
+* report managed allocated bytes as the primary allocation metric;
+* use Gen 0 collection counts as supporting allocation-pressure evidence and Gen 1 / Gen 2 only as diagnostics;
+* verify semantic correctness of every measured result in addition to reporting performance data.
+
+The current shared performance helper performs warm-up before the measured passes, forces collection before each measured pass, measures repeated timing samples with `Stopwatch`, and measures current-thread managed allocation separately. GC collection counts are recorded around the complete allocation pass rather than summed per operation.
+
+Acceptance decisions for substantive performance work should use several independent process-level runs when timing stability matters. Run-level Median is the primary timing comparison. P95 helps identify tail behavior, while Max is too sensitive to isolated system outliers to serve as an acceptance metric by itself. Managed allocated bytes have proven more stable than higher-generation GC counts and should carry more weight in allocation comparisons.
+
+The current `performance.runsettings` selected matrix contains 13 scenarios across readiness, relevance, assembler candidate search, Gene Coverage projection and effective biostat calculation. Additional explicit benchmarks may exist outside that selected validation matrix.
+
+Performance comparison history must preserve workload chronology:
+
+* direct before/after comparisons should use only scenarios that exist on both measured revisions;
+* scenarios introduced later establish regression baselines from the revision where they first appear;
+* later scenarios do not need to be backported to older revisions only to produce an equal benchmark count;
+* cumulative validation should compare each workload against the appropriate historical or introduction baseline.
 
 Template candidate benchmarks should verify bounded completion and semantic validity in addition to reporting diagnostic timings. Runtime UI profiling should use representative normal and extreme data sets. The completed analysis-cache profiling used stable baseline, large-plan, small-plan and tab-specific scenarios; measurements from one machine must not be treated as a workstation-independent FPS guarantee.
 
-Performance benchmarks should not use arbitrary workstation-specific pass/fail timing thresholds without a separately justified requirement.
+Performance benchmarks should not use arbitrary workstation-specific pass/fail timing thresholds without a separately justified requirement. Functional equivalence remains mandatory even when a performance result is favorable.
 
 ## Test decision checklist
 

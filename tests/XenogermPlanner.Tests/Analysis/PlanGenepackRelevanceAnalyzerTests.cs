@@ -208,6 +208,50 @@ namespace XenogermPlanner.Tests.Analysis
         }
 
         [Test]
+        public void Evaluate_RepeatedCallsPreserveDeterministicOrder()
+        {
+            GeneDef firstGene = CreateGene("FirstGene");
+            GeneDef secondGene = CreateGene("SecondGene");
+            XenogermPlan lastFirstGenePlan = CreatePlan("plan-c", "Zulu A", PlanReadinessMode.Coverage, firstGene);
+            XenogermPlan firstFirstGenePlan = CreatePlan("plan-a", "Alpha A", PlanReadinessMode.Coverage, firstGene);
+            XenogermPlan lastSecondGenePlan = CreatePlan("plan-d", "Zulu B", PlanReadinessMode.Coverage, secondGene);
+            XenogermPlan firstSecondGenePlan = CreatePlan("plan-b", "Beta B", PlanReadinessMode.Coverage, secondGene);
+            var readinessByPlan = new Dictionary<XenogermPlan, PlanReadinessResult>
+            {
+                [lastFirstGenePlan] = CreateNotReadyResult(
+                    lastFirstGenePlan,
+                    (firstGene, PlanGeneCoverageState.Missing)),
+                [firstFirstGenePlan] = CreateNotReadyResult(
+                    firstFirstGenePlan,
+                    (firstGene, PlanGeneCoverageState.Missing)),
+                [lastSecondGenePlan] = CreateNotReadyResult(
+                    lastSecondGenePlan,
+                    (secondGene, PlanGeneCoverageState.Missing)),
+                [firstSecondGenePlan] = CreateNotReadyResult(
+                    firstSecondGenePlan,
+                    (secondGene, PlanGeneCoverageState.Missing))
+            };
+            var analyzer = new PlanGenepackRelevanceAnalyzer(
+                new[] { lastSecondGenePlan, lastFirstGenePlan, firstSecondGenePlan, firstFirstGenePlan },
+                PlanGenepackInventorySnapshot.CreateAvailable(Array.Empty<Genepack>()),
+                (plan, _) => readinessByPlan[plan]);
+
+            IReadOnlyList<XenogermPlan> firstMatches = analyzer.Evaluate(new[] { firstGene });
+            IReadOnlyList<XenogermPlan> secondMatches = analyzer.Evaluate(new[] { secondGene });
+            IReadOnlyList<XenogermPlan> thirdMatches = analyzer.Evaluate(new[] { firstGene });
+
+            Assert.That(firstMatches, Is.EqualTo(new[] { firstFirstGenePlan, lastFirstGenePlan }));
+            Assert.That(secondMatches, Is.EqualTo(new[] { firstSecondGenePlan, lastSecondGenePlan }));
+            Assert.That(thirdMatches, Is.EqualTo(new[] { firstFirstGenePlan, lastFirstGenePlan }));
+            Assert.That(firstMatches[0], Is.SameAs(firstFirstGenePlan));
+            Assert.That(firstMatches[1], Is.SameAs(lastFirstGenePlan));
+            Assert.That(secondMatches[0], Is.SameAs(firstSecondGenePlan));
+            Assert.That(secondMatches[1], Is.SameAs(lastSecondGenePlan));
+            Assert.That(thirdMatches[0], Is.SameAs(firstFirstGenePlan));
+            Assert.That(thirdMatches[1], Is.SameAs(lastFirstGenePlan));
+        }
+
+        [Test]
         public void Evaluate_EquivalentOfferedSetsInDifferentOrder_ReturnEquivalentResults()
         {
             GeneDef firstGene = CreateGene("FirstGene");

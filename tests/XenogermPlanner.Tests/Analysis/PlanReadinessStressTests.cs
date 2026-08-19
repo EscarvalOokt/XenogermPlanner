@@ -52,6 +52,27 @@ namespace XenogermPlanner.Tests.Analysis
         }
 
         [Test]
+        public void Analyze_MediumTargetLargeHeterogeneousMissingScenarioReturnsExpectedResult()
+        {
+            var scenario = PlanReadinessStressScenario.CreateMediumTargetLargeHeterogeneousMissing();
+
+            PlanReadinessResult result = Analyze(scenario);
+
+            AssertScenarioResult(scenario, result);
+            Assert.That(result.Status, Is.EqualTo(PlanReadinessStatus.NotReady));
+            Assert.That(result.CoveredGenes, Is.Empty);
+            Assert.That(result.MissingGenes, Has.Count.EqualTo(128));
+            Assert.That(result.GeneCoverageDiagnostics, Has.Count.EqualTo(128));
+            Assert.That(result.HasExactPayloadConflict, Is.False);
+
+            foreach (PlanGeneCoverageDiagnostic diagnostic in result.GeneCoverageDiagnostics)
+            {
+                Assert.That(diagnostic.State, Is.EqualTo(PlanGeneCoverageState.Missing));
+                Assert.That(diagnostic.SourceGenepackCompositions, Is.Empty);
+            }
+        }
+
+        [Test]
         public void Analyze_LargeCoverageScenarioDescribesEveryDesiredGene()
         {
             var scenario = PlanReadinessStressScenario.CreateCoverageReady();

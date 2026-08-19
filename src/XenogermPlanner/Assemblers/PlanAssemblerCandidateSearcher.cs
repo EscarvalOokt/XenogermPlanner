@@ -262,16 +262,25 @@ namespace XenogermPlanner.Assemblers
             if (selectedGroups.Count == 0 || !IsCandidateIrredundant(targetGenes, selectedGroups))
                 return null;
 
-            var orderedGroups = selectedGroups.OrderBy(group => group.CompositionKey, StringComparer.Ordinal).ToList();
+            var orderedGroups = new List<CompositionGroup>(selectedGroups);
+            orderedGroups.Sort((left, right) =>
+                StringComparer.Ordinal.Compare(left.CompositionKey, right.CompositionKey));
 
-            var candidateKey = string.Join("\u001e", orderedGroups.Select(group => group.CompositionKey));
+            var compositionKeys = new string[orderedGroups.Count];
+            var representativeSources = new PlanAssemblerGenepackSource[orderedGroups.Count];
+
+            for (var index = 0; index < orderedGroups.Count; index++)
+            {
+                compositionKeys[index] = orderedGroups[index].CompositionKey;
+                representativeSources[index] = orderedGroups[index].RepresentativeSource;
+            }
+
+            var candidateKey = string.Join("\u001e", compositionKeys);
 
             if (!emittedCandidateKeys.Add(candidateKey))
                 return null;
 
-            return new PlanAssemblerCandidate(
-                orderedGroups.Select(group => group.RepresentativeSource),
-                missingPrerequisites);
+            return new PlanAssemblerCandidate(representativeSources, missingPrerequisites);
         }
 
         private static bool IsCandidateIrredundant(
@@ -285,15 +294,7 @@ namespace XenogermPlanner.Assemblers
 
             for (var removedIndex = 0; removedIndex < selectedGroups.Count; removedIndex++)
             {
-                var reducedGroups = new List<CompositionGroup>(selectedGroups.Count - 1);
-
-                for (var index = 0; index < selectedGroups.Count; index++)
-                {
-                    if (index != removedIndex)
-                        reducedGroups.Add(selectedGroups[index]);
-                }
-
-                HashSet<GeneDef> reducedGenes = CreateGeneUnion(reducedGroups);
+                HashSet<GeneDef> reducedGenes = CreateGeneUnionExcept(selectedGroups, removedIndex);
 
                 if (!targetGenes.IsSubsetOf(reducedGenes))
                     continue;
@@ -434,6 +435,19 @@ namespace XenogermPlanner.Assemblers
 
             foreach (CompositionGroup group in groups)
                 genes.UnionWith(group.Genes);
+
+            return genes;
+        }
+
+        private static HashSet<GeneDef> CreateGeneUnionExcept(IReadOnlyList<CompositionGroup> groups, int excludedIndex)
+        {
+            var genes = new HashSet<GeneDef>();
+
+            for (var index = 0; index < groups.Count; index++)
+            {
+                if (index != excludedIndex)
+                    genes.UnionWith(groups[index].Genes);
+            }
 
             return genes;
         }

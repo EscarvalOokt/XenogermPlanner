@@ -95,26 +95,61 @@ namespace XenogermPlanner.Analysis
         }
 
         private static void BuildGeneDiagnostics(
-            IEnumerable<GeneDef> desiredGenes,
+            IReadOnlyCollection<GeneDef> desiredGenes,
             PlanReadinessMode readinessMode,
             IReadOnlyList<PlanGenepackCompositionDiagnostic> availableGenepackCompositions,
             out List<GeneDef> coveredGenes,
             out List<GeneDef> missingGenes,
             out List<PlanGeneCoverageDiagnostic> geneCoverageDiagnostics)
         {
-            coveredGenes = new List<GeneDef>();
-            missingGenes = new List<GeneDef>();
-            geneCoverageDiagnostics = new List<PlanGeneCoverageDiagnostic>();
+            coveredGenes = new List<GeneDef>(desiredGenes.Count);
+            missingGenes = new List<GeneDef>(desiredGenes.Count);
+            geneCoverageDiagnostics = new List<PlanGeneCoverageDiagnostic>(desiredGenes.Count);
+
+            var compositionsByDesiredGene =
+                new Dictionary<GeneDef, List<PlanGenepackCompositionDiagnostic>>(desiredGenes.Count);
 
             foreach (GeneDef desiredGene in desiredGenes)
             {
-                var sourceCompositions = new List<PlanGenepackCompositionDiagnostic>();
+                if (!compositionsByDesiredGene.ContainsKey(desiredGene))
+                    compositionsByDesiredGene.Add(desiredGene, null);
+            }
 
-                foreach (PlanGenepackCompositionDiagnostic composition in availableGenepackCompositions)
+            for (var index = 0; index < availableGenepackCompositions.Count; index++)
+            {
+                PlanGenepackCompositionDiagnostic composition = availableGenepackCompositions[index];
+
+                if (composition.AdditionalGenes.Count == composition.Genes.Count)
+                    continue;
+
+                foreach (GeneDef gene in composition.Genes)
                 {
-                    if (ContainsGene(composition.Genes, desiredGene))
-                        sourceCompositions.Add(composition);
+                    if (!compositionsByDesiredGene.TryGetValue(
+                            gene,
+                            out List<PlanGenepackCompositionDiagnostic> matchingList))
+                    {
+                        continue;
+                    }
+
+                    if (matchingList == null)
+                    {
+                        matchingList = new List<PlanGenepackCompositionDiagnostic>();
+                        compositionsByDesiredGene[gene] = matchingList;
+                    }
+
+                    matchingList.Add(composition);
                 }
+            }
+
+            foreach (GeneDef desiredGene in desiredGenes)
+            {
+                List<PlanGenepackCompositionDiagnostic> matchingList = compositionsByDesiredGene[desiredGene];
+                IReadOnlyList<PlanGenepackCompositionDiagnostic> sourceCompositions;
+
+                if (matchingList != null)
+                    sourceCompositions = matchingList;
+                else
+                    sourceCompositions = Array.Empty<PlanGenepackCompositionDiagnostic>();
 
                 PlanGeneCoverageState state = ClassifyGeneCoverage(readinessMode, sourceCompositions);
 
@@ -156,17 +191,6 @@ namespace XenogermPlanner.Analysis
                         readinessMode,
                         "Unknown plan readiness mode.");
             }
-        }
-
-        private static bool ContainsGene(IEnumerable<GeneDef> genes, GeneDef expectedGene)
-        {
-            foreach (GeneDef gene in genes)
-            {
-                if (gene == expectedGene)
-                    return true;
-            }
-
-            return false;
         }
     }
 }
