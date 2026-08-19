@@ -1,4 +1,3 @@
-
 # Xenogerm Planner testing policy
 
 This document defines the accepted automated testing and runtime acceptance boundaries of Xenogerm Planner. The current baseline includes the completed shared UI and layout-cache migration, tint-aware icon call-site migration, normalized primary and button assets, collection-level unique-name policy, target-gene `ExactPayloadConflict` analysis and presentation, separately versioned read-only integration API version `1`, window-owned analysis caching, the validated unified plan-creation flow and the implemented trader advisory lifecycle. The external shared source is compiled into the Planner assembly and its ownership boundary has consumer integration coverage. Public reflection shape, DTO invariants, batch orchestration, Planner-owned relevance semantics, semantic integration, read-only API behavior, analysis-cache reuse and invalidation, source transformation and revalidation, xenotype source projection, trader current-stock transformation, reference-identity reconciliation, notification deduplication, delivery gating and cross-subsystem regression boundaries are covered. The final SVG sources and regenerated packaged PNG textures are present under the normalized paths. The current Release build, complete NUnit suite, repeated UI profiling and runtime regression validation, including trader advisory runtime scenarios, have been validated successfully.
@@ -79,7 +78,7 @@ Development-only empty names and earlier development save formats are not a comp
 
 Automated tests should protect Xenogerm Planner's persistence transformations and validation rules.
 
-They should not attempt to reproduce the complete RimWorld Scribe runtime when the behavior under test belongs to the game runtime rather than project-owned logic.
+They should not attempt to reproduce the complete RimWorld Scribe runtime when the behavior under test belongs to the game runtime rather than project-owned logic. In particular, adding the mod to an existing save, disabling it while Planner-owned `GameComponent` records are present, RimWorld's handling of missing component classes, save rewriting without the mod and preservation of vanilla `CustomXenogerm` data belong to runtime acceptance rather than the NUnit persistence suite.
 
 ### Portability contracts
 
@@ -299,7 +298,9 @@ This includes:
 * Harmony integration only when a future separately approved production or research patch exists;
 * parity with vanilla dialogs or other vanilla runtime flows;
 * unchanged open-window analysis reuse across Overview, Gene assembler and Gene effects scenarios;
-* repeated Plan Editor selected-gene removal, including the final visible rows, without `ArgumentOutOfRangeException` or an unbalanced scroll-view mouse-position stack.
+* repeated Plan Editor selected-gene removal, including the final visible rows, without `ArgumentOutOfRangeException` or an unbalanced scroll-view mouse-position stack;
+* adding Xenogerm Planner to an existing save without pre-existing Planner-owned state;
+* removing Xenogerm Planner from a save that contains persisted plans and vanilla xenogerm templates created through the Planner, including first-load missing-component logging, continued game loading, resave cleanup, a subsequent clean reload without Planner component errors, loss of Planner-owned plan state and preservation of vanilla `CustomXenogerm` template data.
 
 Trader advisory runtime acceptance covers:
 
@@ -317,7 +318,11 @@ Trader advisory runtime acceptance covers:
 
 Runtime acceptance should verify the visible or integration behavior that cannot be established reliably through project-owned deterministic logic alone.
 
-The completed current-build acceptance verified the migrated shared UI boundary, tint-aware icon call sites, normalized source and packaged asset paths, unique-name workflows, target-gene `ExactPayloadConflict` behavior, English/Russian/Ukrainian presentation, API version `1`, window analysis-cache lifecycle, the Plan Editor selected-gene removal regression, the unified creation flow and the trader advisory lifecycle. The current Release build and complete NUnit suite passed successfully, including source transformation, source-list projection, template-source provider, xenotype-source provider, editor-initial-state, API, semantic integration, analysis-cache, projection-cache, trader stock scanner, trader lifecycle, notification tracker and trader cross-subsystem regression fixtures. Runtime validation completed without identified problems and covered the accepted trader advisory behavior alongside the existing creation, readiness, notification, integration and UI regression matrix. Consumer integration tests prove that shared types are compiled into `XenogermPlanner.dll`, while API surface tests prove that no separate runtime DTO assembly is required. Repeated runtime profiling confirmed that the tested open-window scenarios no longer exhibit a persistent Planner-specific regression; those measurements are diagnostic evidence rather than a universal frame-rate guarantee.
+The completed current-build acceptance verified the migrated shared UI boundary, tint-aware icon call sites, normalized source and packaged asset paths, unique-name workflows, target-gene `ExactPayloadConflict` behavior, English/Russian/Ukrainian presentation, API version `1`, window analysis-cache lifecycle, the Plan Editor selected-gene removal regression, the unified creation flow, the trader advisory lifecycle and the documented save-removal behavior. The current Release build and complete NUnit suite passed successfully, including source transformation, source-list projection, template-source provider, xenotype-source provider, editor-initial-state, API, semantic integration, analysis-cache, projection-cache, trader stock scanner, trader lifecycle, notification tracker and trader cross-subsystem regression fixtures. Runtime validation completed without identified problems in normal continued play and covered the accepted trader advisory behavior alongside the existing creation, readiness, notification, integration and UI regression matrix.
+
+Save-removal acceptance used a save containing multiple persisted Planner plans and a vanilla xenogerm template created from a ready plan. The first load with Xenogerm Planner disabled produced the expected missing-class / abstract `GameComponent` deserialization errors for Planner-owned components in the development log, but the save loaded and continued. Saving once without the mod removed all `XenogermPlanner` component records from the rewritten save; the subsequent load produced no Planner component errors. The Planner plans were no longer present, while the vanilla `CustomXenogerm` template and its gene composition remained unchanged. This runtime behavior defines the current removal compatibility claim; it should not be replaced by a simulated NUnit assertion about RimWorld Scribe internals.
+
+Consumer integration tests prove that shared types are compiled into `XenogermPlanner.dll`, while API surface tests prove that no separate runtime DTO assembly is required. Repeated runtime profiling confirmed that the tested open-window scenarios no longer exhibit a persistent Planner-specific regression; those measurements are diagnostic evidence rather than a universal frame-rate guarantee.
 
 ## Regression tests
 

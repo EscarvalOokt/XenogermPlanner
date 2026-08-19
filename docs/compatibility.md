@@ -67,6 +67,27 @@ No individual third-party mod is part of the declared support list unless it is 
 
 The current save format establishes the save-compatibility baseline.
 
+### Adding Xenogerm Planner to an existing save
+
+Xenogerm Planner can be added to an existing save. No pre-existing Planner data is required: an existing colony starts with no Planner-owned plans and can begin using the Planner normally.
+
+### Removing Xenogerm Planner from an existing save
+
+Xenogerm Planner can be removed from an existing save, with one expected first-load caveat.
+
+A save written while the mod is active contains Planner-owned `GameComponent` records. On the first load after disabling the mod, RimWorld cannot resolve those missing component classes and may write missing-class / `GameComponent` deserialization errors to the log. The tested save still loaded and continued normally.
+
+After saving the game once without Xenogerm Planner:
+
+* the stale Planner component records are no longer present in the rewritten save;
+* a subsequent load without the mod no longer produces those Planner missing-component errors;
+* saved Xenogerm Planner plans, planning modes and plan-owned notification state are no longer present and should be treated as lost;
+* normal RimWorld `CustomXenogerm` templates previously created through the Planner remain available because they are stored in RimWorld's vanilla xenogerm-template database rather than as Planner-owned plan data.
+
+The validated removal scenario contained multiple saved Planner plans and a vanilla xenogerm template created from a ready plan. Comparison of the save before removal and the rewritten save after removal confirmed that Planner-owned component data was removed while the vanilla template remained unchanged.
+
+### Temporarily missing planned gene definitions
+
 A saved `XenogermPlan` stores desired gene requirements by `GeneDef.defName`. When a planned definition is temporarily unavailable:
 
 * the unresolved name remains part of the plan;
@@ -151,5 +172,7 @@ Results depend on hardware, game state and mod configuration and are not a unive
 ## Support boundary summary
 
 The declared supported configuration is RimWorld 1.6 with Biotech and the standard genetics boundaries described above.
+
+Adding Xenogerm Planner to an existing save is supported. Removing it is also supported with the documented one-time missing-component log errors on the first load; saving once without the mod removes the stale Planner component records, and later loads no longer report those Planner components. Planner-owned plans are not preserved after that rewrite, while vanilla xenogerm templates created through the Planner remain vanilla save data.
 
 Failures at supported integration boundaries are expected to degrade safely without preventing save loading, plan persistence, or access to the core Planner interface. Configurations that replace those boundaries remain unverified unless a later release explicitly expands the support policy.
