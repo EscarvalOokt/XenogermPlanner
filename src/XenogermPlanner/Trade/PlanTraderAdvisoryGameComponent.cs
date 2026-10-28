@@ -13,36 +13,34 @@ namespace XenogermPlanner.Trade
     public sealed class PlanTraderAdvisoryGameComponent : GameComponent
     {
         internal const int StockRefreshIntervalTicks = 60;
+        private readonly Action<PlanTraderAdvisoryNotification> _announce;
 
-        private readonly Func<Map> _getCurrentMap;
-        private readonly Func<int> _getCurrentTick;
-        private readonly Func<Map, PlanTraderAdvisoryStockSnapshot> _scanStock;
-        private readonly Func<IReadOnlyList<XenogermPlan>> _getPlans;
-        private readonly Func<PlanGenepackInventorySnapshot> _getInventorySnapshot;
+        private readonly Func<ITrader, bool> _canTradeNow;
 
         private readonly Func<
             IReadOnlyList<XenogermPlan>, PlanGenepackInventorySnapshot,
             Func<IReadOnlyCollection<GeneDef>, IReadOnlyList<XenogermPlan>>> _createRelevanceEvaluator;
 
-        private readonly Func<ITrader, bool> _canTradeNow;
-        private readonly Action<PlanTraderAdvisoryNotification> _announce;
+        private readonly Func<Map> _getCurrentMap;
+        private readonly Func<int> _getCurrentTick;
+        private readonly Func<PlanGenepackInventorySnapshot> _getInventorySnapshot;
+        private readonly Func<IReadOnlyList<XenogermPlan>> _getPlans;
         private readonly Action<string> _reportError;
+        private readonly Func<Map, PlanTraderAdvisoryStockSnapshot> _scanStock;
 
         private readonly Dictionary<ITrader, PlanTraderAdvisorySourceState> _sourceStates =
             new Dictionary<ITrader, PlanTraderAdvisorySourceState>(ReferenceEqualityComparer<ITrader>.Instance);
 
+        private Map _activeMap;
+        private PlanGenepackInventorySnapshot _lastAnalyzedInventorySnapshot;
+        private int _nextStockRefreshTick;
+        private bool _relevanceInvalidated = true;
+
         private ReadOnlyCollection<PlanTraderAdvisorySourceState> _sourceStatesForReading =
             new List<PlanTraderAdvisorySourceState>().AsReadOnly();
 
-        private Map _activeMap;
-        private PlanTraderAdvisoryStockSnapshot _stockSnapshot = PlanTraderAdvisoryStockSnapshot.Unavailable;
-        private PlanGenepackInventorySnapshot _lastAnalyzedInventorySnapshot;
         private bool _stockPollInvalidated = true;
-        private bool _relevanceInvalidated = true;
-        private int _nextStockRefreshTick;
-
-        internal IReadOnlyList<PlanTraderAdvisorySourceState> Sources => _sourceStatesForReading;
-        internal bool HasDeterminateBaseline { get; private set; }
+        private PlanTraderAdvisoryStockSnapshot _stockSnapshot = PlanTraderAdvisoryStockSnapshot.Unavailable;
 
         // ReSharper disable once UnusedParameter.Local
         public PlanTraderAdvisoryGameComponent(Game _) : this(
@@ -82,6 +80,9 @@ namespace XenogermPlanner.Trade
             _announce = announce ?? throw new ArgumentNullException(nameof(announce));
             _reportError = reportError ?? throw new ArgumentNullException(nameof(reportError));
         }
+
+        internal IReadOnlyList<PlanTraderAdvisorySourceState> Sources => _sourceStatesForReading;
+        internal bool HasDeterminateBaseline { get; private set; }
 
         public void Invalidate()
         {
@@ -214,8 +215,12 @@ namespace XenogermPlanner.Trade
             IReadOnlyList<XenogermPlan> plans = _getPlans();
             PlanGenepackInventorySnapshot inventorySnapshot = _getInventorySnapshot();
 
-            if (plans == null || inventorySnapshot == null || !inventorySnapshot.IsAvailable ||
-                _stockSnapshot == null || !_stockSnapshot.IsAvailable || _activeMap == null)
+            if (plans == null ||
+                inventorySnapshot == null ||
+                !inventorySnapshot.IsAvailable ||
+                _stockSnapshot == null ||
+                !_stockSnapshot.IsAvailable ||
+                _activeMap == null)
             {
                 _relevanceInvalidated = true;
                 return false;

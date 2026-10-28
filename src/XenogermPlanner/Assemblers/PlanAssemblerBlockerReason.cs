@@ -7,6 +7,7 @@ namespace XenogermPlanner.Assemblers
         InsufficientComplexity,
         ArchogeneticsResearchMissing,
         InsufficientArchiteCapsules,
-        MissingPrerequisite
+        MissingPrerequisite,
+        MetabolismTooLow = 6
     }
 }

@@ -24,26 +24,24 @@ namespace XenogermPlanner.UI
         private const float FooterButtonHeight = 35f;
         private const float FooterButtonGap = 8f;
         private const float ContentGap = RimWorldUiStyle.Metrics.SectionGap;
+        private readonly HashSet<string> _collapsedGroupKeys = new HashSet<string>(StringComparer.Ordinal);
+        private readonly Action<XenogermPlanSourceSelection> _onSourceSelected;
 
         private readonly IXenogermPlanSourceProvider _provider;
-        private readonly Action<XenogermPlanSourceSelection> _onSourceSelected;
-        private readonly HashSet<string> _collapsedGroupKeys = new HashSet<string>(StringComparer.Ordinal);
 
         private readonly VariableHeightScrollListLayoutCache _sourceLayoutCache =
             new VariableHeightScrollListLayoutCache();
 
-        private List<XenogermPlanSourceListRow> _sourceRows = new List<XenogermPlanSourceListRow>();
-        private XenogermPlanSourceEntry _selectedSource;
-        private XenogermPlanSourceResolveResult _selectedResult;
-        private List<GeneDef> _previewGenes = new List<GeneDef>();
-        private Vector2 _sourceListScrollPosition;
-        private Vector2 _previewGenesScrollPosition;
-        private object _presentationLanguageKey;
         private bool _isResolving;
+        private object _presentationLanguageKey;
+        private List<GeneDef> _previewGenes = new List<GeneDef>();
+        private Vector2 _previewGenesScrollPosition;
         private int _resolveVersion;
+        private XenogermPlanSourceResolveResult _selectedResult;
+        private XenogermPlanSourceEntry _selectedSource;
+        private Vector2 _sourceListScrollPosition;
 
-        public override Vector2 InitialSize =>
-            new Vector2(DialogWidth, DialogHeight);
+        private List<XenogermPlanSourceListRow> _sourceRows = new List<XenogermPlanSourceListRow>();
 
         internal XenogermPlanSourceDialog(
             IXenogermPlanSourceProvider provider,
@@ -59,6 +57,8 @@ namespace XenogermPlanner.UI
             closeOnClickedOutside = false;
             forcePause = true;
         }
+
+        public override Vector2 InitialSize => new Vector2(DialogWidth, DialogHeight);
 
         public override void DoWindowContents(Rect inRect)
         {

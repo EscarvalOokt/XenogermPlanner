@@ -149,7 +149,8 @@ namespace XenogermPlanner.Trade
 
         private static bool StockMatches(PlanTraderAdvisorySourceSnapshot left, PlanTraderAdvisorySourceSnapshot right)
         {
-            if (left.Kind != right.Kind || !ReferenceEquals(left.NavigationPawn, right.NavigationPawn) ||
+            if (left.Kind != right.Kind ||
+                !ReferenceEquals(left.NavigationPawn, right.NavigationPawn) ||
                 left.Offers.Count != right.Offers.Count)
             {
                 return false;

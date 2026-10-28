@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using NUnit.Framework;
 using RimWorld;
 using Verse;
@@ -25,12 +25,7 @@ namespace XenogermPlanner.Tests.Trade
         {
             Map map = CreateUninitialized<Map>();
 
-            PlanTraderAdvisoryStockSnapshot snapshot = Scan(
-                map,
-                Array.Empty<TradeShip>(),
-                Array.Empty<Pawn>(),
-                _ => Array.Empty<Thing>(),
-                _ => Array.Empty<GeneDef>());
+            PlanTraderAdvisoryStockSnapshot snapshot = Scan(map, [], [], _ => [], _ => []);
 
             Assert.That(snapshot.IsAvailable, Is.True);
             Assert.That(snapshot.Sources, Is.Empty);
@@ -44,12 +39,7 @@ namespace XenogermPlanner.Tests.Trade
             Genepack genepack = CreateUninitialized<Genepack>();
             GeneDef gene = CreateGene("GeneA");
 
-            PlanTraderAdvisoryStockSnapshot snapshot = Scan(
-                map,
-                new[] { trader },
-                Array.Empty<Pawn>(),
-                _ => new Thing[] { genepack },
-                _ => new[] { gene });
+            PlanTraderAdvisoryStockSnapshot snapshot = Scan(map, [trader], [], _ => [genepack], _ => [gene]);
 
             Assert.That(snapshot.Sources, Has.Count.EqualTo(1));
             PlanTraderAdvisorySourceSnapshot source = snapshot.Sources[0];
@@ -58,7 +48,7 @@ namespace XenogermPlanner.Tests.Trade
             Assert.That(source.NavigationPawn, Is.Null);
             Assert.That(source.Offers, Has.Count.EqualTo(1));
             Assert.That(source.Offers[0].Genepack, Is.SameAs(genepack));
-            Assert.That(source.Offers[0].Genes, Is.EquivalentTo(new[] { gene }));
+            Assert.That(source.Offers[0].Genes, Is.EquivalentTo([gene]));
         }
 
         [Test]
@@ -69,12 +59,7 @@ namespace XenogermPlanner.Tests.Trade
             Genepack genepack = CreateUninitialized<Genepack>();
             GeneDef gene = CreateGene("GeneA");
 
-            PlanTraderAdvisoryStockSnapshot snapshot = Scan(
-                map,
-                Array.Empty<TradeShip>(),
-                new[] { trader },
-                _ => new Thing[] { genepack },
-                _ => new[] { gene });
+            PlanTraderAdvisoryStockSnapshot snapshot = Scan(map, [], [trader], _ => [genepack], _ => [gene]);
 
             Assert.That(snapshot.Sources, Has.Count.EqualTo(1));
             PlanTraderAdvisorySourceSnapshot source = snapshot.Sources[0];
@@ -93,13 +78,13 @@ namespace XenogermPlanner.Tests.Trade
 
             PlanTraderAdvisoryStockSnapshot snapshot = Scan(
                 map,
-                new[] { trader },
-                Array.Empty<Pawn>(),
-                _ => new[] { nonGenepack },
+                [trader],
+                [],
+                _ => [nonGenepack],
                 _ =>
                 {
                     geneReads++;
-                    return Array.Empty<GeneDef>();
+                    return [];
                 });
 
             Assert.That(geneReads, Is.Zero);
@@ -118,13 +103,13 @@ namespace XenogermPlanner.Tests.Trade
 
             PlanTraderAdvisoryStockSnapshot snapshot = Scan(
                 map,
-                new[] { trader },
-                Array.Empty<Pawn>(),
-                _ => new Thing[] { genepack, genepack },
+                [trader],
+                [],
+                _ => [genepack, genepack],
                 _ =>
                 {
                     geneReads++;
-                    return new[] { gene };
+                    return [gene];
                 });
 
             Assert.That(geneReads, Is.EqualTo(1));
@@ -142,10 +127,10 @@ namespace XenogermPlanner.Tests.Trade
 
             PlanTraderAdvisoryStockSnapshot snapshot = Scan(
                 map,
-                new[] { trader },
-                Array.Empty<Pawn>(),
-                _ => new Thing[] { firstGenepack, secondGenepack },
-                _ => new[] { gene });
+                [trader],
+                [],
+                _ => [firstGenepack, secondGenepack],
+                _ => [gene]);
 
             Assert.That(snapshot.Sources[0].Offers, Has.Count.EqualTo(2));
             Assert.That(snapshot.Sources[0].Offers[0].Genepack, Is.SameAs(firstGenepack));
@@ -162,16 +147,11 @@ namespace XenogermPlanner.Tests.Trade
             GeneDef secondGene = CreateGene("SecondGene");
             var sourceGenes = new List<GeneDef> { firstGene, firstGene, secondGene };
 
-            PlanTraderAdvisoryStockSnapshot snapshot = Scan(
-                map,
-                new[] { trader },
-                Array.Empty<Pawn>(),
-                _ => new Thing[] { genepack },
-                _ => sourceGenes);
+            PlanTraderAdvisoryStockSnapshot snapshot = Scan(map, [trader], [], _ => [genepack], _ => sourceGenes);
 
             sourceGenes.Clear();
 
-            Assert.That(snapshot.Sources[0].Offers[0].Genes, Is.EquivalentTo(new[] { firstGene, secondGene }));
+            Assert.That(snapshot.Sources[0].Offers[0].Genes, Is.EquivalentTo([firstGene, secondGene]));
         }
 
         [Test]
@@ -183,14 +163,14 @@ namespace XenogermPlanner.Tests.Trade
 
             PlanTraderAdvisoryStockSnapshot snapshot = Scan(
                 map,
-                new[] { trader, trader },
-                Array.Empty<Pawn>(),
+                [trader, trader],
+                [],
                 _ =>
                 {
                     goodsReads++;
-                    return Array.Empty<Thing>();
+                    return [];
                 },
-                _ => Array.Empty<GeneDef>());
+                _ => []);
 
             Assert.That(goodsReads, Is.EqualTo(1));
             Assert.That(snapshot.Sources, Has.Count.EqualTo(1));
@@ -208,16 +188,18 @@ namespace XenogermPlanner.Tests.Trade
 
             PlanTraderAdvisoryStockSnapshot snapshot = Scan(
                 map,
-                new[] { failingTrader, healthyTrader },
-                Array.Empty<Pawn>(),
+                [failingTrader, healthyTrader],
+                [],
+                // Fail one source while leaving the other trader readable.
+                // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
                 trader =>
                 {
                     if (ReferenceEquals(trader, failingTrader))
                         throw new InvalidOperationException("Expected source failure.");
 
-                    return new Thing[] { healthyGenepack };
+                    return [healthyGenepack];
                 },
-                _ => new[] { gene },
+                _ => [gene],
                 errors.Add);
 
             Assert.That(snapshot.Sources, Has.Count.EqualTo(1));
@@ -237,15 +219,17 @@ namespace XenogermPlanner.Tests.Trade
 
             PlanTraderAdvisoryStockSnapshot snapshot = Scan(
                 map,
-                new[] { trader },
-                Array.Empty<Pawn>(),
-                _ => new Thing[] { malformedGenepack, healthyGenepack },
+                [trader],
+                [],
+                _ => [malformedGenepack, healthyGenepack],
+                // Fail one offer while leaving the other genepack readable.
+                // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
                 genepack =>
                 {
                     if (ReferenceEquals(genepack, malformedGenepack))
                         throw new InvalidOperationException("Expected malformed offer.");
 
-                    return new[] { gene };
+                    return [gene];
                 },
                 errors.Add);
 
@@ -266,9 +250,9 @@ namespace XenogermPlanner.Tests.Trade
 
             PlanTraderAdvisoryStockSnapshot snapshot = Scan(
                 map,
-                new[] { trader },
-                Array.Empty<Pawn>(),
-                _ => new Thing[] { emptyGenepack, nullGenepack },
+                [trader],
+                [],
+                _ => [emptyGenepack, nullGenepack],
                 genepack => ReferenceEquals(genepack, emptyGenepack) ? Array.Empty<GeneDef>() : null,
                 errors.Add);
 
@@ -280,10 +264,10 @@ namespace XenogermPlanner.Tests.Trade
         public void Scan_NullDependenciesThrowForAvailableMap()
         {
             Map map = CreateUninitialized<Map>();
-            Func<Map, IEnumerable<TradeShip>> orbital = _ => Array.Empty<TradeShip>();
-            Func<Map, IEnumerable<Pawn>> caravan = _ => Array.Empty<Pawn>();
-            Func<ITrader, IEnumerable<Thing>> goods = _ => Array.Empty<Thing>();
-            Func<Genepack, IReadOnlyCollection<GeneDef>> genes = _ => Array.Empty<GeneDef>();
+            Func<Map, IEnumerable<TradeShip>> orbital = _ => [];
+            Func<Map, IEnumerable<Pawn>> caravan = _ => [];
+            Func<ITrader, IEnumerable<Thing>> goods = _ => [];
+            Func<Genepack, IReadOnlyCollection<GeneDef>> genes = _ => [];
             Action<string> errors = _ => { };
 
             Assert.Throws<ArgumentNullException>(
@@ -322,7 +306,7 @@ namespace XenogermPlanner.Tests.Trade
 
         private static T CreateUninitialized<T>() where T : class
         {
-            return (T)FormatterServices.GetUninitializedObject(typeof(T));
+            return (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
         }
     }
 }

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Verse;
@@ -15,10 +14,7 @@ namespace XenogermPlanner.Tests.Templates
         {
             GeneDef firstGene = CreateGene("First", complexity: 3, metabolism: -2, archites: 1);
             GeneDef secondGene = CreateGene("Second", complexity: 5, metabolism: 4, archites: 2);
-            var composition = new PlanXenogermTemplateComposition(
-                new[] { firstGene, secondGene },
-                Array.Empty<GeneDef>(),
-                physicalPackCount: 1);
+            var composition = new PlanXenogermTemplateComposition([firstGene, secondGene], [], physicalPackCount: 1);
 
             PlanXenogermTemplateBiostats result =
                 PlanXenogermTemplateBiostatCalculator.CalculateComposition(composition);
@@ -41,8 +37,8 @@ namespace XenogermPlanner.Tests.Templates
                 geneC);
             PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(
                 plan,
-                new[] { geneA, geneB },
-                new[] { geneC });
+                [geneA, geneB],
+                [geneC]);
             var capturedGenes = new List<GeneDef>();
 
             PlanXenogermTemplateBiostats result = PlanXenogermTemplateBiostatCalculator.CalculateCandidate(
@@ -53,7 +49,7 @@ namespace XenogermPlanner.Tests.Templates
                     return capturedGenes;
                 });
 
-            Assert.That(capturedGenes, Is.EquivalentTo(new[] { geneA, geneB, geneC }));
+            Assert.That(capturedGenes, Is.EquivalentTo([geneA, geneB, geneC]));
             Assert.That(result.Complexity, Is.EqualTo(7));
             Assert.That(result.Metabolism, Is.EqualTo(4));
             Assert.That(result.ArchiteCapsules, Is.EqualTo(3));
@@ -70,11 +66,11 @@ namespace XenogermPlanner.Tests.Templates
                 removedGene);
             PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(
                 plan,
-                new[] { retainedGene, removedGene });
+                [retainedGene, removedGene]);
 
             PlanXenogermTemplateBiostats result = PlanXenogermTemplateBiostatCalculator.CalculateCandidate(
                 candidate,
-                _ => new[] { retainedGene });
+                _ => [retainedGene]);
 
             Assert.That(result.Complexity, Is.EqualTo(4));
             Assert.That(result.Metabolism, Is.EqualTo(2));

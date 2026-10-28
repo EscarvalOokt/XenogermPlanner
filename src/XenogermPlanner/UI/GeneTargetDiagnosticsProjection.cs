@@ -18,15 +18,6 @@ namespace XenogermPlanner.UI
     {
         private readonly ReadOnlyCollection<GeneDef> _genes;
 
-        internal GeneTargetDiagnosticPresentationRowKind Kind { get; }
-        internal PlanGeneConflictDiagnostic ConflictDiagnostic { get; }
-        internal PlanGeneRandomChoiceGroupDiagnostic RandomChoiceGroupDiagnostic { get; }
-        internal PlanGenePrerequisiteDiagnostic PrerequisiteDiagnostic { get; }
-        internal GeneDef FirstGene { get; }
-        internal GeneDef SecondGene { get; }
-        internal IReadOnlyList<GeneDef> Genes => _genes;
-        internal string Message { get; }
-
         private GeneTargetDiagnosticPresentationRow(
             GeneTargetDiagnosticPresentationRowKind kind,
             PlanGeneConflictDiagnostic conflictDiagnostic,
@@ -62,6 +53,15 @@ namespace XenogermPlanner.UI
 
             _genes = copiedGenes.AsReadOnly();
         }
+
+        internal GeneTargetDiagnosticPresentationRowKind Kind { get; }
+        internal PlanGeneConflictDiagnostic ConflictDiagnostic { get; }
+        internal PlanGeneRandomChoiceGroupDiagnostic RandomChoiceGroupDiagnostic { get; }
+        internal PlanGenePrerequisiteDiagnostic PrerequisiteDiagnostic { get; }
+        internal GeneDef FirstGene { get; }
+        internal GeneDef SecondGene { get; }
+        internal IReadOnlyList<GeneDef> Genes => _genes;
+        internal string Message { get; }
 
         internal static GeneTargetDiagnosticPresentationRow CreateConflict(
             PlanGeneConflictDiagnostic diagnostic,
@@ -129,9 +129,6 @@ namespace XenogermPlanner.UI
     {
         private readonly ReadOnlyCollection<GeneTargetDiagnosticPresentationRow> _rows;
 
-        internal IReadOnlyList<GeneTargetDiagnosticPresentationRow> Rows => _rows;
-        internal bool HasDiagnostics => _rows.Count > 0;
-
         private GeneTargetDiagnosticsProjection(IEnumerable<GeneTargetDiagnosticPresentationRow> rows)
         {
             if (rows == null)
@@ -151,6 +148,9 @@ namespace XenogermPlanner.UI
 
             _rows = copiedRows.AsReadOnly();
         }
+
+        internal IReadOnlyList<GeneTargetDiagnosticPresentationRow> Rows => _rows;
+        internal bool HasDiagnostics => _rows.Count > 0;
 
         internal static GeneTargetDiagnosticsProjection Build(
             PlanGeneTargetAnalysisResult analysis,

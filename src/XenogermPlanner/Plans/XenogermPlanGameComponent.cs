@@ -11,13 +11,13 @@ namespace XenogermPlanner.Plans
         private ReadOnlyCollection<XenogermPlan> _plansForReading;
         private List<XenogermPlanSaveRecord> _saveRecords;
 
-        public IReadOnlyList<XenogermPlan> Plans => _plansForReading;
-
         // ReSharper disable once UnusedParameter.Local
         public XenogermPlanGameComponent(Game _)
         {
             RefreshPlansForReading();
         }
+
+        public IReadOnlyList<XenogermPlan> Plans => _plansForReading;
 
         public void AddPlan(XenogermPlan plan)
         {

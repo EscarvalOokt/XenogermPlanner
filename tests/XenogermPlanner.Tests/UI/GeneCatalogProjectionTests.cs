@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Verse;
@@ -24,7 +23,7 @@ namespace XenogermPlanner.Tests.UI
             };
 
             List<GeneCatalogRow> rows = GeneCatalogProjection.Build(
-                new[] { geneA1, geneA2, geneB1 },
+                [geneA1, geneA2, geneB1],
                 collapsedCategories,
                 forceExpanded: false);
 
@@ -51,7 +50,7 @@ namespace XenogermPlanner.Tests.UI
             };
 
             List<GeneCatalogRow> rows = GeneCatalogProjection.Build(
-                new[] { geneA1, geneA2, geneB1 },
+                [geneA1, geneA2, geneB1],
                 collapsedCategories,
                 forceExpanded: false);
 
@@ -78,7 +77,7 @@ namespace XenogermPlanner.Tests.UI
             };
 
             List<GeneCatalogRow> rows = GeneCatalogProjection.Build(
-                new[] { geneA, geneB, geneC },
+                [geneA, geneB, geneC],
                 collapsedCategories,
                 forceExpanded: false);
 
@@ -99,10 +98,7 @@ namespace XenogermPlanner.Tests.UI
                 { category, true }
             };
 
-            List<GeneCatalogRow> rows = GeneCatalogProjection.Build(
-                new[] { gene },
-                collapsedCategories,
-                forceExpanded: true);
+            List<GeneCatalogRow> rows = GeneCatalogProjection.Build([gene], collapsedCategories, forceExpanded: true);
 
             Assert.That(rows, Has.Count.EqualTo(2));
             AssertCategoryRow(rows[0], category, isExpanded: true);
@@ -117,7 +113,7 @@ namespace XenogermPlanner.Tests.UI
             GeneDef gene = CreateGene("Gene", category);
 
             List<GeneCatalogRow> rows = GeneCatalogProjection.Build(
-                new[] { gene },
+                [gene],
                 new Dictionary<GeneCategoryDef, bool>(),
                 forceExpanded: false);
 
@@ -130,7 +126,7 @@ namespace XenogermPlanner.Tests.UI
         public void Build_EmptyInput_ReturnsEmptyProjection()
         {
             List<GeneCatalogRow> rows = GeneCatalogProjection.Build(
-                Array.Empty<GeneDef>(),
+                [],
                 new Dictionary<GeneCategoryDef, bool>(),
                 forceExpanded: false);
 
@@ -148,14 +144,14 @@ namespace XenogermPlanner.Tests.UI
             };
 
             List<GeneCatalogRow> expandedRows = GeneCatalogProjection.Build(
-                new[] { gene },
+                [gene],
                 collapsedCategories,
                 forceExpanded: false);
 
             collapsedCategories[category] = true;
 
             List<GeneCatalogRow> collapsedRows = GeneCatalogProjection.Build(
-                new[] { gene },
+                [gene],
                 collapsedCategories,
                 forceExpanded: false);
 
@@ -182,7 +178,7 @@ namespace XenogermPlanner.Tests.UI
             };
 
             List<GeneCatalogRow> rows = GeneCatalogProjection.Build(
-                new[] { geneA1, geneB, geneA2 },
+                [geneA1, geneB, geneA2],
                 collapsedCategories,
                 forceExpanded: false);
 

@@ -45,7 +45,7 @@ namespace XenogermPlanner.Tests.Plans
         {
             GeneDef geneA = PlanTestData.CreateGene("GeneA");
             GeneDef geneB = PlanTestData.CreateGene("GeneB");
-            var source = new XenogermPlan("Plan", new[] { geneB, geneA }, PlanReadinessMode.ExactPayload);
+            var source = new XenogermPlan("Plan", [geneB, geneA], PlanReadinessMode.ExactPayload);
 
             string payload = XenogermPlanTransferCodec.Serialize(source);
             bool deserialized = XenogermPlanTransferCodec.TryDeserialize(
@@ -58,7 +58,7 @@ namespace XenogermPlanner.Tests.Plans
             Assert.That(failure, Is.EqualTo(XenogermPlanTransferFailure.None));
             Assert.That(pasted.Id, Is.Not.EqualTo(source.Id));
             Assert.That(pasted.Name, Is.EqualTo(source.Name));
-            Assert.That(pasted.DesiredGenes, Is.EquivalentTo(new[] { geneA, geneB }));
+            Assert.That(pasted.DesiredGenes, Is.EquivalentTo([geneA, geneB]));
             Assert.That(pasted.UnresolvedDesiredGeneDefNames, Is.Empty);
             Assert.That(pasted.ReadinessMode, Is.EqualTo(PlanReadinessMode.ExactPayload));
         }
@@ -67,7 +67,7 @@ namespace XenogermPlanner.Tests.Plans
         public void Serialize_DoesNotTransferSourceIdentityAndRepeatedPasteCreatesDistinctIds()
         {
             GeneDef geneA = PlanTestData.CreateGene("GeneA");
-            var source = new XenogermPlan("Plan", new[] { geneA }, PlanReadinessMode.Coverage);
+            var source = new XenogermPlan("Plan", [geneA], PlanReadinessMode.Coverage);
 
             string payload = XenogermPlanTransferCodec.Serialize(source);
             bool firstResult = XenogermPlanTransferCodec.TryDeserialize(
@@ -96,13 +96,13 @@ namespace XenogermPlanner.Tests.Plans
         {
             GeneDef first = PlanTestData.CreateGene("First");
             GeneDef second = PlanTestData.CreateGene("Second");
-            first.exclusionTags = new List<string> { "Conflict" };
-            second.exclusionTags = new List<string> { "Conflict" };
+            first.exclusionTags = ["Conflict"];
+            second.exclusionTags = ["Conflict"];
             var source = new XenogermPlan(
                 "source-id",
                 "Plan",
-                new[] { first, second },
-                new[] { "UnavailableConflict" },
+                [first, second],
+                ["UnavailableConflict"],
                 PlanReadinessMode.Coverage);
 
             bool deserialized = XenogermPlanTransferCodec.TryDeserialize(
@@ -114,14 +114,14 @@ namespace XenogermPlanner.Tests.Plans
             Assert.That(deserialized, Is.True);
             Assert.That(failure, Is.EqualTo(XenogermPlanTransferFailure.None));
             Assert.That(pasted.Id, Is.Not.EqualTo(source.Id));
-            Assert.That(pasted.DesiredGenes, Is.EquivalentTo(new[] { first, second }));
-            Assert.That(pasted.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(new[] { "UnavailableConflict" }));
+            Assert.That(pasted.DesiredGenes, Is.EquivalentTo([first, second]));
+            Assert.That(pasted.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(["UnavailableConflict"]));
         }
 
         [Test]
         public void RoundTrip_PreservesEmptyPlan()
         {
-            var source = new XenogermPlan("Empty", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var source = new XenogermPlan("Empty", [], PlanReadinessMode.Coverage);
 
             bool deserialized = XenogermPlanTransferCodec.TryDeserialize(
                 XenogermPlanTransferCodec.Serialize(source),
@@ -144,8 +144,8 @@ namespace XenogermPlanner.Tests.Plans
             var source = new XenogermPlan(
                 "source-id",
                 "Degraded",
-                new[] { geneA },
-                new[] { "MissingGene" },
+                [geneA],
+                ["MissingGene"],
                 PlanReadinessMode.ExactPayload);
 
             bool deserialized = XenogermPlanTransferCodec.TryDeserialize(
@@ -156,8 +156,8 @@ namespace XenogermPlanner.Tests.Plans
 
             Assert.That(deserialized, Is.True);
             Assert.That(failure, Is.EqualTo(XenogermPlanTransferFailure.None));
-            Assert.That(pasted.DesiredGenes, Is.EquivalentTo(new[] { geneA }));
-            Assert.That(pasted.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(new[] { "MissingGene" }));
+            Assert.That(pasted.DesiredGenes, Is.EquivalentTo([geneA]));
+            Assert.That(pasted.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(["MissingGene"]));
             Assert.That(pasted.IsDegraded, Is.True);
             Assert.That(pasted.ReadinessMode, Is.EqualTo(PlanReadinessMode.ExactPayload));
         }
@@ -166,7 +166,7 @@ namespace XenogermPlanner.Tests.Plans
         public void Deserialize_PreservesResolvedSourceGeneAsUnresolvedWhenDestinationDefinitionIsMissing()
         {
             GeneDef geneA = PlanTestData.CreateGene("GeneA");
-            var source = new XenogermPlan("Plan", new[] { geneA }, PlanReadinessMode.Coverage);
+            var source = new XenogermPlan("Plan", [geneA], PlanReadinessMode.Coverage);
 
             bool deserialized = XenogermPlanTransferCodec.TryDeserialize(
                 XenogermPlanTransferCodec.Serialize(source),
@@ -177,7 +177,7 @@ namespace XenogermPlanner.Tests.Plans
             Assert.That(deserialized, Is.True);
             Assert.That(failure, Is.EqualTo(XenogermPlanTransferFailure.None));
             Assert.That(pasted.DesiredGenes, Is.Empty);
-            Assert.That(pasted.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(new[] { "GeneA" }));
+            Assert.That(pasted.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(["GeneA"]));
             Assert.That(pasted.IsDegraded, Is.True);
         }
 
@@ -185,12 +185,7 @@ namespace XenogermPlanner.Tests.Plans
         public void Deserialize_ResolvesPreviouslyUnresolvedRequirementWhenDestinationDefinitionExists()
         {
             GeneDef restoredGene = PlanTestData.CreateGene("RestoredGene");
-            var source = new XenogermPlan(
-                "source-id",
-                "Plan",
-                Array.Empty<GeneDef>(),
-                new[] { "RestoredGene" },
-                PlanReadinessMode.Coverage);
+            var source = new XenogermPlan("source-id", "Plan", [], ["RestoredGene"], PlanReadinessMode.Coverage);
 
             bool deserialized = XenogermPlanTransferCodec.TryDeserialize(
                 XenogermPlanTransferCodec.Serialize(source),
@@ -200,7 +195,7 @@ namespace XenogermPlanner.Tests.Plans
 
             Assert.That(deserialized, Is.True);
             Assert.That(failure, Is.EqualTo(XenogermPlanTransferFailure.None));
-            Assert.That(pasted.DesiredGenes, Is.EquivalentTo(new[] { restoredGene }));
+            Assert.That(pasted.DesiredGenes, Is.EquivalentTo([restoredGene]));
             Assert.That(pasted.UnresolvedDesiredGeneDefNames, Is.Empty);
             Assert.That(pasted.IsDegraded, Is.False);
         }
@@ -219,7 +214,7 @@ namespace XenogermPlanner.Tests.Plans
 
             Assert.That(deserialized, Is.True);
             Assert.That(failure, Is.EqualTo(XenogermPlanTransferFailure.None));
-            Assert.That(pasted.DesiredGenes, Is.EquivalentTo(new[] { geneA }));
+            Assert.That(pasted.DesiredGenes, Is.EquivalentTo([geneA]));
             Assert.That(pasted.DesiredGenes.Count, Is.EqualTo(1));
         }
 
@@ -229,36 +224,30 @@ namespace XenogermPlanner.Tests.Plans
             GeneDef geneUpper = PlanTestData.CreateGene("GeneA");
             GeneDef geneLower = PlanTestData.CreateGene("geneB");
             GeneDef geneMiddle = PlanTestData.CreateGene("GeneC");
-            var first = new XenogermPlan(
-                "Plan",
-                new[] { geneLower, geneMiddle, geneUpper },
-                PlanReadinessMode.Coverage);
-            var second = new XenogermPlan(
-                "Plan",
-                new[] { geneUpper, geneLower, geneMiddle },
-                PlanReadinessMode.Coverage);
+            var first = new XenogermPlan("Plan", [geneLower, geneMiddle, geneUpper], PlanReadinessMode.Coverage);
+            var second = new XenogermPlan("Plan", [geneUpper, geneLower, geneMiddle], PlanReadinessMode.Coverage);
 
             string firstPayload = XenogermPlanTransferCodec.Serialize(first);
             string secondPayload = XenogermPlanTransferCodec.Serialize(second);
             string[] geneLines = firstPayload.Split('\n')
-                .Where(line => line.StartsWith("gene=", StringComparison.Ordinal)).ToArray();
+                .Where(line => line.StartsWith("gene=", StringComparison.Ordinal))
+                .ToArray();
 
             Assert.That(secondPayload, Is.EqualTo(firstPayload));
             Assert.That(
                 geneLines,
                 Is.EqualTo(
-                    new[]
-                    {
-                        "gene=" + Encode("GeneA"),
-                        "gene=" + Encode("GeneC"),
-                        "gene=" + Encode("geneB")
-                    }));
+                [
+                    "gene=" + Encode("GeneA"),
+                    "gene=" + Encode("GeneC"),
+                    "gene=" + Encode("geneB")
+                ]));
         }
 
         [TestCase("План\n第二行")]
         public void RoundTrip_PreservesEncodedName(string name)
         {
-            var source = new XenogermPlan(name, Array.Empty<GeneDef>(), PlanReadinessMode.ExactPayload);
+            var source = new XenogermPlan(name, [], PlanReadinessMode.ExactPayload);
 
             bool deserialized = XenogermPlanTransferCodec.TryDeserialize(
                 XenogermPlanTransferCodec.Serialize(source),
@@ -308,7 +297,7 @@ namespace XenogermPlanner.Tests.Plans
             component.AddPlanWithAllocatedName(second);
 
             Assert.That(first.Id, Is.Not.EqualTo(second.Id));
-            Assert.That(component.Plans.Select(plan => plan.Name), Is.EqualTo(new[] { "Plan", "Plan 2" }));
+            Assert.That(component.Plans.Select(plan => plan.Name), Is.EqualTo(["Plan", "Plan 2"]));
         }
 
         [TestCaseSource(nameof(MalformedPayloads))]
@@ -345,7 +334,7 @@ namespace XenogermPlanner.Tests.Plans
         public void DeserializeFailure_DoesNotMutateSourcePlan()
         {
             GeneDef geneA = PlanTestData.CreateGene("GeneA");
-            var source = new XenogermPlan("Source", new[] { geneA }, PlanReadinessMode.ExactPayload);
+            var source = new XenogermPlan("Source", [geneA], PlanReadinessMode.ExactPayload);
             string sourceId = source.Id;
 
             bool deserialized = XenogermPlanTransferCodec.TryDeserialize(
@@ -359,7 +348,7 @@ namespace XenogermPlanner.Tests.Plans
             Assert.That(failure, Is.EqualTo(XenogermPlanTransferFailure.MalformedPayload));
             Assert.That(source.Id, Is.EqualTo(sourceId));
             Assert.That(source.Name, Is.EqualTo("Source"));
-            Assert.That(source.DesiredGenes, Is.EquivalentTo(new[] { geneA }));
+            Assert.That(source.DesiredGenes, Is.EquivalentTo([geneA]));
             Assert.That(source.ReadinessMode, Is.EqualTo(PlanReadinessMode.ExactPayload));
         }
 
@@ -367,11 +356,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void RoundTrip_DoesNotTransferNotificationPreferenceOrTransitionBaseline()
         {
-            var source = new XenogermPlan(
-                "Plan",
-                Array.Empty<GeneDef>(),
-                PlanReadinessMode.Coverage,
-                readinessNotificationsEnabled: false);
+            var source = new XenogermPlan("Plan", [], PlanReadinessMode.Coverage, readinessNotificationsEnabled: false);
             source.UpdateReadinessNotificationState(true);
 
             bool deserialized = XenogermPlanTransferCodec.TryDeserialize(

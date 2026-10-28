@@ -28,7 +28,7 @@ namespace XenogermPlanner.Tests.Api
         public void Query_EmptyBatch_ReturnsSuccessfulEmptyResultWithoutReadingContext()
         {
             GenepackRelevanceBatchResult result = XenogermPlannerRelevanceQuery.Query(
-                Array.Empty<GenepackRelevanceRequest>(),
+                [],
                 () => throw new InvalidOperationException(),
                 () => throw new InvalidOperationException(),
                 () => throw new InvalidOperationException(),
@@ -108,18 +108,17 @@ namespace XenogermPlanner.Tests.Api
             var factoryCallCount = 0;
 
             GenepackRelevanceBatchResult result = XenogermPlannerRelevanceQuery.Query(
-                new[]
-                {
-                    new GenepackRelevanceRequest(new[] { "GeneA" }),
-                    new GenepackRelevanceRequest(new[] { "GeneB" }),
-                    new GenepackRelevanceRequest(new[] { "GeneC" })
-                },
+                [
+                    new GenepackRelevanceRequest(["GeneA"]),
+                    new GenepackRelevanceRequest(["GeneB"]),
+                    new GenepackRelevanceRequest(["GeneC"])
+                ],
                 () => true,
                 () => true,
                 () =>
                 {
                     factoryCallCount++;
-                    return _ => GenepackRelevanceItemResult.CreateSuccess(Array.Empty<GenepackRelevancePlanMatch>());
+                    return _ => GenepackRelevanceItemResult.CreateSuccess([]);
                 },
                 ResolveKnownGene);
 
@@ -131,13 +130,12 @@ namespace XenogermPlanner.Tests.Api
         public void Query_NullItem_ReturnsInvalidInputAtSameIndex()
         {
             GenepackRelevanceBatchResult result = QueryWithEvaluator(
-                new[]
-                {
-                    new GenepackRelevanceRequest(new[] { "GeneA" }),
+                [
+                    new GenepackRelevanceRequest(["GeneA"]),
                     null,
-                    new GenepackRelevanceRequest(new[] { "GeneB" })
-                },
-                _ => GenepackRelevanceItemResult.CreateSuccess(Array.Empty<GenepackRelevancePlanMatch>()));
+                    new GenepackRelevanceRequest(["GeneB"])
+                ],
+                _ => GenepackRelevanceItemResult.CreateSuccess([]));
 
             Assert.That(result.Status, Is.EqualTo(GenepackRelevanceBatchStatus.Success));
             Assert.That(result.Results, Has.Count.EqualTo(3));
@@ -150,7 +148,7 @@ namespace XenogermPlanner.Tests.Api
         public void Query_EmptyComposition_ReturnsInvalidInput()
         {
             GenepackRelevanceBatchResult result = QueryWithEvaluator(
-                new[] { new GenepackRelevanceRequest(Array.Empty<string>()) },
+                [new GenepackRelevanceRequest([])],
                 _ => throw new InvalidOperationException());
 
             AssertSingleItemStatus(result, GenepackRelevanceItemStatus.InvalidInput);
@@ -162,7 +160,7 @@ namespace XenogermPlanner.Tests.Api
         public void Query_InvalidGeneDefName_ReturnsInvalidInput(string invalidGeneDefName)
         {
             GenepackRelevanceBatchResult result = QueryWithEvaluator(
-                new[] { new GenepackRelevanceRequest(new[] { "GeneA", invalidGeneDefName }) },
+                [new GenepackRelevanceRequest(["GeneA", invalidGeneDefName])],
                 _ => throw new InvalidOperationException());
 
             AssertSingleItemStatus(result, GenepackRelevanceItemStatus.InvalidInput);
@@ -177,16 +175,15 @@ namespace XenogermPlanner.Tests.Api
             IReadOnlyCollection<GeneDef> capturedComposition = null;
 
             GenepackRelevanceBatchResult result = XenogermPlannerRelevanceQuery.Query(
-                new[]
-                {
-                    new GenepackRelevanceRequest(new[] { "GeneA", "GeneA", "genea", "GeneB", "GeneA" })
-                },
+                [
+                    new GenepackRelevanceRequest(["GeneA", "GeneA", "genea", "GeneB", "GeneA"])
+                ],
                 () => true,
                 () => true,
                 () => composition =>
                 {
                     capturedComposition = composition;
-                    return GenepackRelevanceItemResult.CreateSuccess(Array.Empty<GenepackRelevancePlanMatch>());
+                    return GenepackRelevanceItemResult.CreateSuccess([]);
                 },
                 geneDefName =>
                 {
@@ -204,7 +201,7 @@ namespace XenogermPlanner.Tests.Api
                 });
 
             AssertSingleItemStatus(result, GenepackRelevanceItemStatus.Success);
-            Assert.That(capturedComposition, Is.EqualTo(new[] { geneA, lowerCaseGeneA, geneB }));
+            Assert.That(capturedComposition, Is.EqualTo([geneA, lowerCaseGeneA, geneB]));
         }
 
         [Test]
@@ -214,25 +211,25 @@ namespace XenogermPlanner.Tests.Api
             IReadOnlyCollection<GeneDef> capturedComposition = null;
 
             GenepackRelevanceBatchResult result = XenogermPlannerRelevanceQuery.Query(
-                new[] { new GenepackRelevanceRequest(new[] { "GeneA", "GeneAlias" }) },
+                [new GenepackRelevanceRequest(["GeneA", "GeneAlias"])],
                 () => true,
                 () => true,
                 () => composition =>
                 {
                     capturedComposition = composition;
-                    return GenepackRelevanceItemResult.CreateSuccess(Array.Empty<GenepackRelevancePlanMatch>());
+                    return GenepackRelevanceItemResult.CreateSuccess([]);
                 },
                 _ => sharedGene);
 
             AssertSingleItemStatus(result, GenepackRelevanceItemStatus.Success);
-            Assert.That(capturedComposition, Is.EqualTo(new[] { sharedGene }));
+            Assert.That(capturedComposition, Is.EqualTo([sharedGene]));
         }
 
         [Test]
         public void Query_UnknownGeneDef_ReturnsUnknownGeneDef()
         {
             GenepackRelevanceBatchResult result = XenogermPlannerRelevanceQuery.Query(
-                new[] { new GenepackRelevanceRequest(new[] { "UnknownGene" }) },
+                [new GenepackRelevanceRequest(["UnknownGene"])],
                 () => true,
                 () => true,
                 CreateSuccessfulEvaluator,
@@ -247,13 +244,13 @@ namespace XenogermPlanner.Tests.Api
             var evaluationCount = 0;
 
             GenepackRelevanceBatchResult result = XenogermPlannerRelevanceQuery.Query(
-                new[] { new GenepackRelevanceRequest(new[] { "GeneA", "UnknownGene" }) },
+                [new GenepackRelevanceRequest(["GeneA", "UnknownGene"])],
                 () => true,
                 () => true,
                 () => _ =>
                 {
                     evaluationCount++;
-                    return GenepackRelevanceItemResult.CreateSuccess(Array.Empty<GenepackRelevancePlanMatch>());
+                    return GenepackRelevanceItemResult.CreateSuccess([]);
                 },
                 geneDefName => geneDefName == "UnknownGene" ? null : CreateGene(geneDefName));
 
@@ -265,12 +262,11 @@ namespace XenogermPlanner.Tests.Api
         public void Query_UnknownGeneDef_IsolatedToMatchingItem()
         {
             GenepackRelevanceBatchResult result = XenogermPlannerRelevanceQuery.Query(
-                new[]
-                {
-                    new GenepackRelevanceRequest(new[] { "GeneA" }),
-                    new GenepackRelevanceRequest(new[] { "UnknownGene" }),
-                    new GenepackRelevanceRequest(new[] { "GeneB" })
-                },
+                [
+                    new GenepackRelevanceRequest(["GeneA"]),
+                    new GenepackRelevanceRequest(["UnknownGene"]),
+                    new GenepackRelevanceRequest(["GeneB"])
+                ],
                 () => true,
                 () => true,
                 CreateSuccessfulEvaluator,
@@ -286,12 +282,11 @@ namespace XenogermPlanner.Tests.Api
         public void Query_ResolverFailure_IsolatedToFailedItem()
         {
             GenepackRelevanceBatchResult result = XenogermPlannerRelevanceQuery.Query(
-                new[]
-                {
-                    new GenepackRelevanceRequest(new[] { "GeneA" }),
-                    new GenepackRelevanceRequest(new[] { "BrokenGene" }),
-                    new GenepackRelevanceRequest(new[] { "GeneB" })
-                },
+                [
+                    new GenepackRelevanceRequest(["GeneA"]),
+                    new GenepackRelevanceRequest(["BrokenGene"]),
+                    new GenepackRelevanceRequest(["GeneB"])
+                ],
                 () => true,
                 () => true,
                 CreateSuccessfulEvaluator,
@@ -315,12 +310,11 @@ namespace XenogermPlanner.Tests.Api
             var evaluationIndex = 0;
 
             GenepackRelevanceBatchResult result = QueryWithEvaluator(
-                new[]
-                {
-                    new GenepackRelevanceRequest(new[] { "GeneA" }),
-                    new GenepackRelevanceRequest(new[] { "GeneB" }),
-                    new GenepackRelevanceRequest(new[] { "GeneC" })
-                },
+                [
+                    new GenepackRelevanceRequest(["GeneA"]),
+                    new GenepackRelevanceRequest(["GeneB"]),
+                    new GenepackRelevanceRequest(["GeneC"])
+                ],
                 _ =>
                 {
                     evaluationIndex++;
@@ -328,7 +322,7 @@ namespace XenogermPlanner.Tests.Api
                     if (evaluationIndex == 2)
                         throw new InvalidOperationException();
 
-                    return GenepackRelevanceItemResult.CreateSuccess(Array.Empty<GenepackRelevancePlanMatch>());
+                    return GenepackRelevanceItemResult.CreateSuccess([]);
                 });
 
             Assert.That(result.Status, Is.EqualTo(GenepackRelevanceBatchStatus.Success));
@@ -352,15 +346,15 @@ namespace XenogermPlanner.Tests.Api
 
             GenepackRelevanceBatchResult result = QueryWithEvaluator(
                 CreateValidRequests(),
-                _ => GenepackRelevanceItemResult.CreateSuccess(new[] { expectedMatch }));
+                _ => GenepackRelevanceItemResult.CreateSuccess([expectedMatch]));
 
             AssertSingleItemStatus(result, GenepackRelevanceItemStatus.Success);
-            Assert.That(result.Results[0].Matches, Is.EqualTo(new[] { expectedMatch }));
+            Assert.That(result.Results[0].Matches, Is.EqualTo([expectedMatch]));
         }
 
         private static IReadOnlyList<GenepackRelevanceRequest> CreateValidRequests()
         {
-            return new[] { new GenepackRelevanceRequest(new[] { "GeneA" }) };
+            return [new GenepackRelevanceRequest(["GeneA"])];
         }
 
         private static GenepackRelevanceBatchResult QueryWithContext(
@@ -391,7 +385,7 @@ namespace XenogermPlanner.Tests.Api
 
         private static Func<IReadOnlyCollection<GeneDef>, GenepackRelevanceItemResult> CreateSuccessfulEvaluator()
         {
-            return _ => GenepackRelevanceItemResult.CreateSuccess(Array.Empty<GenepackRelevancePlanMatch>());
+            return _ => GenepackRelevanceItemResult.CreateSuccess([]);
         }
 
         private static GeneDef ResolveKnownGene(string geneDefName)

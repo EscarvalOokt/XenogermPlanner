@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using Verse;
 using XenogermPlanner.Donors;
 using XenogermPlanner.Genes;
@@ -96,7 +96,7 @@ namespace XenogermPlanner.Tests.Donors
 
         private static T CreateUninitialized<T>() where T : class
         {
-            return (T)FormatterServices.GetUninitializedObject(typeof(T));
+            return (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
         }
     }
 }

@@ -7,15 +7,8 @@ namespace XenogermPlanner.Analysis
 {
     public sealed class PlanGenepackCompositionDiagnostic
     {
-        private readonly ReadOnlyCollection<GeneDef> _genes;
         private readonly ReadOnlyCollection<GeneDef> _additionalGenes;
-
-        public IReadOnlyCollection<GeneDef> Genes => _genes;
-        public int PhysicalPackCount { get; }
-        public bool IsExactPayloadEligible { get; }
-
-        public IReadOnlyCollection<GeneDef> AdditionalGenes =>
-            _additionalGenes;
+        private readonly ReadOnlyCollection<GeneDef> _genes;
 
         internal PlanGenepackCompositionDiagnostic(
             IEnumerable<GeneDef> genes,
@@ -59,6 +52,12 @@ namespace XenogermPlanner.Analysis
             IsExactPayloadEligible = isExactPayloadEligible;
             _additionalGenes = copiedAdditionalGenes.AsReadOnly();
         }
+
+        public IReadOnlyCollection<GeneDef> Genes => _genes;
+        public int PhysicalPackCount { get; }
+        public bool IsExactPayloadEligible { get; }
+
+        public IReadOnlyCollection<GeneDef> AdditionalGenes => _additionalGenes;
 
         private static List<GeneDef> CopyDistinctGenes(IEnumerable<GeneDef> genes, string parameterName)
         {

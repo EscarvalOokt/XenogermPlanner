@@ -58,7 +58,7 @@ namespace XenogermPlanner.UI
 
             adjustedTarget = CameraJumper.GetAdjustedTarget(target);
 
-            return adjustedTarget.IsValid && adjustedTarget.IsMapTarget &&
+            return adjustedTarget is { IsValid: true, IsMapTarget: true } &&
                    ReferenceEquals(adjustedTarget.Map, currentMap);
         }
     }

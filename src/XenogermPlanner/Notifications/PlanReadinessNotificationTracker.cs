@@ -25,7 +25,8 @@ namespace XenogermPlanner.Notifications
                 return false;
             }
 
-            bool shouldAnnounce = plan.ReadinessNotificationsEnabled && !plan.LastReadinessNotificationStateWasReady &&
+            bool shouldAnnounce = plan.ReadinessNotificationsEnabled &&
+                                  !plan.LastReadinessNotificationStateWasReady &&
                                   isReady;
 
             plan.UpdateReadinessNotificationState(isReady);

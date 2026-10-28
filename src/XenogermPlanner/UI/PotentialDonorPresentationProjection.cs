@@ -7,23 +7,21 @@ namespace XenogermPlanner.UI
 {
     internal sealed class PotentialDonorPresentationRow
     {
-        internal Pawn Donor { get; }
-        internal string DisplayName { get; }
-        internal int StableKey { get; }
-
         internal PotentialDonorPresentationRow(Pawn donor, string displayName, int stableKey)
         {
             Donor = donor ?? throw new ArgumentNullException(nameof(donor));
             DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
             StableKey = stableKey;
         }
+
+        internal Pawn Donor { get; }
+        internal string DisplayName { get; }
+        internal int StableKey { get; }
     }
 
     internal sealed class PotentialDonorPresentationProjection
     {
         private readonly ReadOnlyCollection<PotentialDonorPresentationRow> _rows;
-
-        internal IReadOnlyList<PotentialDonorPresentationRow> Rows => _rows;
 
         internal PotentialDonorPresentationProjection(IEnumerable<PotentialDonorPresentationRow> rows)
         {
@@ -42,27 +40,15 @@ namespace XenogermPlanner.UI
 
             _rows = copiedRows.AsReadOnly();
         }
+
+        internal IReadOnlyList<PotentialDonorPresentationRow> Rows => _rows;
     }
 
     internal sealed class PotentialDonorPresentationProjectionCache
     {
-        private sealed class SourceDescriptor
-        {
-            internal Pawn Donor { get; }
-            internal string DisplayName { get; }
-            internal int StableKey { get; }
-
-            internal SourceDescriptor(Pawn donor, string displayName, int stableKey)
-            {
-                Donor = donor;
-                DisplayName = displayName;
-                StableKey = stableKey;
-            }
-        }
-
         private object _languageKey;
-        private SourceDescriptor[] _sourceDescriptors;
         private PotentialDonorPresentationProjection _projection;
+        private SourceDescriptor[] _sourceDescriptors;
 
         internal PotentialDonorPresentationProjection GetOrBuild(IReadOnlyList<Pawn> donors, object languageKey)
         {
@@ -88,7 +74,8 @@ namespace XenogermPlanner.UI
             if (getStableKey == null)
                 throw new ArgumentNullException(nameof(getStableKey));
 
-            if (_projection != null && Equals(_languageKey, languageKey) &&
+            if (_projection != null &&
+                Equals(_languageKey, languageKey) &&
                 IsCompatible(donors, getDisplayName, getStableKey))
             {
                 return _projection;
@@ -164,6 +151,20 @@ namespace XenogermPlanner.UI
             int comparison = StringComparer.CurrentCultureIgnoreCase.Compare(left.DisplayName, right.DisplayName);
 
             return comparison != 0 ? comparison : left.StableKey.CompareTo(right.StableKey);
+        }
+
+        private sealed class SourceDescriptor
+        {
+            internal SourceDescriptor(Pawn donor, string displayName, int stableKey)
+            {
+                Donor = donor;
+                DisplayName = displayName;
+                StableKey = stableKey;
+            }
+
+            internal Pawn Donor { get; }
+            internal string DisplayName { get; }
+            internal int StableKey { get; }
         }
     }
 }

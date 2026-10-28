@@ -8,11 +8,8 @@ namespace XenogermPlanner.UI
 {
     internal sealed class XenogermTemplateCompositionPresentation
     {
-        private readonly ReadOnlyCollection<GeneDef> _sortedGenes;
         private readonly HashSet<GeneDef> _additionalGenes;
-
-        internal PlanXenogermTemplateComposition Composition { get; }
-        internal IReadOnlyList<GeneDef> SortedGenes => _sortedGenes;
+        private readonly ReadOnlyCollection<GeneDef> _sortedGenes;
 
         internal XenogermTemplateCompositionPresentation(
             PlanXenogermTemplateComposition composition,
@@ -37,6 +34,9 @@ namespace XenogermPlanner.UI
             _additionalGenes = new HashSet<GeneDef>(composition.AdditionalGenes);
         }
 
+        internal PlanXenogermTemplateComposition Composition { get; }
+        internal IReadOnlyList<GeneDef> SortedGenes => _sortedGenes;
+
         internal bool IsAdditional(GeneDef gene)
         {
             if (gene == null)
@@ -50,13 +50,6 @@ namespace XenogermPlanner.UI
     {
         private readonly ReadOnlyCollection<XenogermTemplateCompositionPresentation> _compositions;
         private readonly ReadOnlyCollection<GeneDef> _sortedAdditionalGenes;
-
-        internal PlanXenogermTemplateCandidate Candidate { get; }
-        internal int Index { get; }
-        internal string Label { get; }
-        internal string Summary { get; }
-        internal IReadOnlyList<XenogermTemplateCompositionPresentation> Compositions => _compositions;
-        internal IReadOnlyList<GeneDef> SortedAdditionalGenes => _sortedAdditionalGenes;
 
         internal XenogermTemplateCandidatePresentation(
             PlanXenogermTemplateCandidate candidate,
@@ -110,13 +103,18 @@ namespace XenogermPlanner.UI
             _compositions = copiedCompositions.AsReadOnly();
             _sortedAdditionalGenes = copiedAdditionalGenes.AsReadOnly();
         }
+
+        internal PlanXenogermTemplateCandidate Candidate { get; }
+        internal int Index { get; }
+        internal string Label { get; }
+        internal string Summary { get; }
+        internal IReadOnlyList<XenogermTemplateCompositionPresentation> Compositions => _compositions;
+        internal IReadOnlyList<GeneDef> SortedAdditionalGenes => _sortedAdditionalGenes;
     }
 
     internal sealed class XenogermTemplatePresentationProjection
     {
         private readonly ReadOnlyCollection<XenogermTemplateCandidatePresentation> _candidates;
-
-        internal IReadOnlyList<XenogermTemplateCandidatePresentation> Candidates => _candidates;
 
         private XenogermTemplatePresentationProjection(IEnumerable<XenogermTemplateCandidatePresentation> candidates)
         {
@@ -136,12 +134,14 @@ namespace XenogermPlanner.UI
             _candidates = copiedCandidates.AsReadOnly();
         }
 
+        internal IReadOnlyList<XenogermTemplateCandidatePresentation> Candidates => _candidates;
+
         internal static XenogermTemplatePresentationProjection Build(
             PlanXenogermTemplateCandidateSearchResult searchResult)
         {
             return Build(
                 searchResult,
-                (candidate, index) => XenogermPlannerPresentation.GetTemplateCandidateLabel(index, index == 0),
+                (_, index) => XenogermPlannerPresentation.GetTemplateCandidateLabel(index, index == 0),
                 XenogermPlannerPresentation.GetTemplateCandidateSummary,
                 XenogermPlannerPresentation.GetSortedGenes);
         }

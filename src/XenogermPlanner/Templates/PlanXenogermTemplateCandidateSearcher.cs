@@ -13,110 +13,6 @@ namespace XenogermPlanner.Templates
         private static readonly IEqualityComparer<HashSet<GeneDef>> _geneSetComparer =
             HashSet<GeneDef>.CreateSetComparer();
 
-        private sealed class CompositionGroup
-        {
-            internal HashSet<GeneDef> Genes { get; }
-            internal string CompositionKey { get; }
-            internal int PhysicalPackCount { get; set; }
-
-            internal CompositionGroup(HashSet<GeneDef> genes)
-            {
-                Genes = new HashSet<GeneDef>(genes);
-                CompositionKey = GenepackCompositionUtility.CreateCompositionKey(Genes);
-                PhysicalPackCount = 1;
-            }
-        }
-
-        private sealed class BoundedCandidateCollector
-        {
-            private readonly PlanReadinessMode _readinessMode;
-            private readonly int _maximumCandidateCount;
-            private readonly HashSet<string> _candidateKeys = new HashSet<string>(StringComparer.Ordinal);
-
-            private readonly List<PlanXenogermTemplateCandidate> _candidates =
-                new List<PlanXenogermTemplateCandidate>();
-
-            internal IReadOnlyList<PlanXenogermTemplateCandidate> Candidates => _candidates;
-            internal bool DiscardedAnyCandidate { get; private set; }
-
-            internal BoundedCandidateCollector(PlanReadinessMode readinessMode, int maximumCandidateCount)
-            {
-                _readinessMode = readinessMode;
-                _maximumCandidateCount = maximumCandidateCount;
-            }
-
-            internal void Add(PlanXenogermTemplateCandidate candidate)
-            {
-                if (candidate == null)
-                    throw new ArgumentNullException(nameof(candidate));
-
-                if (!_candidateKeys.Add(candidate.CandidateKey))
-                    return;
-
-                int insertionIndex = FindInsertionIndex(candidate);
-
-                if (_candidates.Count < _maximumCandidateCount)
-                {
-                    _candidates.Insert(insertionIndex, candidate);
-                    return;
-                }
-
-                DiscardedAnyCandidate = true;
-
-                if (insertionIndex >= _maximumCandidateCount)
-                    return;
-
-                _candidates.Insert(insertionIndex, candidate);
-                _candidates.RemoveAt(_candidates.Count - 1);
-            }
-
-            private int FindInsertionIndex(PlanXenogermTemplateCandidate candidate)
-            {
-                var lowerBound = 0;
-                int upperBound = _candidates.Count;
-
-                while (lowerBound < upperBound)
-                {
-                    int middle = lowerBound + (upperBound - lowerBound) / 2;
-
-                    if (CompareCandidates(_candidates[middle], candidate, _readinessMode) <= 0)
-                        lowerBound = middle + 1;
-                    else
-                        upperBound = middle;
-                }
-
-                return lowerBound;
-            }
-        }
-
-        private sealed class CandidateSearchState
-        {
-            internal HashSet<GeneDef> TargetGenes { get; }
-            internal IReadOnlyDictionary<GeneDef, List<CompositionGroup>> GroupsByTargetGene { get; }
-            internal PlanXenogermTemplateCandidateSearchLimits Limits { get; }
-            internal BoundedCandidateCollector Collector { get; }
-            internal List<CompositionGroup> SelectedGroups { get; } = new List<CompositionGroup>();
-            internal HashSet<CompositionGroup> SelectedGroupSet { get; } = new HashSet<CompositionGroup>();
-            internal Dictionary<GeneDef, int> CoverageCounts { get; }
-
-            internal int CoveredTargetGeneCount;
-            internal int VisitedNodeCount { get; set; }
-            internal bool NodeBudgetExhausted { get; set; }
-
-            internal CandidateSearchState(
-                HashSet<GeneDef> targetGenes,
-                IReadOnlyDictionary<GeneDef, List<CompositionGroup>> groupsByTargetGene,
-                PlanXenogermTemplateCandidateSearchLimits limits,
-                BoundedCandidateCollector collector)
-            {
-                TargetGenes = targetGenes;
-                GroupsByTargetGene = groupsByTargetGene;
-                Limits = limits;
-                Collector = collector;
-                CoverageCounts = CreateCoverageCounts(targetGenes);
-            }
-        }
-
         internal static PlanXenogermTemplateCandidateSearchResult Search(
             XenogermPlan plan,
             PlanReadinessResult readinessResult,
@@ -189,7 +85,9 @@ namespace XenogermPlanner.Templates
             HashSet<GeneDef> copiedTargetGenes =
                 GenepackCompositionUtility.CopyDistinctGenes(targetGenes, nameof(targetGenes));
 
-            if (!inventoryAvailable || isDegraded || readinessStatus != PlanReadinessStatus.Ready ||
+            if (!inventoryAvailable ||
+                isDegraded ||
+                readinessStatus != PlanReadinessStatus.Ready ||
                 copiedTargetGenes.Count == 0)
             {
                 return new PlanXenogermTemplateCandidateSearchResult(
@@ -288,9 +186,8 @@ namespace XenogermPlanner.Templates
                     groupsByTargetGene,
                     selectedGroupSet);
 
-                if (nextTargetGene == null || !groupsByTargetGene.TryGetValue(
-                        nextTargetGene,
-                        out List<CompositionGroup> groups))
+                if (nextTargetGene == null ||
+                    !groupsByTargetGene.TryGetValue(nextTargetGene, out List<CompositionGroup> groups))
                 {
                     return null;
                 }
@@ -369,9 +266,8 @@ namespace XenogermPlanner.Templates
                 state.GroupsByTargetGene,
                 state.SelectedGroupSet);
 
-            if (nextTargetGene == null || !state.GroupsByTargetGene.TryGetValue(
-                    nextTargetGene,
-                    out List<CompositionGroup> groups))
+            if (nextTargetGene == null ||
+                !state.GroupsByTargetGene.TryGetValue(nextTargetGene, out List<CompositionGroup> groups))
             {
                 return;
             }
@@ -617,6 +513,111 @@ namespace XenogermPlanner.Templates
                     readinessMode,
                     "Unsupported plan readiness mode.");
             }
+        }
+
+        private sealed class CompositionGroup
+        {
+            internal CompositionGroup(HashSet<GeneDef> genes)
+            {
+                Genes = new HashSet<GeneDef>(genes);
+                CompositionKey = GenepackCompositionUtility.CreateCompositionKey(Genes);
+                PhysicalPackCount = 1;
+            }
+
+            internal HashSet<GeneDef> Genes { get; }
+            internal string CompositionKey { get; }
+            internal int PhysicalPackCount { get; set; }
+        }
+
+        private sealed class BoundedCandidateCollector
+        {
+            private readonly HashSet<string> _candidateKeys = new HashSet<string>(StringComparer.Ordinal);
+
+            private readonly List<PlanXenogermTemplateCandidate> _candidates =
+                new List<PlanXenogermTemplateCandidate>();
+
+            private readonly int _maximumCandidateCount;
+            private readonly PlanReadinessMode _readinessMode;
+
+            internal BoundedCandidateCollector(PlanReadinessMode readinessMode, int maximumCandidateCount)
+            {
+                _readinessMode = readinessMode;
+                _maximumCandidateCount = maximumCandidateCount;
+            }
+
+            internal IReadOnlyList<PlanXenogermTemplateCandidate> Candidates => _candidates;
+            internal bool DiscardedAnyCandidate { get; private set; }
+
+            internal void Add(PlanXenogermTemplateCandidate candidate)
+            {
+                if (candidate == null)
+                    throw new ArgumentNullException(nameof(candidate));
+
+                if (!_candidateKeys.Add(candidate.CandidateKey))
+                    return;
+
+                int insertionIndex = FindInsertionIndex(candidate);
+
+                if (_candidates.Count < _maximumCandidateCount)
+                {
+                    _candidates.Insert(insertionIndex, candidate);
+                    return;
+                }
+
+                DiscardedAnyCandidate = true;
+
+                if (insertionIndex >= _maximumCandidateCount)
+                    return;
+
+                _candidates.Insert(insertionIndex, candidate);
+                _candidates.RemoveAt(_candidates.Count - 1);
+            }
+
+            private int FindInsertionIndex(PlanXenogermTemplateCandidate candidate)
+            {
+                var lowerBound = 0;
+                int upperBound = _candidates.Count;
+
+                while (lowerBound < upperBound)
+                {
+                    int middle = lowerBound + (upperBound - lowerBound) / 2;
+
+                    if (CompareCandidates(_candidates[middle], candidate, _readinessMode) <= 0)
+                        lowerBound = middle + 1;
+                    else
+                        upperBound = middle;
+                }
+
+                return lowerBound;
+            }
+        }
+
+        private sealed class CandidateSearchState
+        {
+            internal int CoveredTargetGeneCount;
+
+            internal CandidateSearchState(
+                HashSet<GeneDef> targetGenes,
+                IReadOnlyDictionary<GeneDef, List<CompositionGroup>> groupsByTargetGene,
+                PlanXenogermTemplateCandidateSearchLimits limits,
+                BoundedCandidateCollector collector)
+            {
+                TargetGenes = targetGenes;
+                GroupsByTargetGene = groupsByTargetGene;
+                Limits = limits;
+                Collector = collector;
+                CoverageCounts = CreateCoverageCounts(targetGenes);
+            }
+
+            internal HashSet<GeneDef> TargetGenes { get; }
+            internal IReadOnlyDictionary<GeneDef, List<CompositionGroup>> GroupsByTargetGene { get; }
+            internal PlanXenogermTemplateCandidateSearchLimits Limits { get; }
+            internal BoundedCandidateCollector Collector { get; }
+            internal List<CompositionGroup> SelectedGroups { get; } = new List<CompositionGroup>();
+            internal HashSet<CompositionGroup> SelectedGroupSet { get; } = new HashSet<CompositionGroup>();
+            internal Dictionary<GeneDef, int> CoverageCounts { get; }
+            internal int VisitedNodeCount { get; set; }
+            internal bool NodeBudgetExhausted { get; set; }
         }
     }
 }

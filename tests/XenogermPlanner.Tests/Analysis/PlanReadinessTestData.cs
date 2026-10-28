@@ -13,30 +13,6 @@ namespace XenogermPlanner.Tests.Analysis
 {
     internal static class PlanReadinessTestData
     {
-        internal sealed class PackFixture
-        {
-            internal Genepack Genepack { get; }
-            internal List<GeneDef> Genes { get; }
-
-            internal PackFixture(Genepack genepack, IEnumerable<GeneDef> genes)
-            {
-                Genepack = genepack ?? throw new ArgumentNullException(nameof(genepack));
-
-                if (genes == null)
-                    throw new ArgumentNullException(nameof(genes));
-
-                Genes = new List<GeneDef>();
-
-                foreach (GeneDef gene in genes)
-                {
-                    if (gene == null)
-                        throw new ArgumentNullException(nameof(genes));
-
-                    Genes.Add(gene);
-                }
-            }
-        }
-
         internal static GeneDef CreateGene(string defName)
         {
             return PlanTestData.CreateGene(defName);
@@ -179,10 +155,7 @@ namespace XenogermPlanner.Tests.Analysis
                 if (pack == null)
                     throw new ArgumentException("Pack fixture collection cannot contain null values.", nameof(packs));
 
-                if (!packsByGenepack.ContainsKey(pack.Genepack))
-                {
-                    packsByGenepack.Add(pack.Genepack, pack);
-                }
+                packsByGenepack.TryAdd(pack.Genepack, pack);
             }
 
             return packsByGenepack;
@@ -198,6 +171,30 @@ namespace XenogermPlanner.Tests.Analysis
             }
 
             throw new InvalidOperationException("Genepack is not associated with an analysis test fixture.");
+        }
+
+        internal sealed class PackFixture
+        {
+            internal PackFixture(Genepack genepack, IEnumerable<GeneDef> genes)
+            {
+                Genepack = genepack ?? throw new ArgumentNullException(nameof(genepack));
+
+                if (genes == null)
+                    throw new ArgumentNullException(nameof(genes));
+
+                Genes = new List<GeneDef>();
+
+                foreach (GeneDef gene in genes)
+                {
+                    if (gene == null)
+                        throw new ArgumentNullException(nameof(genes));
+
+                    Genes.Add(gene);
+                }
+            }
+
+            internal Genepack Genepack { get; }
+            internal List<GeneDef> Genes { get; }
         }
     }
 }

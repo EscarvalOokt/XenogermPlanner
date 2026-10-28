@@ -10,12 +10,6 @@ namespace XenogermPlanner.Donors
     {
         private readonly ReadOnlyCollection<Pawn> _pawns;
 
-        public bool IsAvailable { get; }
-        public IReadOnlyList<Pawn> Pawns => _pawns;
-
-        internal static PlanPotentialDonorScopeSnapshot Unavailable { get; } =
-            new PlanPotentialDonorScopeSnapshot(false, Array.Empty<Pawn>());
-
         private PlanPotentialDonorScopeSnapshot(bool isAvailable, IEnumerable<Pawn> pawns)
         {
             if (pawns == null)
@@ -43,6 +37,12 @@ namespace XenogermPlanner.Donors
             IsAvailable = isAvailable;
             _pawns = copiedPawns.AsReadOnly();
         }
+
+        public bool IsAvailable { get; }
+        public IReadOnlyList<Pawn> Pawns => _pawns;
+
+        internal static PlanPotentialDonorScopeSnapshot Unavailable { get; } =
+            new PlanPotentialDonorScopeSnapshot(false, Array.Empty<Pawn>());
 
         internal static PlanPotentialDonorScopeSnapshot CreateAvailable(IEnumerable<Pawn> pawns)
         {

@@ -9,12 +9,8 @@ namespace XenogermPlanner.Assemblers
 {
     internal sealed class PlanAssemblerCandidate
     {
-        private readonly ReadOnlyCollection<PlanAssemblerGenepackSource> _sources;
         private readonly ReadOnlyCollection<PlanGenePrerequisiteDiagnostic> _missingPrerequisites;
-
-        internal IReadOnlyList<PlanAssemblerGenepackSource> Sources => _sources;
-        internal IReadOnlyList<PlanGenePrerequisiteDiagnostic> MissingPrerequisites => _missingPrerequisites;
-        internal bool IsPrerequisiteComplete => _missingPrerequisites.Count == 0;
+        private readonly ReadOnlyCollection<PlanAssemblerGenepackSource> _sources;
 
         internal PlanAssemblerCandidate(
             IEnumerable<PlanAssemblerGenepackSource> sources,
@@ -30,6 +26,10 @@ namespace XenogermPlanner.Assemblers
                     nameof(sources));
             }
         }
+
+        internal IReadOnlyList<PlanAssemblerGenepackSource> Sources => _sources;
+        internal IReadOnlyList<PlanGenePrerequisiteDiagnostic> MissingPrerequisites => _missingPrerequisites;
+        internal bool IsPrerequisiteComplete => _missingPrerequisites.Count == 0;
 
         private static List<PlanAssemblerGenepackSource> CopySources(IEnumerable<PlanAssemblerGenepackSource> sources)
         {
@@ -73,7 +73,8 @@ namespace XenogermPlanner.Assemblers
                         nameof(prerequisites));
                 }
 
-                string key = (prerequisite.DependentGene.defName ?? string.Empty) + "\u001f" +
+                string key = (prerequisite.DependentGene.defName ?? string.Empty) +
+                             "\u001f" +
                              (prerequisite.PrerequisiteGene.defName ?? string.Empty);
 
                 if (keys.Add(key))

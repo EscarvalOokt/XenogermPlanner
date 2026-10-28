@@ -18,9 +18,6 @@ namespace XenogermPlanner.Plans
     {
         private readonly ReadOnlyCollection<GeneDef> _desiredGenes;
 
-        internal string Name { get; }
-        internal IReadOnlyCollection<GeneDef> DesiredGenes => _desiredGenes;
-
         internal XenotypePlanCreationSourceData(string name, IEnumerable<GeneDef> desiredGenes)
         {
             if (name == null)
@@ -50,6 +47,9 @@ namespace XenogermPlanner.Plans
             Name = normalizedName;
             _desiredGenes = new List<GeneDef>(distinctGenes).AsReadOnly();
         }
+
+        internal string Name { get; }
+        internal IReadOnlyCollection<GeneDef> DesiredGenes => _desiredGenes;
     }
 
     internal static class XenotypePlanCreationSourceReader

@@ -33,7 +33,7 @@ namespace XenogermPlanner.Tests.Donors
                 currentMap =>
                 {
                     discoveredMap = currentMap;
-                    return new[] { pawn };
+                    return [pawn];
                 },
                 (currentMap, candidate) =>
                 {
@@ -64,7 +64,7 @@ namespace XenogermPlanner.Tests.Donors
 
             PlanPotentialDonorScopeSnapshot snapshot = PlanPotentialDonorTestData.ScanScope(
                 map,
-                new[] { includedPawn, excludedPawn },
+                [includedPawn, excludedPawn],
                 (_, pawn) => ReferenceEquals(pawn, includedPawn),
                 _ => true);
 
@@ -81,8 +81,8 @@ namespace XenogermPlanner.Tests.Donors
 
             PlanPotentialDonorScopeSnapshot snapshot = PlanPotentialDonorTestData.ScanScope(
                 map,
-                new[] { includedPawn, excludedPawn },
-                (_, __) => true,
+                [includedPawn, excludedPawn],
+                (_, _) => true,
                 pawn => ReferenceEquals(pawn, includedPawn));
 
             Assert.That(snapshot.Pawns, Has.Count.EqualTo(1));
@@ -99,11 +99,11 @@ namespace XenogermPlanner.Tests.Donors
 
             PlanPotentialDonorScopeSnapshot snapshot = PlanPotentialDonorTestData.ScanScope(
                 map,
-                new[] { firstPawn, secondPawn, thirdPawn },
-                (_, __) => true,
+                [firstPawn, secondPawn, thirdPawn],
+                (_, _) => true,
                 _ => true);
 
-            Assert.That(snapshot.Pawns, Is.EqualTo(new[] { firstPawn, secondPawn, thirdPawn }));
+            Assert.That(snapshot.Pawns, Is.EqualTo([firstPawn, secondPawn, thirdPawn]));
         }
 
         [Test]
@@ -116,8 +116,8 @@ namespace XenogermPlanner.Tests.Donors
 
             PlanPotentialDonorScopeSnapshot snapshot = PlanPotentialDonorTestData.ScanScope(
                 map,
-                new[] { null, pawn },
-                (_, __) =>
+                [null, pawn],
+                (_, _) =>
                 {
                     spawnedPolicyCalls++;
                     return true;
@@ -142,8 +142,8 @@ namespace XenogermPlanner.Tests.Donors
 
             PlanPotentialDonorScopeSnapshot snapshot = PlanPotentialDonorTestData.ScanScope(
                 map,
-                new[] { pawn, pawn },
-                (_, __) => true,
+                [pawn, pawn],
+                (_, _) => true,
                 _ => true);
 
             Assert.That(snapshot.Pawns, Has.Count.EqualTo(1));
@@ -159,8 +159,8 @@ namespace XenogermPlanner.Tests.Donors
 
             PlanPotentialDonorScopeSnapshot snapshot = PlanPotentialDonorTestData.ScanScope(
                 map,
-                new[] { firstPawn, secondPawn },
-                (_, __) => true,
+                [firstPawn, secondPawn],
+                (_, _) => true,
                 _ => true);
 
             Assert.That(snapshot.Pawns, Has.Count.EqualTo(2));
@@ -176,7 +176,7 @@ namespace XenogermPlanner.Tests.Donors
             PlanPotentialDonorScopeSnapshot snapshot = PlanPotentialDonorScopeScanner.Scan(
                 map,
                 _ => null,
-                (_, __) => true,
+                (_, _) => true,
                 _ => true);
 
             Assert.That(snapshot.IsAvailable, Is.True);
@@ -190,8 +190,8 @@ namespace XenogermPlanner.Tests.Donors
 
             PlanPotentialDonorScopeSnapshot snapshot = PlanPotentialDonorTestData.ScanScope(
                 map,
-                Array.Empty<Pawn>(),
-                (_, __) => true,
+                [],
+                (_, _) => true,
                 _ => true);
 
             Assert.That(snapshot.IsAvailable, Is.True);
@@ -220,8 +220,7 @@ namespace XenogermPlanner.Tests.Donors
         [Test]
         public void Snapshot_NullPawnThrows()
         {
-            Assert.Throws<ArgumentException>(
-                (Action)(() => PlanPotentialDonorScopeSnapshot.CreateAvailable(new Pawn[] { null })));
+            Assert.Throws<ArgumentException>((Action)(() => PlanPotentialDonorScopeSnapshot.CreateAvailable([null])));
         }
 
         [Test]
@@ -230,7 +229,7 @@ namespace XenogermPlanner.Tests.Donors
             Map map = PlanPotentialDonorTestData.CreateMap();
 
             Assert.Throws<ArgumentNullException>(
-                (Action)(() => PlanPotentialDonorScopeScanner.Scan(map, null, (_, __) => true, _ => true)));
+                (Action)(() => PlanPotentialDonorScopeScanner.Scan(map, null, (_, _) => true, _ => true)));
         }
 
         [Test]
@@ -239,7 +238,7 @@ namespace XenogermPlanner.Tests.Donors
             Map map = PlanPotentialDonorTestData.CreateMap();
 
             Assert.Throws<ArgumentNullException>(
-                (Action)(() => PlanPotentialDonorScopeScanner.Scan(map, _ => Array.Empty<Pawn>(), null, _ => true)));
+                (Action)(() => PlanPotentialDonorScopeScanner.Scan(map, _ => [], null, _ => true)));
         }
 
         [Test]
@@ -248,11 +247,7 @@ namespace XenogermPlanner.Tests.Donors
             Map map = PlanPotentialDonorTestData.CreateMap();
 
             Assert.Throws<ArgumentNullException>(
-                (Action)(() => PlanPotentialDonorScopeScanner.Scan(
-                    map,
-                    _ => Array.Empty<Pawn>(),
-                    (_, __) => true,
-                    null)));
+                (Action)(() => PlanPotentialDonorScopeScanner.Scan(map, _ => [], (_, _) => true, null)));
         }
     }
 }

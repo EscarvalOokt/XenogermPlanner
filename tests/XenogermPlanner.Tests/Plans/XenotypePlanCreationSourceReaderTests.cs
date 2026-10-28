@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using RimWorld;
@@ -19,7 +18,7 @@ namespace XenogermPlanner.Tests.Plans
             {
                 defName = "PremadeDef",
                 label = "Premade",
-                genes = new List<GeneDef> { geneA, geneA, geneB }
+                genes = [geneA, geneA, geneB]
             };
 
             bool read = XenotypePlanCreationSourceReader.TryReadSource(
@@ -30,9 +29,7 @@ namespace XenogermPlanner.Tests.Plans
             Assert.That(read, Is.True);
             Assert.That(failure, Is.EqualTo(XenotypePlanCreationSourceFailure.None));
             Assert.That(sourceData.Name, Is.EqualTo("Premade"));
-            Assert.That(
-                sourceData.DesiredGenes.Select(gene => gene.defName),
-                Is.EquivalentTo(new[] { "GeneA", "GeneB" }));
+            Assert.That(sourceData.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(["GeneA", "GeneB"]));
         }
 
         [Test]
@@ -40,13 +37,13 @@ namespace XenogermPlanner.Tests.Plans
         {
             GeneDef first = PlanTestData.CreateGene("First");
             GeneDef second = PlanTestData.CreateGene("Second");
-            first.exclusionTags = new List<string> { "Conflict" };
-            second.exclusionTags = new List<string> { "Conflict" };
+            first.exclusionTags = ["Conflict"];
+            second.exclusionTags = ["Conflict"];
             var source = new XenotypeDef
             {
                 defName = "PremadeDef",
                 label = "Premade",
-                genes = new List<GeneDef> { first, second }
+                genes = [first, second]
             };
 
             bool read = XenotypePlanCreationSourceReader.TryReadSource(
@@ -56,7 +53,7 @@ namespace XenogermPlanner.Tests.Plans
 
             Assert.That(read, Is.True);
             Assert.That(failure, Is.EqualTo(XenotypePlanCreationSourceFailure.None));
-            Assert.That(sourceData.DesiredGenes, Is.EquivalentTo(new[] { first, second }));
+            Assert.That(sourceData.DesiredGenes, Is.EquivalentTo([first, second]));
         }
 
         [Test]
@@ -67,7 +64,7 @@ namespace XenogermPlanner.Tests.Plans
             var source = new CustomXenotype
             {
                 name = "Custom",
-                genes = new List<GeneDef> { geneA }
+                genes = [geneA]
             };
 
             bool read = XenotypePlanCreationSourceReader.TryReadSource(
@@ -80,8 +77,8 @@ namespace XenogermPlanner.Tests.Plans
             Assert.That(read, Is.True);
             Assert.That(failure, Is.EqualTo(XenotypePlanCreationSourceFailure.None));
             Assert.That(sourceData.Name, Is.EqualTo("Custom"));
-            Assert.That(sourceData.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(new[] { "GeneA" }));
-            Assert.That(source.genes.Select(gene => gene.defName), Is.EquivalentTo(new[] { "GeneA", "GeneB" }));
+            Assert.That(sourceData.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(["GeneA"]));
+            Assert.That(source.genes.Select(gene => gene.defName), Is.EquivalentTo(["GeneA", "GeneB"]));
         }
 
         [Test]
@@ -91,7 +88,7 @@ namespace XenogermPlanner.Tests.Plans
             var source = new CustomXenotype
             {
                 name = "  Custom  ",
-                genes = new List<GeneDef> { gene, gene }
+                genes = [gene, gene]
             };
 
             bool read = XenotypePlanCreationSourceReader.TryReadSource(
@@ -102,7 +99,7 @@ namespace XenogermPlanner.Tests.Plans
             Assert.That(read, Is.True);
             Assert.That(failure, Is.EqualTo(XenotypePlanCreationSourceFailure.None));
             Assert.That(sourceData.Name, Is.EqualTo("Custom"));
-            Assert.That(sourceData.DesiredGenes, Is.EquivalentTo(new[] { gene }));
+            Assert.That(sourceData.DesiredGenes, Is.EquivalentTo([gene]));
         }
 
         [Test]
@@ -138,7 +135,7 @@ namespace XenogermPlanner.Tests.Plans
             {
                 defName = "PremadeDef",
                 label = "Premade",
-                genes = new List<GeneDef>()
+                genes = []
             };
 
             AssertPremadeFailure(source, XenotypePlanCreationSourceFailure.EmptySource);
@@ -151,7 +148,7 @@ namespace XenogermPlanner.Tests.Plans
             {
                 defName = "PremadeDef",
                 label = "Premade",
-                genes = new List<GeneDef> { PlanTestData.CreateGene("GeneA"), null }
+                genes = [PlanTestData.CreateGene("GeneA"), null]
             };
 
             AssertPremadeFailure(source, XenotypePlanCreationSourceFailure.InvalidSourceData);
@@ -165,7 +162,7 @@ namespace XenogermPlanner.Tests.Plans
             var source = new CustomXenotype
             {
                 name = name,
-                genes = new List<GeneDef> { PlanTestData.CreateGene("GeneA") }
+                genes = [PlanTestData.CreateGene("GeneA")]
             };
 
             AssertCustomFailure(source, XenotypePlanCreationSourceFailure.InvalidSourceData);
@@ -177,7 +174,7 @@ namespace XenogermPlanner.Tests.Plans
             var source = new CustomXenotype
             {
                 name = "Custom",
-                genes = new List<GeneDef>()
+                genes = []
             };
 
             AssertCustomFailure(source, XenotypePlanCreationSourceFailure.EmptySource);
@@ -189,7 +186,7 @@ namespace XenogermPlanner.Tests.Plans
             var source = new CustomXenotype
             {
                 name = "Custom",
-                genes = new List<GeneDef> { PlanTestData.CreateGene("GeneA"), null }
+                genes = [PlanTestData.CreateGene("GeneA"), null]
             };
 
             AssertCustomFailure(source, XenotypePlanCreationSourceFailure.InvalidSourceData);

@@ -11,14 +11,14 @@ namespace XenogermPlanner.Notifications
 {
     public sealed class PlanReadinessNotificationGameComponent : GameComponent
     {
-        private readonly Func<IReadOnlyList<XenogermPlan>> _getPlans;
-        private readonly Func<PlanGenepackInventorySnapshot> _getInventorySnapshot;
         private readonly Func<XenogermPlan, PlanGenepackInventorySnapshot, PlanReadinessResult> _analyze;
         private readonly Action<XenogermPlan> _announce;
+        private readonly Func<PlanGenepackInventorySnapshot> _getInventorySnapshot;
+        private readonly Func<IReadOnlyList<XenogermPlan>> _getPlans;
         private readonly Action<string> _reportError;
+        private bool _invalidated = true;
 
         private PlanGenepackInventorySnapshot _lastEvaluatedInventorySnapshot;
-        private bool _invalidated = true;
 
         // ReSharper disable once UnusedParameter.Local
         public PlanReadinessNotificationGameComponent(Game _) : this(

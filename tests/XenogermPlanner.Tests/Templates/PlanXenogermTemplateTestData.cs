@@ -14,20 +14,6 @@ namespace XenogermPlanner.Tests.Templates
 {
     internal static class PlanXenogermTemplateTestData
     {
-        internal sealed class PackFixture
-        {
-            internal Genepack Genepack { get; }
-            internal IReadOnlyList<GeneDef> Genes { get; }
-            internal string PhysicalKey { get; }
-
-            internal PackFixture(string physicalKey, IEnumerable<GeneDef> genes)
-            {
-                PhysicalKey = physicalKey ?? throw new ArgumentNullException(nameof(physicalKey));
-                Genepack = GenepackInventoryTestData.CreateGenepack();
-                Genes = new List<GeneDef>(genes ?? throw new ArgumentNullException(nameof(genes))).AsReadOnly();
-            }
-        }
-
         internal static GeneDef CreateGene(string defName)
         {
             return PlanTestData.CreateGene(defName);
@@ -169,6 +155,20 @@ namespace XenogermPlanner.Tests.Templates
         private static PackFixture Find(IReadOnlyDictionary<Genepack, PackFixture> lookup, Genepack genepack)
         {
             return lookup[genepack];
+        }
+
+        internal sealed class PackFixture
+        {
+            internal PackFixture(string physicalKey, IEnumerable<GeneDef> genes)
+            {
+                PhysicalKey = physicalKey ?? throw new ArgumentNullException(nameof(physicalKey));
+                Genepack = GenepackInventoryTestData.CreateGenepack();
+                Genes = new List<GeneDef>(genes ?? throw new ArgumentNullException(nameof(genes))).AsReadOnly();
+            }
+
+            internal Genepack Genepack { get; }
+            internal IReadOnlyList<GeneDef> Genes { get; }
+            internal string PhysicalKey { get; }
         }
     }
 }

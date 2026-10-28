@@ -6,6 +6,7 @@ namespace XenogermPlanner.Assemblers
         NotReady,
         Blocked,
         EmptyTarget,
-        Degraded
+        Degraded,
+        SearchIncomplete = 5
     }
 }

@@ -16,7 +16,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.Coverage,
                 PlanReadinessTestData.CreatePack(geneA, geneB));
 
@@ -30,7 +30,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.Coverage,
                 PlanReadinessTestData.CreatePack(geneA),
                 PlanReadinessTestData.CreatePack(geneB));
@@ -46,7 +46,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneX = PlanReadinessTestData.CreateGene("GeneX");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.Coverage,
                 PlanReadinessTestData.CreatePack(geneA, geneX),
                 PlanReadinessTestData.CreatePack(geneB));
@@ -61,7 +61,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.Coverage,
                 PlanReadinessTestData.CreatePack(geneA));
 
@@ -75,7 +75,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.ExactPayload,
                 PlanReadinessTestData.CreatePack(geneA, geneB));
 
@@ -89,7 +89,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.ExactPayload,
                 PlanReadinessTestData.CreatePack(geneA),
                 PlanReadinessTestData.CreatePack(geneB));
@@ -105,7 +105,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneX = PlanReadinessTestData.CreateGene("GeneX");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.ExactPayload,
                 PlanReadinessTestData.CreatePack(geneA),
                 PlanReadinessTestData.CreatePack(geneB),
@@ -122,7 +122,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneX = PlanReadinessTestData.CreateGene("GeneX");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.ExactPayload,
                 PlanReadinessTestData.CreatePack(geneA, geneX),
                 PlanReadinessTestData.CreatePack(geneB));
@@ -137,7 +137,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.ExactPayload,
                 PlanReadinessTestData.CreatePack(geneA));
 
@@ -151,15 +151,13 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB, geneA },
+                [geneA, geneB, geneA],
                 PlanReadinessMode.ExactPayload,
                 PlanReadinessTestData.CreatePack(geneA),
                 PlanReadinessTestData.CreatePack(geneA, geneB));
 
             Assert.That(result.HasValidCombination, Is.True);
-            Assert.That(
-                PlanReadinessTestData.GetGeneDefNames(result.AvailableGenes),
-                Is.EqualTo(new[] { "GeneA", "GeneB" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.AvailableGenes), Is.EqualTo(["GeneA", "GeneB"]));
         }
 
         [Test]
@@ -170,13 +168,13 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneC = PlanReadinessTestData.CreateGene("GeneC");
 
             PlanGenepackCombinationSearchResult groupedResult = PlanReadinessTestData.Search(
-                new[] { geneA, geneB, geneC },
+                [geneA, geneB, geneC],
                 PlanReadinessMode.ExactPayload,
                 PlanReadinessTestData.CreatePack(geneA, geneB),
                 PlanReadinessTestData.CreatePack(geneC));
 
             PlanGenepackCombinationSearchResult splitResult = PlanReadinessTestData.Search(
-                new[] { geneA, geneB, geneC },
+                [geneA, geneB, geneC],
                 PlanReadinessMode.ExactPayload,
                 PlanReadinessTestData.CreatePack(geneA),
                 PlanReadinessTestData.CreatePack(geneB, geneC));
@@ -192,16 +190,14 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.ExactPayload,
                 PlanReadinessTestData.CreatePack(geneA),
                 PlanReadinessTestData.CreatePack(geneB),
                 PlanReadinessTestData.CreatePack(geneA, geneB));
 
             Assert.That(result.HasValidCombination, Is.True);
-            Assert.That(
-                PlanReadinessTestData.GetGeneDefNames(result.AvailableGenes),
-                Is.EqualTo(new[] { "GeneA", "GeneB" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.AvailableGenes), Is.EqualTo(["GeneA", "GeneB"]));
         }
 
 
@@ -212,7 +208,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.Coverage,
                 PlanReadinessTestData.CreatePack(geneA, geneB),
                 PlanReadinessTestData.CreatePack(geneB, geneA));
@@ -221,7 +217,7 @@ namespace XenogermPlanner.Tests.Analysis
             Assert.That(result.AvailableGenepackCompositions[0].PhysicalPackCount, Is.EqualTo(2));
             Assert.That(
                 PlanReadinessTestData.GetGeneDefNames(result.AvailableGenepackCompositions[0].Genes),
-                Is.EqualTo(new[] { "GeneA", "GeneB" }));
+                Is.EqualTo(["GeneA", "GeneB"]));
         }
 
         [Test]
@@ -231,7 +227,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.ExactPayload,
                 PlanReadinessTestData.CreatePack(geneA));
 
@@ -248,16 +244,14 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneX = PlanReadinessTestData.CreateGene("GeneX");
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA },
+                [geneA],
                 PlanReadinessMode.ExactPayload,
                 PlanReadinessTestData.CreatePack(geneA, geneX));
 
             PlanGenepackCompositionDiagnostic composition = result.AvailableGenepackCompositions.Single();
 
             Assert.That(composition.IsExactPayloadEligible, Is.False);
-            Assert.That(
-                PlanReadinessTestData.GetGeneDefNames(composition.AdditionalGenes),
-                Is.EqualTo(new[] { "GeneX" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(composition.AdditionalGenes), Is.EqualTo(["GeneX"]));
         }
 
         [Test]
@@ -268,7 +262,7 @@ namespace XenogermPlanner.Tests.Analysis
             PlanReadinessTestData.PackFixture pack = PlanReadinessTestData.CreatePack(geneA);
 
             PlanGenepackCombinationSearchResult result = PlanReadinessTestData.Search(
-                new[] { geneA },
+                [geneA],
                 PlanReadinessMode.ExactPayload,
                 pack);
 
@@ -276,7 +270,7 @@ namespace XenogermPlanner.Tests.Analysis
 
             PlanGenepackCompositionDiagnostic composition = result.AvailableGenepackCompositions.Single();
 
-            Assert.That(PlanReadinessTestData.GetGeneDefNames(composition.Genes), Is.EqualTo(new[] { "GeneA" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(composition.Genes), Is.EqualTo(["GeneA"]));
             Assert.That(composition.IsExactPayloadEligible, Is.True);
             Assert.That(composition.AdditionalGenes, Is.Empty);
         }
@@ -288,18 +282,18 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
             GeneDef geneX = PlanReadinessTestData.CreateGene("GeneX");
             PlanReadinessTestData.PackFixture[] packs =
-            {
+            [
                 PlanReadinessTestData.CreatePack(geneA, geneX),
                 PlanReadinessTestData.CreatePack(geneB)
-            };
+            ];
 
             PlanGenepackCombinationSearchResult firstResult = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.ExactPayload,
                 packs);
 
             PlanGenepackCombinationSearchResult secondResult = PlanReadinessTestData.Search(
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 PlanReadinessMode.ExactPayload,
                 packs);
 

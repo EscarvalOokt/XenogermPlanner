@@ -9,18 +9,6 @@ namespace XenogermPlanner.UI
 {
     internal sealed class CustomXenogermPlanSourceProvider : IXenogermPlanSourceProvider
     {
-        private sealed class SourceToken
-        {
-            internal SourceToken(CustomXenogerm source, int sourceIndex)
-            {
-                Source = source;
-                SourceIndex = sourceIndex;
-            }
-
-            internal CustomXenogerm Source { get; }
-            internal int SourceIndex { get; }
-        }
-
         private const string GroupKey = "xenogerm-templates";
 
         private readonly Func<IReadOnlyList<CustomXenogerm>> _getRuntimeSources;
@@ -37,14 +25,11 @@ namespace XenogermPlanner.UI
             Refresh();
         }
 
-        public string TitleKey =>
-            "XenogermPlanner.PlanSource.XenogermTemplate.Title";
+        public string TitleKey => "XenogermPlanner.PlanSource.XenogermTemplate.Title";
 
-        public string EmptySourcesKey =>
-            "XenogermPlanner.PlanSource.XenogermTemplate.EmptySources";
+        public string EmptySourcesKey => "XenogermPlanner.PlanSource.XenogermTemplate.EmptySources";
 
-        public IReadOnlyList<XenogermPlanSourceGroup> Groups =>
-            _groups;
+        public IReadOnlyList<XenogermPlanSourceGroup> Groups => _groups;
 
         public void Refresh()
         {
@@ -222,6 +207,18 @@ namespace XenogermPlanner.UI
         private static IReadOnlyList<CustomXenogerm> GetRuntimeSources()
         {
             return Current.Game?.customXenogermDatabase?.CustomXenogermsForReading;
+        }
+
+        private sealed class SourceToken
+        {
+            internal SourceToken(CustomXenogerm source, int sourceIndex)
+            {
+                Source = source;
+                SourceIndex = sourceIndex;
+            }
+
+            internal CustomXenogerm Source { get; }
+            internal int SourceIndex { get; }
         }
     }
 }

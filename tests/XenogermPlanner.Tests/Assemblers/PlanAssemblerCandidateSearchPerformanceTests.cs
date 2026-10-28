@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
@@ -31,12 +31,54 @@ namespace XenogermPlanner.Tests.Assemblers
                 $"Expected candidates: {scenario.ExpectedCandidateCount}");
         }
 
+        [Test]
+        public void Benchmark_HelperHeavyReadinessStopsAtSharedBudget()
+        {
+            GeneDef target = PlanAssemblerReadinessTestData.CreateGene("A_Target", metabolism: -6);
+            PlanAssemblerReadinessTestData.PackFixture[] packs = Enumerable.Range(0, 20)
+                .Select(index => PlanAssemblerReadinessTestData.CreatePack(
+                    "helper-" + index,
+                    true,
+                    PlanAssemblerReadinessTestData.CreateGene("Helper" + index.ToString("D2"))))
+                .Prepend(PlanAssemblerReadinessTestData.CreatePack("target", true, target))
+                .ToArray();
+            XenogermPlan plan = PlanAssemblerReadinessTestData.CreatePlan(PlanReadinessMode.Coverage, target);
+            PlanAssemblerLiveState liveState =
+                PlanAssemblerReadinessTestData.CreateLiveState(true, 100, 100, true, packs);
+
+            PerformanceMeasurement.Measure(
+                "Assembler Helper-Heavy Bounded Readiness",
+                () =>
+                {
+                    var budget = new PlanAssemblerSearchBudget();
+                    PlanAssemblerReadinessResult result = PlanAssemblerReadinessTestData.Analyze(
+                        plan,
+                        liveState,
+                        genes => genes,
+                        budget,
+                        packs);
+                    return Tuple.Create(result, budget.VisitedStates, budget.IsExhausted);
+                },
+                measured =>
+                {
+                    Assert.That(measured.Item1.Status, Is.EqualTo(PlanAssemblerReadinessStatus.SearchIncomplete));
+                    Assert.That(measured.Item1.CandidateGenepacks, Is.Empty);
+                    Assert.That(measured.Item1.BlockerReasons, Is.Empty);
+                    Assert.That(measured.Item2, Is.EqualTo(PlanAssemblerSearchBudget.DefaultMaxVisitedStates));
+                    Assert.That(measured.Item3, Is.True);
+                },
+                "Composition groups: 21",
+                "Shared base + helper state budget: 10000");
+        }
+
         private static void AssertResultMatchesScenario(
             AssemblerCandidateSearchPerformanceScenario scenario,
             IReadOnlyList<PlanAssemblerCandidate> result)
         {
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Has.Count.EqualTo(scenario.ExpectedCandidateCount));
+            Assert.That(scenario.LastVisitedStates, Is.EqualTo(2047));
+            Assert.That(scenario.LastSearchExhausted, Is.False);
 
             foreach (PlanAssemblerCandidate candidate in result)
             {
@@ -56,19 +98,14 @@ namespace XenogermPlanner.Tests.Assemblers
         {
             private const int DesiredGeneCount = 10;
             private const int AlternativesPerGene = 2;
+            private readonly IReadOnlyDictionary<Genepack, IReadOnlyList<GeneDef>> _genesByPack;
+            private readonly Func<Genepack, IEnumerable<GeneDef>> _getGenepackGenes;
+            private readonly Func<Genepack, string> _getPhysicalKey;
+            private readonly IReadOnlyDictionary<Genepack, string> _physicalKeysByPack;
 
             private readonly XenogermPlan _plan;
             private readonly PlanAssemblerScopeSnapshot _scope;
-            private readonly IReadOnlyDictionary<Genepack, IReadOnlyList<GeneDef>> _genesByPack;
-            private readonly IReadOnlyDictionary<Genepack, string> _physicalKeysByPack;
             private readonly HashSet<GeneDef> _targetGenes;
-            private readonly Func<Genepack, IEnumerable<GeneDef>> _getGenepackGenes;
-            private readonly Func<Genepack, string> _getPhysicalKey;
-
-            internal int TargetGeneCount => _targetGenes.Count;
-            internal int AlternativesPerTargetGene => AlternativesPerGene;
-            internal int PhysicalPackCount => _scope.Sources.Count;
-            internal int ExpectedCandidateCount { get; }
 
             private AssemblerCandidateSearchPerformanceScenario(
                 XenogermPlan plan,
@@ -88,6 +125,13 @@ namespace XenogermPlanner.Tests.Assemblers
                 _getGenepackGenes = GetGenepackGenes;
                 _getPhysicalKey = GetPhysicalKey;
             }
+
+            internal int TargetGeneCount => _targetGenes.Count;
+            internal int AlternativesPerTargetGene => AlternativesPerGene;
+            internal int PhysicalPackCount => _scope.Sources.Count;
+            internal int ExpectedCandidateCount { get; }
+            internal int LastVisitedStates { get; private set; }
+            internal bool LastSearchExhausted { get; private set; }
 
             internal static AssemblerCandidateSearchPerformanceScenario Create()
             {
@@ -136,12 +180,18 @@ namespace XenogermPlanner.Tests.Assemblers
 
             internal IReadOnlyList<PlanAssemblerCandidate> Search()
             {
-                return PlanAssemblerCandidateSearcher.Search(
-                    _plan.DesiredGenes,
-                    _plan.ReadinessMode,
-                    _scope,
-                    _getGenepackGenes,
-                    _getPhysicalKey).ToList();
+                var budget = new PlanAssemblerSearchBudget();
+                var candidates = PlanAssemblerCandidateSearcher.Search(
+                        _plan.DesiredGenes,
+                        _plan.ReadinessMode,
+                        _scope,
+                        _getGenepackGenes,
+                        _getPhysicalKey,
+                        budget)
+                    .ToList();
+                LastVisitedStates = budget.VisitedStates;
+                LastSearchExhausted = budget.IsExhausted;
+                return candidates;
             }
 
             internal bool CandidateCoversTarget(PlanAssemblerCandidate candidate)
@@ -163,8 +213,9 @@ namespace XenogermPlanner.Tests.Assemblers
                     throw new ArgumentNullException(nameof(candidates));
 
                 return candidates.Select(candidate => string.Join(
-                    "|",
-                    candidate.Sources.Select(source => _physicalKeysByPack[source.Genepack]))).ToArray();
+                        "|",
+                        candidate.Sources.Select(source => _physicalKeysByPack[source.Genepack])))
+                    .ToArray();
             }
 
             private IEnumerable<GeneDef> GetGenepackGenes(Genepack genepack)

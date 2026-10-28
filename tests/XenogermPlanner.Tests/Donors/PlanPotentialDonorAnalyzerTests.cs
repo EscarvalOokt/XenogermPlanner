@@ -17,11 +17,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, otherGene));
 
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
@@ -31,11 +31,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene));
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -45,15 +45,12 @@ namespace XenogermPlanner.Tests.Donors
             Pawn firstPawn = PlanPotentialDonorTestData.CreatePawn();
             Pawn secondPawn = PlanPotentialDonorTestData.CreatePawn();
             Dictionary<Pawn, IEnumerable<GeneDef>> genesByPawn = PlanPotentialDonorTestData.CreatePawnGeneMap();
-            genesByPawn.Add(firstPawn, new[] { requestedGene });
-            genesByPawn.Add(secondPawn, new[] { requestedGene });
+            genesByPawn.Add(firstPawn, [requestedGene]);
+            genesByPawn.Add(secondPawn, [requestedGene]);
 
-            PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { firstPawn, secondPawn },
-                genesByPawn);
+            PlanPotentialDonorAnalysisResult result = Analyze([requestedGene], [firstPawn, secondPawn], genesByPawn);
 
-            AssertDiagnostic(result, requestedGene, new[] { firstPawn, secondPawn });
+            AssertDiagnostic(result, requestedGene, [firstPawn, secondPawn]);
         }
 
         [Test]
@@ -62,12 +59,12 @@ namespace XenogermPlanner.Tests.Donors
             GeneDef requestedGene = PlanPotentialDonorTestData.CreateGene("Requested");
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                Array.Empty<Pawn>(),
+                [requestedGene],
+                [],
                 PlanPotentialDonorTestData.CreatePawnGeneMap());
 
             Assert.That(result.GeneDiagnostics, Has.Count.EqualTo(1));
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
@@ -79,13 +76,13 @@ namespace XenogermPlanner.Tests.Donors
 
             PlanPotentialDonorAnalysisResult result = Analyze(
                 requestedGenes,
-                Array.Empty<Pawn>(),
+                [],
                 PlanPotentialDonorTestData.CreatePawnGeneMap());
 
             Assert.That(result.GeneDiagnostics, Has.Count.EqualTo(2));
             Assert.That(result.GeneDiagnostics[0].Gene, Is.SameAs(firstGene));
             Assert.That(result.GeneDiagnostics[1].Gene, Is.SameAs(secondGene));
-            Assert.That(requestedGenes, Is.EqualTo(new[] { secondGene, firstGene, firstGene }));
+            Assert.That(requestedGenes, Is.EqualTo([secondGene, firstGene, firstGene]));
         }
 
         [Test]
@@ -95,11 +92,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene, requestedGene));
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -110,9 +107,9 @@ namespace XenogermPlanner.Tests.Donors
             Dictionary<Pawn, IEnumerable<GeneDef>> genesByPawn = PlanPotentialDonorTestData.CreatePawnGeneMap();
             genesByPawn.Add(pawn, null);
 
-            PlanPotentialDonorAnalysisResult result = Analyze(new[] { requestedGene }, new[] { pawn }, genesByPawn);
+            PlanPotentialDonorAnalysisResult result = Analyze([requestedGene], [pawn], genesByPawn);
 
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
@@ -122,11 +119,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, null, requestedGene));
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -136,11 +133,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene));
 
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
@@ -151,11 +148,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene, architeHelper));
 
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
@@ -165,11 +162,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene));
 
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
@@ -183,11 +180,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene, melaninHelper));
 
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
@@ -197,11 +194,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene));
 
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
@@ -212,11 +209,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene, helperGene));
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -226,11 +223,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene));
 
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
@@ -241,11 +238,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene, helperGene));
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -257,11 +254,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene, positiveHelper, negativeHelper));
 
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
@@ -273,11 +270,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene, firstTriedHelper, validHelper));
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -291,8 +288,8 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(
                     pawn,
                     requestedGene,
@@ -301,25 +298,25 @@ namespace XenogermPlanner.Tests.Donors
                     thirdHelper,
                     fourthHelper));
 
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
         public void Analyze_TargetCanParticipateAtSecondSelectionStep()
         {
-            AssertTargetStep(6, new[] { -1 });
+            AssertTargetStep(6, [-1]);
         }
 
         [Test]
         public void Analyze_TargetCanParticipateAtThirdSelectionStep()
         {
-            AssertTargetStep(7, new[] { -1, -1 });
+            AssertTargetStep(7, [-1, -1]);
         }
 
         [Test]
         public void Analyze_TargetCanParticipateAtFourthSelectionStep()
         {
-            AssertTargetStep(8, new[] { -1, -1, -1 });
+            AssertTargetStep(8, [-1, -1, -1]);
         }
 
         [Test]
@@ -329,11 +326,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene));
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -343,11 +340,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene));
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -358,11 +355,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene));
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -370,16 +367,16 @@ namespace XenogermPlanner.Tests.Donors
         {
             GeneDef requestedGene = PlanPotentialDonorTestData.CreateGene("Requested");
             GeneDef conflictingGene = PlanPotentialDonorTestData.CreateGene("Conflicting");
-            requestedGene.exclusionTags = new List<string> { "Conflict" };
-            conflictingGene.exclusionTags = new List<string> { "Conflict" };
+            requestedGene.exclusionTags = ["Conflict"];
+            conflictingGene.exclusionTags = ["Conflict"];
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, requestedGene, conflictingGene));
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -390,17 +387,17 @@ namespace XenogermPlanner.Tests.Donors
             var readerCalls = 0;
 
             PlanPotentialDonorAnalysisResult result = PlanPotentialDonorAnalyzer.Analyze(
-                new[] { requestedGene },
+                [requestedGene],
                 PlanPotentialDonorTestData.CreateScope(pawn),
                 candidate =>
                 {
                     Assert.That(candidate, Is.SameAs(pawn));
                     readerCalls++;
-                    return new[] { requestedGene };
+                    return [requestedGene];
                 });
 
             Assert.That(readerCalls, Is.EqualTo(1));
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -410,11 +407,11 @@ namespace XenogermPlanner.Tests.Donors
             Pawn pawn = PlanPotentialDonorTestData.CreatePawn();
 
             PlanPotentialDonorAnalysisResult result = PlanPotentialDonorAnalyzer.Analyze(
-                new[] { requestedGene },
+                [requestedGene],
                 PlanPotentialDonorTestData.CreateScope(pawn),
-                _ => new[] { requestedGene });
+                _ => [requestedGene]);
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         [Test]
@@ -424,12 +421,12 @@ namespace XenogermPlanner.Tests.Donors
             var readerCalled = false;
 
             PlanPotentialDonorAnalysisResult result = PlanPotentialDonorAnalyzer.Analyze(
-                new[] { requestedGene },
+                [requestedGene],
                 PlanPotentialDonorScopeSnapshot.Unavailable,
                 _ =>
                 {
                     readerCalled = true;
-                    return new[] { requestedGene };
+                    return [requestedGene];
                 });
 
             Assert.That(result.IsAvailable, Is.False);
@@ -443,12 +440,12 @@ namespace XenogermPlanner.Tests.Donors
             GeneDef requestedGene = PlanPotentialDonorTestData.CreateGene("Requested");
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                Array.Empty<Pawn>(),
+                [requestedGene],
+                [],
                 PlanPotentialDonorTestData.CreatePawnGeneMap());
 
             Assert.That(result.IsAvailable, Is.True);
-            AssertDiagnostic(result, requestedGene, Array.Empty<Pawn>());
+            AssertDiagnostic(result, requestedGene, []);
         }
 
         [Test]
@@ -459,8 +456,8 @@ namespace XenogermPlanner.Tests.Donors
             GeneDef geneC = PlanPotentialDonorTestData.CreateGene("C");
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { geneC, geneA, geneB },
-                Array.Empty<Pawn>(),
+                [geneC, geneA, geneB],
+                [],
                 PlanPotentialDonorTestData.CreatePawnGeneMap());
 
             Assert.That(result.GeneDiagnostics[0].Gene, Is.SameAs(geneA));
@@ -488,7 +485,7 @@ namespace XenogermPlanner.Tests.Donors
         public void Result_CopiesDiagnosticsAndSupportsGeneLookup()
         {
             GeneDef gene = PlanPotentialDonorTestData.CreateGene("Gene");
-            var diagnostic = new PlanPotentialDonorGeneDiagnostic(gene, Array.Empty<Pawn>());
+            var diagnostic = new PlanPotentialDonorGeneDiagnostic(gene, []);
             var diagnostics = new List<PlanPotentialDonorGeneDiagnostic> { diagnostic };
 
             var result = PlanPotentialDonorAnalysisResult.CreateAvailable(diagnostics);
@@ -505,11 +502,11 @@ namespace XenogermPlanner.Tests.Donors
         public void Result_RejectsDuplicateGeneDiagnostics()
         {
             GeneDef gene = PlanPotentialDonorTestData.CreateGene("Gene");
-            var first = new PlanPotentialDonorGeneDiagnostic(gene, Array.Empty<Pawn>());
-            var second = new PlanPotentialDonorGeneDiagnostic(gene, Array.Empty<Pawn>());
+            var first = new PlanPotentialDonorGeneDiagnostic(gene, []);
+            var second = new PlanPotentialDonorGeneDiagnostic(gene, []);
 
             Assert.Throws<ArgumentException>(
-                (Action)(() => PlanPotentialDonorAnalysisResult.CreateAvailable(new[] { first, second })));
+                (Action)(() => PlanPotentialDonorAnalysisResult.CreateAvailable([first, second])));
         }
 
         [Test]
@@ -519,7 +516,7 @@ namespace XenogermPlanner.Tests.Donors
                 (Action)(() => PlanPotentialDonorAnalyzer.Analyze(
                     null,
                     PlanPotentialDonorTestData.CreateScope(),
-                    _ => Array.Empty<GeneDef>())));
+                    _ => [])));
         }
 
         [Test]
@@ -527,43 +524,36 @@ namespace XenogermPlanner.Tests.Donors
         {
             Assert.Throws<ArgumentException>(
                 (Action)(() => PlanPotentialDonorAnalyzer.Analyze(
-                    new GeneDef[] { null },
+                    [null],
                     PlanPotentialDonorTestData.CreateScope(),
-                    _ => Array.Empty<GeneDef>())));
+                    _ => [])));
         }
 
         [Test]
         public void Analyze_NullScopeThrows()
         {
-            Assert.Throws<ArgumentNullException>(
-                (Action)(() => PlanPotentialDonorAnalyzer.Analyze(
-                    Array.Empty<GeneDef>(),
-                    null,
-                    _ => Array.Empty<GeneDef>())));
+            Assert.Throws<ArgumentNullException>((Action)(() => PlanPotentialDonorAnalyzer.Analyze([], null, _ => [])));
         }
 
         [Test]
         public void Analyze_NullPawnGeneReaderThrows()
         {
             Assert.Throws<ArgumentNullException>(
-                (Action)(() => PlanPotentialDonorAnalyzer.Analyze(
-                    Array.Empty<GeneDef>(),
-                    PlanPotentialDonorTestData.CreateScope(),
-                    null)));
+                (Action)(() => PlanPotentialDonorAnalyzer.Analyze([], PlanPotentialDonorTestData.CreateScope(), null)));
         }
 
         [Test]
         public void CanParticipateInExtraction_NullTargetThrows()
         {
             Assert.Throws<ArgumentNullException>(
-                (Action)(() => PlanPotentialDonorAnalyzer.CanParticipateInExtraction(null, Array.Empty<GeneDef>())));
+                (Action)(() => PlanPotentialDonorAnalyzer.CanParticipateInExtraction(null, [])));
         }
 
         [Test]
         public void Diagnostic_NullGeneThrows()
         {
             Assert.Throws<ArgumentNullException>(
-                (Action)(() => { _ = new PlanPotentialDonorGeneDiagnostic(null, Array.Empty<Pawn>()); }));
+                (Action)(() => { _ = new PlanPotentialDonorGeneDiagnostic(null, []); }));
         }
 
         [Test]
@@ -581,7 +571,7 @@ namespace XenogermPlanner.Tests.Donors
             GeneDef gene = PlanPotentialDonorTestData.CreateGene("Gene");
 
             Assert.Throws<ArgumentException>(
-                (Action)(() => { _ = new PlanPotentialDonorGeneDiagnostic(gene, new Pawn[] { null }); }));
+                (Action)(() => { _ = new PlanPotentialDonorGeneDiagnostic(gene, [null]); }));
         }
 
         [Test]
@@ -594,16 +584,13 @@ namespace XenogermPlanner.Tests.Donors
         [Test]
         public void Result_NullDiagnosticThrows()
         {
-            Assert.Throws<ArgumentException>(
-                (Action)(() => PlanPotentialDonorAnalysisResult.CreateAvailable(
-                    new PlanPotentialDonorGeneDiagnostic[] { null })));
+            Assert.Throws<ArgumentException>((Action)(() => PlanPotentialDonorAnalysisResult.CreateAvailable([null])));
         }
 
         [Test]
         public void Result_TryGetDiagnosticNullGeneThrows()
         {
-            var result =
-                PlanPotentialDonorAnalysisResult.CreateAvailable(Array.Empty<PlanPotentialDonorGeneDiagnostic>());
+            var result = PlanPotentialDonorAnalysisResult.CreateAvailable([]);
 
             Assert.Throws<ArgumentNullException>((Action)(() => result.TryGetDiagnostic(null, out _)));
         }
@@ -632,11 +619,11 @@ namespace XenogermPlanner.Tests.Donors
             }
 
             PlanPotentialDonorAnalysisResult result = Analyze(
-                new[] { requestedGene },
-                new[] { pawn },
+                [requestedGene],
+                [pawn],
                 PlanPotentialDonorTestData.CreatePawnGeneMap(pawn, pawnGenes.ToArray()));
 
-            AssertDiagnostic(result, requestedGene, new[] { pawn });
+            AssertDiagnostic(result, requestedGene, [pawn]);
         }
 
         private static void AssertDiagnostic(

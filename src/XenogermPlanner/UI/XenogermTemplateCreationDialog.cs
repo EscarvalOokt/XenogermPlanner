@@ -48,42 +48,36 @@ namespace XenogermPlanner.UI
 
         private static readonly Regex _validNameSymbolRegex = new Regex("^[\\p{L}0-9 '\\-]*$");
 
-        private readonly XenogermPlan _plan;
-        private readonly PlanGenepackInventoryGameComponent _inventoryComponent;
-        private readonly PlanXenogermTemplateCandidateSearchResult _searchResult;
+        private readonly Dictionary<string, string> _additionalGeneTooltips =
+            new Dictionary<string, string>(StringComparer.Ordinal);
 
         private readonly Dictionary<string, PlanXenogermTemplateBiostats> _candidateBiostats =
             new Dictionary<string, PlanXenogermTemplateBiostats>(StringComparer.Ordinal);
 
+        private readonly VariableHeightScrollListLayoutCache _candidateListLayoutCache =
+            new VariableHeightScrollListLayoutCache();
+
         private readonly Dictionary<string, PlanXenogermTemplateBiostats> _compositionBiostats =
             new Dictionary<string, PlanXenogermTemplateBiostats>(StringComparer.Ordinal);
 
-        private readonly Dictionary<string, string> _additionalGeneTooltips =
-            new Dictionary<string, string>(StringComparer.Ordinal);
+        private readonly PlanGenepackInventoryGameComponent _inventoryComponent;
 
-        private bool _customize;
-        private int _selectedCandidateIndex;
-        private string _templateName;
-        private XenotypeIconDef _iconDef;
-        private Vector2 _candidateListScrollPosition;
-        private Vector2 _previewScrollPosition;
-
-        private readonly VariableHeightScrollListLayoutCache _candidateListLayoutCache =
-            new VariableHeightScrollListLayoutCache();
+        private readonly XenogermPlan _plan;
 
         private readonly VariableHeightScrollListLayoutCache _previewLayoutCache =
             new VariableHeightScrollListLayoutCache();
 
-        private XenogermTemplatePresentationProjection _presentationProjection;
+        private readonly PlanXenogermTemplateCandidateSearchResult _searchResult;
+        private Vector2 _candidateListScrollPosition;
+
+        private bool _customize;
+        private XenotypeIconDef _iconDef;
         private object _presentationLanguageKey;
 
-        public override Vector2 InitialSize => new Vector2(DialogWidth, DialogHeight);
-
-        private XenogermTemplateCandidatePresentation SelectedCandidatePresentation =>
-            _selectedCandidateIndex >= 0 && _presentationProjection != null &&
-            _selectedCandidateIndex < _presentationProjection.Candidates.Count
-                ? _presentationProjection.Candidates[_selectedCandidateIndex]
-                : null;
+        private XenogermTemplatePresentationProjection _presentationProjection;
+        private Vector2 _previewScrollPosition;
+        private int _selectedCandidateIndex;
+        private string _templateName;
 
         internal XenogermTemplateCreationDialog(
             XenogermPlan plan,
@@ -110,6 +104,15 @@ namespace XenogermPlanner.UI
             forcePause = true;
             absorbInputAroundWindow = true;
         }
+
+        public override Vector2 InitialSize => new Vector2(DialogWidth, DialogHeight);
+
+        private XenogermTemplateCandidatePresentation SelectedCandidatePresentation =>
+            _selectedCandidateIndex >= 0 &&
+            _presentationProjection != null &&
+            _selectedCandidateIndex < _presentationProjection.Candidates.Count
+                ? _presentationProjection.Candidates[_selectedCandidateIndex]
+                : null;
 
         public override void DoWindowContents(Rect inRect)
         {
@@ -206,7 +209,8 @@ namespace XenogermPlanner.UI
 
             TooltipHandler.TipRegion(
                 iconRect,
-                "SelectIconDesc".Translate() + "\n\n" +
+                "SelectIconDesc".Translate() +
+                "\n\n" +
                 "ClickToEdit".Translate().Colorize(RimWorldUiStyle.Colors.MutedText));
 
             return rect.yMax;
@@ -533,8 +537,9 @@ namespace XenogermPlanner.UI
                 contentRect.width,
                 iconFlowHeight);
             bool hasOverflow = XenogermPlannerWidgets.CalculateGeneIconFlowHeight(
-                candidate.SortedAdditionalGenes.Count,
-                iconFlowRect.width) > iconFlowHeight;
+                                   candidate.SortedAdditionalGenes.Count,
+                                   iconFlowRect.width) >
+                               iconFlowHeight;
             string overflowTooltip = hasOverflow ? GetAdditionalGeneTooltip(candidate) : null;
 
             XenogermPlannerWidgets.DrawLimitedGeneIconFlow(
@@ -810,7 +815,8 @@ namespace XenogermPlanner.UI
             }
             else
             {
-                message = XenogermPlannerPresentation.GetTemplateSaveFailureTranslationKey(result.Failure).Translate()
+                message = XenogermPlannerPresentation.GetTemplateSaveFailureTranslationKey(result.Failure)
+                    .Translate()
                     .ToString();
             }
 

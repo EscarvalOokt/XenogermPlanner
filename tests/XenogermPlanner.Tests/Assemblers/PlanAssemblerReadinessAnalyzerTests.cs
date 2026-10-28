@@ -17,10 +17,7 @@ namespace XenogermPlanner.Tests.Assemblers
                 PlanAssemblerReadinessTestData.CreatePack("pack", true, gene);
 
             PlanAssemblerReadinessResult result = Analyze(
-                PlanAssemblerReadinessTestData.CreateDegradedPlan(
-                    PlanReadinessMode.Coverage,
-                    new[] { gene },
-                    "MissingGene"),
+                PlanAssemblerReadinessTestData.CreateDegradedPlan(PlanReadinessMode.Coverage, [gene], "MissingGene"),
                 true,
                 100,
                 100,
@@ -97,7 +94,7 @@ namespace XenogermPlanner.Tests.Assemblers
                 pack);
 
             Assert.That(result.Status, Is.EqualTo(PlanAssemblerReadinessStatus.Blocked));
-            Assert.That(result.BlockerReasons, Is.EqualTo(new[] { PlanAssemblerBlockerReason.AssemblerUnpowered }));
+            Assert.That(result.BlockerReasons, Is.EqualTo([PlanAssemblerBlockerReason.AssemblerUnpowered]));
         }
 
         [Test]
@@ -497,10 +494,9 @@ namespace XenogermPlanner.Tests.Assemblers
             Assert.That(
                 result.BlockerReasons,
                 Is.EqualTo(
-                    new[]
-                    {
-                        PlanAssemblerBlockerReason.UsedGeneBankUnpowered
-                    }));
+                [
+                    PlanAssemblerBlockerReason.UsedGeneBankUnpowered
+                ]));
             Assert.That(PlanAssemblerReadinessTestData.ResultContainsCandidatePack(result, complete), Is.True);
         }
 
@@ -527,7 +523,7 @@ namespace XenogermPlanner.Tests.Assemblers
 
             Assert.That(
                 result.MissingPrerequisites.Select(diagnostic => diagnostic.DependentGene.defName),
-                Is.EqualTo(new[] { "DependentA", "DependentB" }));
+                Is.EqualTo(["DependentA", "DependentB"]));
         }
 
         [Test]
@@ -552,13 +548,12 @@ namespace XenogermPlanner.Tests.Assemblers
             Assert.That(
                 result.BlockerReasons,
                 Is.EqualTo(
-                    new[]
-                    {
-                        PlanAssemblerBlockerReason.MissingPrerequisite,
-                        PlanAssemblerBlockerReason.AssemblerUnpowered,
-                        PlanAssemblerBlockerReason.UsedGeneBankUnpowered,
-                        PlanAssemblerBlockerReason.InsufficientComplexity
-                    }));
+                [
+                    PlanAssemblerBlockerReason.MissingPrerequisite,
+                    PlanAssemblerBlockerReason.AssemblerUnpowered,
+                    PlanAssemblerBlockerReason.UsedGeneBankUnpowered,
+                    PlanAssemblerBlockerReason.InsufficientComplexity
+                ]));
         }
 
         [Test]
@@ -600,14 +595,13 @@ namespace XenogermPlanner.Tests.Assemblers
             Assert.That(
                 result.BlockerReasons,
                 Is.EqualTo(
-                    new[]
-                    {
-                        PlanAssemblerBlockerReason.AssemblerUnpowered,
-                        PlanAssemblerBlockerReason.UsedGeneBankUnpowered,
-                        PlanAssemblerBlockerReason.InsufficientComplexity,
-                        PlanAssemblerBlockerReason.ArchogeneticsResearchMissing,
-                        PlanAssemblerBlockerReason.InsufficientArchiteCapsules
-                    }));
+                [
+                    PlanAssemblerBlockerReason.AssemblerUnpowered,
+                    PlanAssemblerBlockerReason.UsedGeneBankUnpowered,
+                    PlanAssemblerBlockerReason.InsufficientComplexity,
+                    PlanAssemblerBlockerReason.ArchogeneticsResearchMissing,
+                    PlanAssemblerBlockerReason.InsufficientArchiteCapsules
+                ]));
             Assert.That(result.BlockerReasons.Distinct().Count(), Is.EqualTo(result.BlockerReasons.Count));
         }
 

@@ -60,6 +60,8 @@
     <XenogermPlanner.Planner.AssemblerDetailsShow>Details ▼</XenogermPlanner.Planner.AssemblerDetailsShow>
     <XenogermPlanner.Planner.AssemblerDetailsHide>Details ▲</XenogermPlanner.Planner.AssemblerDetailsHide>
     <XenogermPlanner.AssemblerReadinessStatus.Blocked>Blocked</XenogermPlanner.AssemblerReadinessStatus.Blocked>
+    <XenogermPlanner.AssemblerReadinessStatus.SearchIncomplete>Check incomplete</XenogermPlanner.AssemblerReadinessStatus.SearchIncomplete>
+    <XenogermPlanner.Planner.AssemblerSearchIncomplete>Not all genepack combinations were checked. The assembler's readiness is undetermined.</XenogermPlanner.Planner.AssemblerSearchIncomplete>
     <XenogermPlanner.AssemblerReadinessStatus.Unknown>Unknown</XenogermPlanner.AssemblerReadinessStatus.Unknown>
     <XenogermPlanner.AssemblerBlocker.MissingPrerequisite>The genepacks needed for this plan do not provide these required genes: {0}.</XenogermPlanner.AssemblerBlocker.MissingPrerequisite>
     <XenogermPlanner.AssemblerBlocker.AssemblerUnpowered>The selected Gene Assembler has no power.</XenogermPlanner.AssemblerBlocker.AssemblerUnpowered>
@@ -68,6 +70,7 @@
     <XenogermPlanner.AssemblerBlocker.ArchogeneticsResearchMissing>Archogenetics research is required to use the needed genepacks.</XenogermPlanner.AssemblerBlocker.ArchogeneticsResearchMissing>
     <XenogermPlanner.AssemblerBlocker.InsufficientArchiteCapsules>Archite capsules required: {0}. Available: {1}.</XenogermPlanner.AssemblerBlocker.InsufficientArchiteCapsules>
     <XenogermPlanner.AssemblerBlocker.Unknown>Assembly is blocked for an unknown reason.</XenogermPlanner.AssemblerBlocker.Unknown>
+    <XenogermPlanner.AssemblerBlocker.MetabolismTooLow>Metabolic efficiency: {0}. Minimum allowed: {1}.</XenogermPlanner.AssemblerBlocker.MetabolismTooLow>
 
     <XenogermPlanner.Planner.GeneCoverage>Gene availability</XenogermPlanner.Planner.GeneCoverage>
     <XenogermPlanner.Planner.GeneColumn>Gene</XenogermPlanner.Planner.GeneColumn>

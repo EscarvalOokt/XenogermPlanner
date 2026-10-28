@@ -31,7 +31,7 @@ namespace XenogermPlanner.Tests.UI
             var cache = new PotentialDonorPresentationProjectionCache();
 
             PotentialDonorPresentationProjection projection = cache.GetOrBuild(
-                new[] { first, second, third },
+                [first, second, third],
                 "English",
                 pawn => names[pawn],
                 pawn => keys[pawn]);
@@ -49,23 +49,15 @@ namespace XenogermPlanner.Tests.UI
             Pawn donor = PlanPotentialDonorTestData.CreatePawn();
             var cache = new PotentialDonorPresentationProjectionCache();
 
-            PotentialDonorPresentationProjection first = cache.GetOrBuild(
-                new[] { donor },
-                "English",
-                _ => "Donor",
-                _ => 10);
-            PotentialDonorPresentationProjection second = cache.GetOrBuild(
-                new[] { donor },
-                "English",
-                _ => "Donor",
-                _ => 10);
+            PotentialDonorPresentationProjection first = cache.GetOrBuild([donor], "English", _ => "Donor", _ => 10);
+            PotentialDonorPresentationProjection second = cache.GetOrBuild([donor], "English", _ => "Donor", _ => 10);
             PotentialDonorPresentationProjection renamed = cache.GetOrBuild(
-                new[] { donor },
+                [donor],
                 "English",
                 _ => "Renamed",
                 _ => 10);
             PotentialDonorPresentationProjection otherLanguage = cache.GetOrBuild(
-                new[] { donor },
+                [donor],
                 "Other",
                 _ => "Renamed",
                 _ => 10);
@@ -84,18 +76,14 @@ namespace XenogermPlanner.Tests.UI
             Pawn replacement = PlanPotentialDonorTestData.CreatePawn();
             var cache = new PotentialDonorPresentationProjectionCache();
 
-            PotentialDonorPresentationProjection initial = cache.GetOrBuild(
-                new[] { first },
-                "English",
-                _ => "Donor",
-                _ => 1);
+            PotentialDonorPresentationProjection initial = cache.GetOrBuild([first], "English", _ => "Donor", _ => 1);
             PotentialDonorPresentationProjection added = cache.GetOrBuild(
-                new[] { first, second },
+                [first, second],
                 "English",
                 _ => "Donor",
                 pawn => ReferenceEquals(pawn, first) ? 1 : 2);
             PotentialDonorPresentationProjection replaced = cache.GetOrBuild(
-                new[] { replacement },
+                [replacement],
                 "English",
                 _ => "Donor",
                 _ => 1);
@@ -125,19 +113,11 @@ namespace XenogermPlanner.Tests.UI
         {
             Pawn donor = PlanPotentialDonorTestData.CreatePawn();
             var cache = new PotentialDonorPresentationProjectionCache();
-            PotentialDonorPresentationProjection first = cache.GetOrBuild(
-                new[] { donor },
-                "English",
-                _ => "Donor",
-                _ => 1);
+            PotentialDonorPresentationProjection first = cache.GetOrBuild([donor], "English", _ => "Donor", _ => 1);
 
             cache.Invalidate();
 
-            PotentialDonorPresentationProjection rebuilt = cache.GetOrBuild(
-                new[] { donor },
-                "English",
-                _ => "Donor",
-                _ => 1);
+            PotentialDonorPresentationProjection rebuilt = cache.GetOrBuild([donor], "English", _ => "Donor", _ => 1);
 
             Assert.That(rebuilt, Is.Not.SameAs(first));
         }

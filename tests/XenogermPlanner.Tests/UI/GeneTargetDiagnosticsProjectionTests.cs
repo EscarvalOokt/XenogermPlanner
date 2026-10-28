@@ -27,12 +27,9 @@ namespace XenogermPlanner.Tests.UI
                 PlanGeneConflictKind.Ordinary,
                 conflictA,
                 conflictB);
-            var randomGroup = new PlanGeneRandomChoiceGroupDiagnostic(new[] { randomA, randomB });
+            var randomGroup = new PlanGeneRandomChoiceGroupDiagnostic([randomA, randomB]);
             var prerequisiteDiagnostic = new PlanGenePrerequisiteDiagnostic(dependent, prerequisite);
-            var analysis = new PlanGeneTargetAnalysisResult(
-                new[] { conflict },
-                new[] { randomGroup },
-                new[] { prerequisiteDiagnostic });
+            var analysis = new PlanGeneTargetAnalysisResult([conflict], [randomGroup], [prerequisiteDiagnostic]);
 
             GeneTargetDiagnosticsProjection projection = Build(
                 analysis,
@@ -56,7 +53,7 @@ namespace XenogermPlanner.Tests.UI
             GeneTargetDiagnosticPresentationRow randomRow = projection.Rows[1];
             Assert.That(randomRow.Kind, Is.EqualTo(GeneTargetDiagnosticPresentationRowKind.RandomChoiceGroup));
             Assert.That(randomRow.RandomChoiceGroupDiagnostic, Is.SameAs(randomGroup));
-            Assert.That(randomRow.Genes, Is.EqualTo(new[] { randomB, randomA }));
+            Assert.That(randomRow.Genes, Is.EqualTo([randomB, randomA]));
             Assert.That(randomRow.Message, Is.EqualTo("random:RandomA"));
 
             GeneTargetDiagnosticPresentationRow prerequisiteRow = projection.Rows[2];
@@ -73,18 +70,12 @@ namespace XenogermPlanner.Tests.UI
             GeneDef dependent = PlanTestData.CreateGene("Dependent");
             GeneDef prerequisite = PlanTestData.CreateGene("Prerequisite");
             var analysis = new PlanGeneTargetAnalysisResult(
-                Array.Empty<PlanGeneConflictDiagnostic>(),
-                Array.Empty<PlanGeneRandomChoiceGroupDiagnostic>(),
-                new[] { new PlanGenePrerequisiteDiagnostic(dependent, prerequisite) });
+                [],
+                [],
+                [new PlanGenePrerequisiteDiagnostic(dependent, prerequisite)]);
 
-            GeneTargetDiagnosticsProjection coverage = Build(
-                analysis,
-                PlanReadinessMode.Coverage,
-                genes => new List<GeneDef>(genes));
-            GeneTargetDiagnosticsProjection exact = Build(
-                analysis,
-                PlanReadinessMode.ExactPayload,
-                genes => new List<GeneDef>(genes));
+            GeneTargetDiagnosticsProjection coverage = Build(analysis, PlanReadinessMode.Coverage, genes => [..genes]);
+            GeneTargetDiagnosticsProjection exact = Build(analysis, PlanReadinessMode.ExactPayload, genes => [..genes]);
 
             Assert.That(coverage.Rows[0].Message, Is.EqualTo("prerequisite:Coverage"));
             Assert.That(exact.Rows[0].Message, Is.EqualTo("prerequisite:ExactPayload"));
@@ -95,32 +86,26 @@ namespace XenogermPlanner.Tests.UI
         {
             GeneDef first = PlanTestData.CreateGene("First");
             GeneDef second = PlanTestData.CreateGene("Second");
-            var randomGroup = new PlanGeneRandomChoiceGroupDiagnostic(new[] { first, second });
-            var analysis = new PlanGeneTargetAnalysisResult(
-                Array.Empty<PlanGeneConflictDiagnostic>(),
-                new[] { randomGroup },
-                Array.Empty<PlanGenePrerequisiteDiagnostic>());
+            var randomGroup = new PlanGeneRandomChoiceGroupDiagnostic([first, second]);
+            var analysis = new PlanGeneTargetAnalysisResult([], [randomGroup], []);
             var sortedGenes = new List<GeneDef> { second, first };
 
             GeneTargetDiagnosticsProjection projection = Build(analysis, PlanReadinessMode.Coverage, _ => sortedGenes);
 
             sortedGenes.Clear();
 
-            Assert.That(projection.Rows[0].Genes, Is.EqualTo(new[] { second, first }));
+            Assert.That(projection.Rows[0].Genes, Is.EqualTo([second, first]));
         }
 
         [Test]
         public void Build_EmptyAnalysis_ReturnsEmptyProjection()
         {
-            var analysis = new PlanGeneTargetAnalysisResult(
-                Array.Empty<PlanGeneConflictDiagnostic>(),
-                Array.Empty<PlanGeneRandomChoiceGroupDiagnostic>(),
-                Array.Empty<PlanGenePrerequisiteDiagnostic>());
+            var analysis = new PlanGeneTargetAnalysisResult([], [], []);
 
             GeneTargetDiagnosticsProjection projection = Build(
                 analysis,
                 PlanReadinessMode.Coverage,
-                genes => new List<GeneDef>(genes));
+                genes => [..genes]);
 
             Assert.That(projection.HasDiagnostics, Is.False);
             Assert.That(projection.Rows, Is.Empty);
@@ -134,9 +119,9 @@ namespace XenogermPlanner.Tests.UI
             return GeneTargetDiagnosticsProjection.Build(
                 analysis,
                 readinessMode,
-                diagnostics => new List<PlanGeneConflictDiagnostic>(diagnostics),
-                diagnostics => new List<PlanGeneRandomChoiceGroupDiagnostic>(diagnostics),
-                diagnostics => new List<PlanGenePrerequisiteDiagnostic>(diagnostics),
+                diagnostics => [..diagnostics],
+                diagnostics => [..diagnostics],
+                diagnostics => [..diagnostics],
                 sortGenes,
                 diagnostic => "conflict:" + diagnostic.FirstGene.defName,
                 diagnostic => "random:" + diagnostic.Genes[0].defName,

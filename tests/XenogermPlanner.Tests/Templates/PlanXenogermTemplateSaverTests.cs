@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using RimWorld;
@@ -16,8 +15,7 @@ namespace XenogermPlanner.Tests.Templates
         {
             GeneDef target = PlanXenogermTemplateTestData.CreateGene("Target");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.ExactPayload, target);
-            PlanXenogermTemplateCandidate candidate =
-                PlanXenogermTemplateTestData.CreateCandidate(plan, new[] { target });
+            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(plan, [target]);
             PlanXenogermTemplateTestData.PackFixture pack = PlanXenogermTemplateTestData.CreatePack("pack", target);
             List<Genepack> captured = null;
 
@@ -25,8 +23,8 @@ namespace XenogermPlanner.Tests.Templates
                 plan,
                 candidate,
                 inventoryAvailable: true,
-                new[] { pack },
-                (_, __, selected) =>
+                [pack],
+                (_, _, selected) =>
                 {
                     captured = selected;
                     return true;
@@ -45,8 +43,8 @@ namespace XenogermPlanner.Tests.Templates
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.ExactPayload, geneA, geneB);
             PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(
                 plan,
-                new[] { geneB },
-                new[] { geneA });
+                [geneB],
+                [geneA]);
             PlanXenogermTemplateTestData.PackFixture packB = PlanXenogermTemplateTestData.CreatePack("b", geneB);
             PlanXenogermTemplateTestData.PackFixture packA = PlanXenogermTemplateTestData.CreatePack("a", geneA);
             List<Genepack> captured = null;
@@ -55,8 +53,8 @@ namespace XenogermPlanner.Tests.Templates
                 plan,
                 candidate,
                 inventoryAvailable: true,
-                new[] { packB, packA },
-                (_, __, selected) =>
+                [packB, packA],
+                (_, _, selected) =>
                 {
                     captured = selected;
                     return true;
@@ -71,8 +69,7 @@ namespace XenogermPlanner.Tests.Templates
         {
             GeneDef target = PlanXenogermTemplateTestData.CreateGene("Target");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, target);
-            PlanXenogermTemplateCandidate candidate =
-                PlanXenogermTemplateTestData.CreateCandidate(plan, new[] { target });
+            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(plan, [target]);
             PlanXenogermTemplateTestData.PackFixture later = PlanXenogermTemplateTestData.CreatePack("z-pack", target);
             PlanXenogermTemplateTestData.PackFixture earlier =
                 PlanXenogermTemplateTestData.CreatePack("a-pack", target);
@@ -82,8 +79,8 @@ namespace XenogermPlanner.Tests.Templates
                 plan,
                 candidate,
                 inventoryAvailable: true,
-                new[] { later, earlier },
-                (_, __, selected) =>
+                [later, earlier],
+                (_, _, selected) =>
                 {
                     captured = selected;
                     return true;
@@ -97,8 +94,7 @@ namespace XenogermPlanner.Tests.Templates
         {
             GeneDef target = PlanXenogermTemplateTestData.CreateGene("Target");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, target);
-            PlanXenogermTemplateCandidate candidate =
-                PlanXenogermTemplateTestData.CreateCandidate(plan, new[] { target });
+            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(plan, [target]);
             PlanXenogermTemplateTestData.PackFixture first = PlanXenogermTemplateTestData.CreatePack("a", target);
             PlanXenogermTemplateTestData.PackFixture second = PlanXenogermTemplateTestData.CreatePack("b", target);
             Genepack selectedFromFirstOrder = null;
@@ -108,8 +104,8 @@ namespace XenogermPlanner.Tests.Templates
                 plan,
                 candidate,
                 true,
-                new[] { second, first },
-                (_, __, selected) =>
+                [second, first],
+                (_, _, selected) =>
                 {
                     selectedFromFirstOrder = selected[0];
                     return true;
@@ -118,8 +114,8 @@ namespace XenogermPlanner.Tests.Templates
                 plan,
                 candidate,
                 true,
-                new[] { first, second },
-                (_, __, selected) =>
+                [first, second],
+                (_, _, selected) =>
                 {
                     selectedFromSecondOrder = selected[0];
                     return true;
@@ -134,8 +130,7 @@ namespace XenogermPlanner.Tests.Templates
         {
             GeneDef target = PlanXenogermTemplateTestData.CreateGene("Target");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, target);
-            PlanXenogermTemplateCandidate candidate =
-                PlanXenogermTemplateTestData.CreateCandidate(plan, new[] { target });
+            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(plan, [target]);
             PlanXenogermTemplateTestData.PackFixture replacement =
                 PlanXenogermTemplateTestData.CreatePack("replacement", target);
             Genepack selected = null;
@@ -144,8 +139,8 @@ namespace XenogermPlanner.Tests.Templates
                 plan,
                 candidate,
                 true,
-                new[] { replacement },
-                (_, __, packs) =>
+                [replacement],
+                (_, _, packs) =>
                 {
                     selected = packs[0];
                     return true;
@@ -160,16 +155,15 @@ namespace XenogermPlanner.Tests.Templates
         {
             GeneDef target = PlanXenogermTemplateTestData.CreateGene("Target");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, target);
-            PlanXenogermTemplateCandidate candidate =
-                PlanXenogermTemplateTestData.CreateCandidate(plan, new[] { target });
+            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(plan, [target]);
             var called = false;
 
             PlanXenogermTemplateSaveResult result = PlanXenogermTemplateTestData.Save(
                 plan,
                 candidate,
                 true,
-                Array.Empty<PlanXenogermTemplateTestData.PackFixture>(),
-                (_, __, ___) =>
+                [],
+                (_, _, _) =>
                 {
                     called = true;
                     return true;
@@ -186,15 +180,15 @@ namespace XenogermPlanner.Tests.Templates
             GeneDef extra = PlanXenogermTemplateTestData.CreateGene("Extra");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.ExactPayload, target);
             PlanXenogermTemplateCandidate candidate =
-                PlanXenogermTemplateTestData.CreateCandidate(plan, new[] { target, extra });
+                PlanXenogermTemplateTestData.CreateCandidate(plan, [target, extra]);
             var called = false;
 
             PlanXenogermTemplateSaveResult result = PlanXenogermTemplateTestData.Save(
                 plan,
                 candidate,
                 true,
-                new[] { PlanXenogermTemplateTestData.CreatePack("pack", target, extra) },
-                (_, __, ___) =>
+                [PlanXenogermTemplateTestData.CreatePack("pack", target, extra)],
+                (_, _, _) =>
                 {
                     called = true;
                     return true;
@@ -210,15 +204,14 @@ namespace XenogermPlanner.Tests.Templates
             GeneDef geneA = PlanXenogermTemplateTestData.CreateGene("A");
             GeneDef geneB = PlanXenogermTemplateTestData.CreateGene("B");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, geneA, geneB);
-            PlanXenogermTemplateCandidate candidate =
-                PlanXenogermTemplateTestData.CreateCandidate(plan, new[] { geneA });
+            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(plan, [geneA]);
 
             PlanXenogermTemplateSaveResult result = PlanXenogermTemplateTestData.Save(
                 plan,
                 candidate,
                 true,
-                new[] { PlanXenogermTemplateTestData.CreatePack("a", geneA) },
-                (_, __, ___) => true);
+                [PlanXenogermTemplateTestData.CreatePack("a", geneA)],
+                (_, _, _) => true);
 
             Assert.That(result.Failure, Is.EqualTo(PlanXenogermTemplateSaveFailure.CandidateInvalidForPlan));
         }
@@ -229,16 +222,15 @@ namespace XenogermPlanner.Tests.Templates
             GeneDef original = PlanXenogermTemplateTestData.CreateGene("Original");
             GeneDef replacement = PlanXenogermTemplateTestData.CreateGene("Replacement");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, original);
-            PlanXenogermTemplateCandidate candidate =
-                PlanXenogermTemplateTestData.CreateCandidate(plan, new[] { original });
-            plan.ReplaceDesiredGenes(new[] { replacement });
+            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(plan, [original]);
+            plan.ReplaceDesiredGenes([replacement]);
 
             PlanXenogermTemplateSaveResult result = PlanXenogermTemplateTestData.Save(
                 plan,
                 candidate,
                 true,
-                new[] { PlanXenogermTemplateTestData.CreatePack("original", original) },
-                (_, __, ___) => true);
+                [PlanXenogermTemplateTestData.CreatePack("original", original)],
+                (_, _, _) => true);
 
             Assert.That(result.Failure, Is.EqualTo(PlanXenogermTemplateSaveFailure.CandidateInvalidForPlan));
         }
@@ -248,15 +240,14 @@ namespace XenogermPlanner.Tests.Templates
         {
             GeneDef target = PlanXenogermTemplateTestData.CreateGene("Target");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, target);
-            PlanXenogermTemplateCandidate candidate =
-                PlanXenogermTemplateTestData.CreateCandidate(plan, new[] { target });
+            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(plan, [target]);
 
             PlanXenogermTemplateSaveResult result = PlanXenogermTemplateTestData.Save(
                 plan,
                 candidate,
                 inventoryAvailable: false,
-                new[] { PlanXenogermTemplateTestData.CreatePack("pack", target) },
-                (_, __, ___) => true);
+                [PlanXenogermTemplateTestData.CreatePack("pack", target)],
+                (_, _, _) => true);
 
             Assert.That(result.Failure, Is.EqualTo(PlanXenogermTemplateSaveFailure.InventoryUnavailable));
         }
@@ -266,8 +257,7 @@ namespace XenogermPlanner.Tests.Templates
         {
             GeneDef target = PlanXenogermTemplateTestData.CreateGene("Target");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, target);
-            PlanXenogermTemplateCandidate candidate =
-                PlanXenogermTemplateTestData.CreateCandidate(plan, new[] { target });
+            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(plan, [target]);
             var icon = new XenotypeIconDef();
             string capturedName = null;
             XenotypeIconDef capturedIcon = null;
@@ -278,7 +268,7 @@ namespace XenogermPlanner.Tests.Templates
                 "Expected template",
                 icon,
                 true,
-                new[] { PlanXenogermTemplateTestData.CreatePack("pack", target) },
+                [PlanXenogermTemplateTestData.CreatePack("pack", target)],
                 (name, receivedIcon, _) =>
                 {
                     capturedName = name;
@@ -296,15 +286,14 @@ namespace XenogermPlanner.Tests.Templates
         {
             GeneDef target = PlanXenogermTemplateTestData.CreateGene("Target");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, target);
-            PlanXenogermTemplateCandidate candidate =
-                PlanXenogermTemplateTestData.CreateCandidate(plan, new[] { target });
+            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(plan, [target]);
 
             PlanXenogermTemplateSaveResult result = PlanXenogermTemplateTestData.Save(
                 plan,
                 candidate,
                 true,
-                new[] { PlanXenogermTemplateTestData.CreatePack("pack", target) },
-                (_, __, ___) => "Rejected by vanilla");
+                [PlanXenogermTemplateTestData.CreatePack("pack", target)],
+                (_, _, _) => "Rejected by vanilla");
 
             Assert.That(result.Failure, Is.EqualTo(PlanXenogermTemplateSaveFailure.VanillaRejected));
             Assert.That(result.VanillaRejectionReason, Is.EqualTo("Rejected by vanilla"));

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using RimWorld;
 using Verse;
 using XenogermPlanner.Analysis;
 using XenogermPlanner.Genes;
@@ -102,20 +101,13 @@ namespace XenogermPlanner.Tests.Analysis
             private const int CandidatePlanCount = 512;
             private const int NeedGroupCount = 8;
             private const int OffersPerBatch = 64;
+            private readonly Func<XenogermPlan, PlanGenepackInventorySnapshot, PlanReadinessResult> _analyzeReadiness;
+            private readonly IReadOnlyList<IReadOnlyCollection<GeneDef>> _batchOffers;
+            private readonly PlanGenepackInventorySnapshot _inventory;
 
             private readonly IReadOnlyList<XenogermPlan> _plans;
-            private readonly PlanGenepackInventorySnapshot _inventory;
             private readonly IReadOnlyDictionary<XenogermPlan, PlanReadinessResult> _readinessByPlan;
-            private readonly Func<XenogermPlan, PlanGenepackInventorySnapshot, PlanReadinessResult> _analyzeReadiness;
             private readonly IReadOnlyCollection<GeneDef> _singleOffer;
-            private readonly IReadOnlyList<IReadOnlyCollection<GeneDef>> _batchOffers;
-
-            internal int PlanCount => _plans.Count;
-            internal int BatchOfferCount => _batchOffers.Count;
-            internal int ExpectedMatchesPerOffer { get; }
-            internal IReadOnlyList<XenogermPlan> ExpectedSingleOfferMatches { get; }
-            internal IReadOnlyList<XenogermPlan> ExpectedTwoOfferLastMatches { get; }
-            internal IReadOnlyList<XenogermPlan> ExpectedLastBatchMatches { get; }
 
             private RelevancePerformanceScenario(
                 IReadOnlyList<XenogermPlan> plans,
@@ -143,6 +135,13 @@ namespace XenogermPlanner.Tests.Analysis
                 _analyzeReadiness = AnalyzeReadiness;
             }
 
+            internal int PlanCount => _plans.Count;
+            internal int BatchOfferCount => _batchOffers.Count;
+            internal int ExpectedMatchesPerOffer { get; }
+            internal IReadOnlyList<XenogermPlan> ExpectedSingleOfferMatches { get; }
+            internal IReadOnlyList<XenogermPlan> ExpectedTwoOfferLastMatches { get; }
+            internal IReadOnlyList<XenogermPlan> ExpectedLastBatchMatches { get; }
+
             internal static RelevancePerformanceScenario Create()
             {
                 GeneDef[] needGenes = CreateGenes("NeedGene", NeedGroupCount);
@@ -162,38 +161,35 @@ namespace XenogermPlanner.Tests.Analysis
                     var plan = new XenogermPlan(
                         $"plan-{index:D4}",
                         $"Plan {descendingNameIndex:D4}",
-                        new[] { needGene, supportGene },
-                        Array.Empty<string>(),
+                        [needGene, supportGene],
+                        [],
                         readinessMode);
-                    var missingDiagnostic = new PlanGeneCoverageDiagnostic(
-                        needGene,
-                        PlanGeneCoverageState.Missing,
-                        Array.Empty<PlanGenepackCompositionDiagnostic>());
+                    var missingDiagnostic = new PlanGeneCoverageDiagnostic(needGene, PlanGeneCoverageState.Missing, []);
                     var supportComposition = new PlanGenepackCompositionDiagnostic(
-                        new[] { supportGene },
+                        [supportGene],
                         physicalPackCount: 1,
                         isExactPayloadEligible: true,
-                        additionalGenes: Array.Empty<GeneDef>());
+                        additionalGenes: []);
                     var availableDiagnostic = new PlanGeneCoverageDiagnostic(
                         supportGene,
                         PlanGeneCoverageState.Available,
-                        new[] { supportComposition });
+                        [supportComposition]);
                     var readiness = PlanReadinessResult.CreateNotReady(
-                        new[] { supportGene },
-                        new[] { needGene },
+                        [supportGene],
+                        [needGene],
                         hasExactPayloadConflict: false,
-                        geneCoverageDiagnostics: new[] { missingDiagnostic, availableDiagnostic });
+                        geneCoverageDiagnostics: [missingDiagnostic, availableDiagnostic]);
 
                     plans.Add(plan);
                     readinessByPlan.Add(plan, readiness);
                 }
 
                 var singleOfferGroup = 3;
-                IReadOnlyCollection<GeneDef> singleOffer = new[]
-                {
+                IReadOnlyCollection<GeneDef> singleOffer =
+                [
                     needGenes[singleOfferGroup],
                     supportGenes[singleOfferGroup]
-                };
+                ];
 
                 var batchOffers = new List<IReadOnlyCollection<GeneDef>>(OffersPerBatch);
 
@@ -202,11 +198,10 @@ namespace XenogermPlanner.Tests.Analysis
                     int groupIndex = index % NeedGroupCount;
 
                     batchOffers.Add(
-                        new[]
-                        {
-                            needGenes[groupIndex],
-                            supportGenes[groupIndex]
-                        });
+                    [
+                        needGenes[groupIndex],
+                        supportGenes[groupIndex]
+                    ]);
                 }
 
                 var twoOfferLastGroup = 1;
@@ -223,7 +218,7 @@ namespace XenogermPlanner.Tests.Analysis
 
                 return new RelevancePerformanceScenario(
                     plans.AsReadOnly(),
-                    PlanGenepackInventorySnapshot.CreateAvailable(Array.Empty<Genepack>()),
+                    PlanGenepackInventorySnapshot.CreateAvailable([]),
                     readinessByPlan,
                     singleOffer,
                     batchOffers.AsReadOnly(),
@@ -252,7 +247,7 @@ namespace XenogermPlanner.Tests.Analysis
             private RelevanceBatchMeasurementResult EvaluateOffers(int offerCount)
             {
                 PlanGenepackRelevanceAnalyzer analyzer = CreateAnalyzer();
-                IReadOnlyList<XenogermPlan> lastMatches = Array.Empty<XenogermPlan>();
+                IReadOnlyList<XenogermPlan> lastMatches = [];
                 var totalMatchCount = 0;
 
                 for (var index = 0; index < offerCount; index++)
@@ -280,7 +275,9 @@ namespace XenogermPlanner.Tests.Analysis
             {
                 return plans.Where(plan => plan.DesiredGenes.Contains(neededGene))
                     .OrderBy(plan => plan.Name, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(plan => plan.Id, StringComparer.Ordinal).ToList().AsReadOnly();
+                    .ThenBy(plan => plan.Id, StringComparer.Ordinal)
+                    .ToList()
+                    .AsReadOnly();
             }
 
             private static GeneDef[] CreateGenes(string prefix, int count)
@@ -302,14 +299,14 @@ namespace XenogermPlanner.Tests.Analysis
 
         private sealed class RelevanceBatchMeasurementResult
         {
-            internal int TotalMatchCount { get; }
-            internal IReadOnlyList<XenogermPlan> LastMatches { get; }
-
             internal RelevanceBatchMeasurementResult(int totalMatchCount, IReadOnlyList<XenogermPlan> lastMatches)
             {
                 TotalMatchCount = totalMatchCount;
                 LastMatches = lastMatches ?? throw new ArgumentNullException(nameof(lastMatches));
             }
+
+            internal int TotalMatchCount { get; }
+            internal IReadOnlyList<XenogermPlan> LastMatches { get; }
         }
     }
 }

@@ -6,13 +6,13 @@ namespace XenogermPlanner.Plans
 {
     internal sealed class XenogermPlanSaveRecord : IExposable
     {
-        private string _id;
-        private string _name;
         private List<string> _desiredGeneDefNames;
+        private bool _hasReadinessNotificationBaseline;
+        private string _id;
+        private bool _lastReadinessNotificationStateWasReady;
+        private string _name;
         private int _readinessMode = -1;
         private bool _readinessNotificationsEnabled = true;
-        private bool _hasReadinessNotificationBaseline;
-        private bool _lastReadinessNotificationStateWasReady;
 
         public XenogermPlanSaveRecord()
         {
@@ -29,7 +29,7 @@ namespace XenogermPlanner.Plans
         {
             _id = id;
             _name = name;
-            _desiredGeneDefNames = desiredGeneDefNames == null ? null : new List<string>(desiredGeneDefNames);
+            _desiredGeneDefNames = desiredGeneDefNames == null ? null : [..desiredGeneDefNames];
             _readinessMode = readinessMode;
             _readinessNotificationsEnabled = readinessNotificationsEnabled;
             _hasReadinessNotificationBaseline = hasReadinessNotificationBaseline;

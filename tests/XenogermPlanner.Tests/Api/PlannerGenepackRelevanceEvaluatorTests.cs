@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using RimWorld;
 using Verse;
 using XenogermPlanner.Analysis;
 using XenogermPlanner.Api;
@@ -28,11 +26,11 @@ namespace XenogermPlanner.Tests.Api
                 [firstById] = CreateMissingResult(gene)
             };
             var evaluator = new PlannerGenepackRelevanceEvaluator(
-                new[] { lastByName, secondById, firstById },
-                PlanGenepackInventorySnapshot.CreateAvailable(Array.Empty<Genepack>()),
+                [lastByName, secondById, firstById],
+                PlanGenepackInventorySnapshot.CreateAvailable([]),
                 (plan, _) => readinessByPlan[plan]);
 
-            GenepackRelevanceItemResult result = evaluator.Evaluate(new[] { gene });
+            GenepackRelevanceItemResult result = evaluator.Evaluate([gene]);
 
             Assert.That(result.Status, Is.EqualTo(GenepackRelevanceItemStatus.Success));
             Assert.That(result.Matches, Has.Count.EqualTo(3));
@@ -50,11 +48,11 @@ namespace XenogermPlanner.Tests.Api
             GeneDef gene = CreateGene("GeneA");
             XenogermPlan plan = CreatePlan("plan-id", "Plan Name", gene);
             var evaluator = new PlannerGenepackRelevanceEvaluator(
-                new[] { plan },
-                PlanGenepackInventorySnapshot.CreateAvailable(Array.Empty<Genepack>()),
-                (_, __) => PlanReadinessResult.CreateReady(new[] { gene }));
+                [plan],
+                PlanGenepackInventorySnapshot.CreateAvailable([]),
+                (_, _) => PlanReadinessResult.CreateReady([gene]));
 
-            GenepackRelevanceItemResult result = evaluator.Evaluate(new[] { gene });
+            GenepackRelevanceItemResult result = evaluator.Evaluate([gene]);
 
             Assert.That(result.Status, Is.EqualTo(GenepackRelevanceItemStatus.Success));
             Assert.That(result.Matches, Is.Empty);
@@ -67,38 +65,34 @@ namespace XenogermPlanner.Tests.Api
             XenogermPlan plan = CreatePlan("plan-id", "Plan Name", gene);
             var analyzeCount = 0;
             var evaluator = new PlannerGenepackRelevanceEvaluator(
-                new[] { plan },
-                PlanGenepackInventorySnapshot.CreateAvailable(Array.Empty<Genepack>()),
-                (_, __) =>
+                [plan],
+                PlanGenepackInventorySnapshot.CreateAvailable([]),
+                (_, _) =>
                 {
                     analyzeCount++;
                     return CreateMissingResult(gene);
                 });
 
-            evaluator.Evaluate(new[] { gene });
-            evaluator.Evaluate(new[] { gene });
+            evaluator.Evaluate([gene]);
+            evaluator.Evaluate([gene]);
 
             Assert.That(analyzeCount, Is.EqualTo(1));
         }
 
         private static XenogermPlan CreatePlan(string id, string name, GeneDef gene)
         {
-            return new XenogermPlan(id, name, new[] { gene }, Array.Empty<string>(), PlanReadinessMode.Coverage);
+            return new XenogermPlan(id, name, [gene], [], PlanReadinessMode.Coverage);
         }
 
         private static PlanReadinessResult CreateMissingResult(GeneDef gene)
         {
             return PlanReadinessResult.CreateNotReady(
-                Array.Empty<GeneDef>(),
-                new[] { gene },
+                [],
+                [gene],
                 hasExactPayloadConflict: false,
-                new[]
-                {
-                    new PlanGeneCoverageDiagnostic(
-                        gene,
-                        PlanGeneCoverageState.Missing,
-                        Array.Empty<PlanGenepackCompositionDiagnostic>())
-                });
+                [
+                    new PlanGeneCoverageDiagnostic(gene, PlanGeneCoverageState.Missing, [])
+                ]);
         }
 
         private static GeneDef CreateGene(string defName)

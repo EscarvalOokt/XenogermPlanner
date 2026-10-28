@@ -8,10 +8,6 @@ namespace XenogermPlanner.Api
     {
         private readonly ReadOnlyCollection<GenepackRelevanceItemResult> _results;
 
-        public GenepackRelevanceBatchStatus Status { get; }
-        public GenepackRelevanceUnavailableReason UnavailableReason { get; }
-        public IReadOnlyList<GenepackRelevanceItemResult> Results => _results;
-
         private GenepackRelevanceBatchResult(
             GenepackRelevanceBatchStatus status,
             GenepackRelevanceUnavailableReason unavailableReason,
@@ -49,6 +45,10 @@ namespace XenogermPlanner.Api
             UnavailableReason = unavailableReason;
             _results = copiedResults.AsReadOnly();
         }
+
+        public GenepackRelevanceBatchStatus Status { get; }
+        public GenepackRelevanceUnavailableReason UnavailableReason { get; }
+        public IReadOnlyList<GenepackRelevanceItemResult> Results => _results;
 
         internal static GenepackRelevanceBatchResult CreateSuccess(IEnumerable<GenepackRelevanceItemResult> results)
         {
@@ -109,7 +109,8 @@ namespace XenogermPlanner.Api
         {
             if (status != GenepackRelevanceBatchStatus.Success &&
                 status != GenepackRelevanceBatchStatus.InvalidRequest &&
-                status != GenepackRelevanceBatchStatus.Unavailable && status != GenepackRelevanceBatchStatus.Failed)
+                status != GenepackRelevanceBatchStatus.Unavailable &&
+                status != GenepackRelevanceBatchStatus.Failed)
             {
                 throw new ArgumentOutOfRangeException(nameof(status), status, "Unsupported relevance batch status.");
             }
@@ -119,8 +120,8 @@ namespace XenogermPlanner.Api
         {
             if (unavailableReason != GenepackRelevanceUnavailableReason.None &&
                 unavailableReason != GenepackRelevanceUnavailableReason.NoGame &&
-                unavailableReason != GenepackRelevanceUnavailableReason.NoActiveMap && unavailableReason !=
-                GenepackRelevanceUnavailableReason.PlannerStateUnavailable)
+                unavailableReason != GenepackRelevanceUnavailableReason.NoActiveMap &&
+                unavailableReason != GenepackRelevanceUnavailableReason.PlannerStateUnavailable)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(unavailableReason),

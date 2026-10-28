@@ -46,8 +46,10 @@ namespace XenogermPlanner.UI
 
         private static void ValidateColumn(GeneCoverageSortColumn column)
         {
-            if (column != GeneCoverageSortColumn.Gene && column != GeneCoverageSortColumn.Availability &&
-                column != GeneCoverageSortColumn.GenepackCount && column != GeneCoverageSortColumn.PotentialDonorCount)
+            if (column != GeneCoverageSortColumn.Gene &&
+                column != GeneCoverageSortColumn.Availability &&
+                column != GeneCoverageSortColumn.GenepackCount &&
+                column != GeneCoverageSortColumn.PotentialDonorCount)
             {
                 throw new ArgumentOutOfRangeException(nameof(column), column, "Unsupported gene coverage sort column.");
             }
@@ -56,15 +58,6 @@ namespace XenogermPlanner.UI
 
     internal sealed class GeneCoverageTableRow
     {
-        internal PlanGeneCoverageDiagnostic Diagnostic { get; }
-        internal string UnresolvedGeneDefName { get; }
-        internal string DisplayName { get; }
-        internal string StableKey { get; }
-        internal GeneCoverageAvailabilityState AvailabilityState { get; }
-        internal int SourceGenepackCount { get; }
-        internal int? PotentialDonorCount { get; }
-        internal bool IsResolved => Diagnostic != null;
-
         private GeneCoverageTableRow(
             PlanGeneCoverageDiagnostic diagnostic,
             string unresolvedGeneDefName,
@@ -95,7 +88,7 @@ namespace XenogermPlanner.UI
                     "Source genepack count cannot be negative.");
             }
 
-            if (potentialDonorCount.HasValue && potentialDonorCount.Value < 0)
+            if (potentialDonorCount is < 0)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(potentialDonorCount),
@@ -111,6 +104,15 @@ namespace XenogermPlanner.UI
             SourceGenepackCount = sourceGenepackCount;
             PotentialDonorCount = potentialDonorCount;
         }
+
+        internal PlanGeneCoverageDiagnostic Diagnostic { get; }
+        internal string UnresolvedGeneDefName { get; }
+        internal string DisplayName { get; }
+        internal string StableKey { get; }
+        internal GeneCoverageAvailabilityState AvailabilityState { get; }
+        internal int SourceGenepackCount { get; }
+        internal int? PotentialDonorCount { get; }
+        internal bool IsResolved => Diagnostic != null;
 
         internal static GeneCoverageTableRow CreateResolved(
             PlanGeneCoverageDiagnostic diagnostic,

@@ -49,13 +49,12 @@ namespace XenogermPlanner.Genes
             List<Genepack> discoveredGenepacks,
             Predicate<IThingHolder> passCheck)
         {
-            ThingOwnerUtility.GetAllThingsRecursively<Genepack>(
+            ThingOwnerUtility.GetAllThingsRecursively(
                 map,
                 ThingRequest.ForDef(ThingDefOf.Genepack),
                 discoveredGenepacks,
                 true,
-                passCheck,
-                true);
+                passCheck);
         }
     }
 }

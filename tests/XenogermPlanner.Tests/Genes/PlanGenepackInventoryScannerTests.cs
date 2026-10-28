@@ -35,7 +35,7 @@ namespace XenogermPlanner.Tests.Genes
                     holderPassCheck = passCheck;
                     output.Add(genepack);
                 },
-                (_, __) => true);
+                (_, _) => true);
 
             Assert.That(discoveredMap, Is.SameAs(map));
             Assert.That(holderPassCheck, Is.Not.Null);
@@ -54,8 +54,8 @@ namespace XenogermPlanner.Tests.Genes
 
             PlanGenepackInventorySnapshot snapshot = GenepackInventoryTestData.Scan(
                 map,
-                new[] { spawnedGenepack, heldGenepack },
-                (_, __) => true);
+                [spawnedGenepack, heldGenepack],
+                (_, _) => true);
 
             Assert.That(snapshot.IsAvailable, Is.True);
             Assert.That(snapshot.Genepacks, Has.Count.EqualTo(2));
@@ -72,7 +72,7 @@ namespace XenogermPlanner.Tests.Genes
 
             PlanGenepackInventorySnapshot snapshot = GenepackInventoryTestData.Scan(
                 map,
-                new[] { includedGenepack, excludedGenepack },
+                [includedGenepack, excludedGenepack],
                 (_, genepack) => !ReferenceEquals(genepack, excludedGenepack));
 
             Assert.That(snapshot.Genepacks, Has.Count.EqualTo(1));
@@ -87,8 +87,8 @@ namespace XenogermPlanner.Tests.Genes
 
             PlanGenepackInventorySnapshot snapshot = GenepackInventoryTestData.Scan(
                 map,
-                new[] { genepack, genepack },
-                (_, __) => true);
+                [genepack, genepack],
+                (_, _) => true);
 
             Assert.That(snapshot.Genepacks, Has.Count.EqualTo(1));
             Assert.That(snapshot.Genepacks[0], Is.SameAs(genepack));
@@ -103,8 +103,8 @@ namespace XenogermPlanner.Tests.Genes
 
             PlanGenepackInventorySnapshot snapshot = GenepackInventoryTestData.Scan(
                 map,
-                new[] { firstGenepack, secondGenepack },
-                (_, __) => true);
+                [firstGenepack, secondGenepack],
+                (_, _) => true);
 
             Assert.That(snapshot.Genepacks, Has.Count.EqualTo(2));
             Assert.That(ContainsReference(snapshot.Genepacks, firstGenepack), Is.True);
@@ -120,8 +120,8 @@ namespace XenogermPlanner.Tests.Genes
 
             PlanGenepackInventorySnapshot snapshot = GenepackInventoryTestData.Scan(
                 map,
-                new[] { null, genepack },
-                (_, __) =>
+                [null, genepack],
+                (_, _) =>
                 {
                     policyEvaluationCount++;
                     return true;
@@ -137,10 +137,7 @@ namespace XenogermPlanner.Tests.Genes
         {
             Map map = GenepackInventoryTestData.CreateMap();
 
-            PlanGenepackInventorySnapshot snapshot = GenepackInventoryTestData.Scan(
-                map,
-                Array.Empty<Genepack>(),
-                (_, __) => true);
+            PlanGenepackInventorySnapshot snapshot = GenepackInventoryTestData.Scan(map, [], (_, _) => true);
 
             Assert.That(snapshot.IsAvailable, Is.True);
             Assert.That(snapshot.Genepacks, Is.Empty);
@@ -152,7 +149,7 @@ namespace XenogermPlanner.Tests.Genes
             Map map = GenepackInventoryTestData.CreateMap();
 
             Assert.Throws<ArgumentNullException>(
-                (Action)(() => PlanGenepackInventoryScanner.Scan(map, null, (_, __) => true)));
+                (Action)(() => PlanGenepackInventoryScanner.Scan(map, null, (_, _) => true)));
         }
 
         [Test]
@@ -161,7 +158,7 @@ namespace XenogermPlanner.Tests.Genes
             Map map = GenepackInventoryTestData.CreateMap();
 
             Assert.Throws<ArgumentNullException>(
-                (Action)(() => PlanGenepackInventoryScanner.Scan(map, (_, __, ___) => { }, null)));
+                (Action)(() => PlanGenepackInventoryScanner.Scan(map, (_, _, _) => { }, null)));
         }
 
         private static bool ContainsReference(IReadOnlyList<Genepack> genepacks, Genepack expectedGenepack)

@@ -10,23 +10,9 @@ namespace XenogermPlanner.Plans
         private readonly HashSet<GeneDef> _desiredGenes;
         private readonly HashSet<string> _unresolvedDesiredGeneDefNames;
         private ReadOnlyCollection<GeneDef> _desiredGenesForReading;
-        private ReadOnlyCollection<string> _unresolvedDesiredGeneDefNamesForReading;
         private bool _hasReadinessNotificationBaseline;
         private bool _lastReadinessNotificationStateWasReady;
-
-        public string Id { get; }
-        public string Name { get; private set; }
-        public IReadOnlyCollection<GeneDef> DesiredGenes => _desiredGenesForReading;
-
-        public IReadOnlyCollection<string> UnresolvedDesiredGeneDefNames =>
-            _unresolvedDesiredGeneDefNamesForReading;
-
-        public bool IsDegraded => _unresolvedDesiredGeneDefNames.Count > 0;
-        public PlanReadinessMode ReadinessMode { get; private set; }
-        public bool ReadinessNotificationsEnabled { get; private set; }
-
-        internal bool HasReadinessNotificationBaseline => _hasReadinessNotificationBaseline;
-        internal bool LastReadinessNotificationStateWasReady => _lastReadinessNotificationStateWasReady;
+        private ReadOnlyCollection<string> _unresolvedDesiredGeneDefNamesForReading;
 
         public XenogermPlan(
             string name,
@@ -71,6 +57,19 @@ namespace XenogermPlanner.Plans
             RefreshDesiredGenesForReading();
             RefreshUnresolvedDesiredGeneDefNamesForReading();
         }
+
+        public string Id { get; }
+        public string Name { get; private set; }
+        public IReadOnlyCollection<GeneDef> DesiredGenes => _desiredGenesForReading;
+
+        public IReadOnlyCollection<string> UnresolvedDesiredGeneDefNames => _unresolvedDesiredGeneDefNamesForReading;
+
+        public bool IsDegraded => _unresolvedDesiredGeneDefNames.Count > 0;
+        public PlanReadinessMode ReadinessMode { get; private set; }
+        public bool ReadinessNotificationsEnabled { get; private set; }
+
+        internal bool HasReadinessNotificationBaseline => _hasReadinessNotificationBaseline;
+        internal bool LastReadinessNotificationStateWasReady => _lastReadinessNotificationStateWasReady;
 
         public XenogermPlan CreateDuplicate()
         {

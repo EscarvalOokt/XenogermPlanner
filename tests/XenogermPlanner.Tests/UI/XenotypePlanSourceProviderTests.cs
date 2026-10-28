@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using RimWorld;
-using Verse;
 using XenogermPlanner.Tests.Plans;
 using XenogermPlanner.UI;
 
@@ -13,8 +12,6 @@ namespace XenogermPlanner.Tests.UI
     [TestFixture]
     public sealed class XenotypePlanSourceProviderTests
     {
-        private string _temporaryDirectory;
-
         [SetUp]
         public void SetUp()
         {
@@ -32,12 +29,14 @@ namespace XenogermPlanner.Tests.UI
                 Directory.Delete(_temporaryDirectory, recursive: true);
         }
 
+        private string _temporaryDirectory;
+
         [Test]
         public void Refresh_SeparatesPremadeAndSavedSources()
         {
             XenotypeDef premade = CreatePremade("Premade", displayPriority: 1f);
             FileInfo saved = CreateSavedFile("Saved.xtp", "saved");
-            XenotypePlanSourceProvider provider = CreateProvider(new[] { premade }, new[] { saved }, out _, out _);
+            XenotypePlanSourceProvider provider = CreateProvider([premade], [saved], out _, out _);
 
             Assert.That(provider.Groups.Count, Is.EqualTo(2));
             Assert.That(provider.Groups[0].Key, Is.EqualTo("premade-xenotypes"));
@@ -53,11 +52,7 @@ namespace XenogermPlanner.Tests.UI
         {
             XenotypeDef low = CreatePremade("Low", displayPriority: 1f);
             XenotypeDef high = CreatePremade("High", displayPriority: 5f);
-            XenotypePlanSourceProvider provider = CreateProvider(
-                new[] { low, high },
-                Array.Empty<FileInfo>(),
-                out _,
-                out _);
+            XenotypePlanSourceProvider provider = CreateProvider([low, high], [], out _, out _);
 
             Assert.That(provider.Groups[0].Sources[0].DisplayName, Is.EqualTo("High"));
             Assert.That(provider.Groups[0].Sources[1].DisplayName, Is.EqualTo("Low"));
@@ -68,8 +63,8 @@ namespace XenogermPlanner.Tests.UI
         {
             FileInfo saved = CreateSavedFile("Saved.xtp", "saved");
             XenotypePlanSourceProvider provider = CreateProvider(
-                Array.Empty<XenotypeDef>(),
-                new[] { saved },
+                [],
+                [saved],
                 out Func<int> getVersionCheckCount,
                 out Func<int> getLoadCount);
 
@@ -84,8 +79,8 @@ namespace XenogermPlanner.Tests.UI
         {
             FileInfo saved = CreateSavedFile("Saved.xtp", "saved");
             XenotypePlanSourceProvider provider = CreateProvider(
-                Array.Empty<XenotypeDef>(),
-                new[] { saved },
+                [],
+                [saved],
                 out Func<int> getVersionCheckCount,
                 out Func<int> getLoadCount);
             XenogermPlanSourceEntry entry = provider.Groups[1].Sources[0];
@@ -108,14 +103,14 @@ namespace XenogermPlanner.Tests.UI
             Action deferredLoad = null;
             var provider = new XenotypePlanSourceProvider(
                 Array.Empty<XenotypeDef>,
-                () => new[] { saved },
+                () => [saved],
                 (_, loadAction) => deferredLoad = loadAction,
-                (string path, out CustomXenotype source) =>
+                (_, out source) =>
                 {
                     source = new CustomXenotype
                     {
                         name = "Saved custom",
-                        genes = new List<GeneDef> { PlanTestData.CreateGene("SavedGene") }
+                        genes = [PlanTestData.CreateGene("SavedGene")]
                     };
                     return true;
                 });
@@ -138,8 +133,8 @@ namespace XenogermPlanner.Tests.UI
         {
             FileInfo saved = CreateSavedFile("Saved.xtp", "saved");
             XenotypePlanSourceProvider provider = CreateProvider(
-                Array.Empty<XenotypeDef>(),
-                new[] { saved },
+                [],
+                [saved],
                 out Func<int> getVersionCheckCount,
                 out Func<int> getLoadCount);
             XenogermPlanSourceEntry entry = provider.Groups[1].Sources[0];
@@ -160,7 +155,7 @@ namespace XenogermPlanner.Tests.UI
             FileInfo saved = CreateSavedFile("Saved.xtp", "saved");
             var provider = new XenotypePlanSourceProvider(
                 Array.Empty<XenotypeDef>,
-                () => new[] { saved },
+                () => [saved],
                 (_, loadAction) => loadAction(),
                 TryLoadSavedXenotype);
             XenogermPlanSourceEntry entry = provider.Groups[1].Sources[0];
@@ -176,11 +171,7 @@ namespace XenogermPlanner.Tests.UI
         public void Resolve_SavedSourceRejectsDeletedFile()
         {
             FileInfo saved = CreateSavedFile("Saved.xtp", "saved");
-            XenotypePlanSourceProvider provider = CreateProvider(
-                Array.Empty<XenotypeDef>(),
-                new[] { saved },
-                out _,
-                out _);
+            XenotypePlanSourceProvider provider = CreateProvider([], [saved], out _, out _);
             XenogermPlanSourceEntry entry = provider.Groups[1].Sources[0];
 
             File.Delete(saved.FullName);
@@ -228,13 +219,13 @@ namespace XenogermPlanner.Tests.UI
                     versionCheckCount++;
                     loadAction();
                 },
-                (string path, out CustomXenotype source) =>
+                (_, out source) =>
                 {
                     loadCount++;
                     source = new CustomXenotype
                     {
                         name = "Saved custom",
-                        genes = new List<GeneDef> { PlanTestData.CreateGene("SavedGene") }
+                        genes = [PlanTestData.CreateGene("SavedGene")]
                     };
                     return true;
                 });
@@ -261,7 +252,7 @@ namespace XenogermPlanner.Tests.UI
                 defName = name + "Def",
                 label = name,
                 displayPriority = displayPriority,
-                genes = new List<GeneDef> { PlanTestData.CreateGene(name + "Gene") }
+                genes = [PlanTestData.CreateGene(name + "Gene")]
             };
         }
 

@@ -10,11 +10,6 @@ namespace XenogermPlanner.Donors
     {
         private readonly ReadOnlyCollection<Pawn> _donors;
 
-        public GeneDef Gene { get; }
-        public IReadOnlyList<Pawn> Donors => _donors;
-        public int DonorCount => _donors.Count;
-        public bool HasDonors => _donors.Count > 0;
-
         internal PlanPotentialDonorGeneDiagnostic(GeneDef gene, IEnumerable<Pawn> donors)
         {
             Gene = gene ?? throw new ArgumentNullException(nameof(gene));
@@ -38,5 +33,10 @@ namespace XenogermPlanner.Donors
 
             _donors = copiedDonors.AsReadOnly();
         }
+
+        public GeneDef Gene { get; }
+        public IReadOnlyList<Pawn> Donors => _donors;
+        public int DonorCount => _donors.Count;
+        public bool HasDonors => _donors.Count > 0;
     }
 }

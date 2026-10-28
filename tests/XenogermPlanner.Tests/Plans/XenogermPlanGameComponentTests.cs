@@ -14,8 +14,8 @@ namespace XenogermPlanner.Tests.Plans
         public void RemovePlan_RemovesMatchingStableId()
         {
             var component = new XenogermPlanGameComponent(null);
-            var firstPlan = new XenogermPlan("First", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
-            var secondPlan = new XenogermPlan("Second", Array.Empty<GeneDef>(), PlanReadinessMode.ExactPayload);
+            var firstPlan = new XenogermPlan("First", [], PlanReadinessMode.Coverage);
+            var secondPlan = new XenogermPlan("Second", [], PlanReadinessMode.ExactPayload);
 
             component.AddPlan(firstPlan);
             component.AddPlan(secondPlan);
@@ -31,18 +31,8 @@ namespace XenogermPlanner.Tests.Plans
         public void AddPlan_RejectsDuplicateStableId()
         {
             var component = new XenogermPlanGameComponent(null);
-            var firstPlan = new XenogermPlan(
-                "stable-id",
-                "First",
-                Array.Empty<GeneDef>(),
-                Array.Empty<string>(),
-                PlanReadinessMode.Coverage);
-            var duplicatePlan = new XenogermPlan(
-                "stable-id",
-                "Second",
-                Array.Empty<GeneDef>(),
-                Array.Empty<string>(),
-                PlanReadinessMode.ExactPayload);
+            var firstPlan = new XenogermPlan("stable-id", "First", [], [], PlanReadinessMode.Coverage);
+            var duplicatePlan = new XenogermPlan("stable-id", "Second", [], [], PlanReadinessMode.ExactPayload);
 
             component.AddPlan(firstPlan);
 
@@ -57,11 +47,8 @@ namespace XenogermPlanner.Tests.Plans
         public void AddPlan_RejectsDuplicateDisplayNameIgnoringCaseAndWhitespace()
         {
             var component = new XenogermPlanGameComponent(null);
-            var firstPlan = new XenogermPlan("Existing", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
-            var duplicateNamePlan = new XenogermPlan(
-                "  existing  ",
-                Array.Empty<GeneDef>(),
-                PlanReadinessMode.ExactPayload);
+            var firstPlan = new XenogermPlan("Existing", [], PlanReadinessMode.Coverage);
+            var duplicateNamePlan = new XenogermPlan("  existing  ", [], PlanReadinessMode.ExactPayload);
 
             component.AddPlan(firstPlan);
 
@@ -78,10 +65,10 @@ namespace XenogermPlanner.Tests.Plans
         public void AddPlanWithAllocatedName_UsesFirstAvailableSuffix()
         {
             var component = new XenogermPlanGameComponent(null);
-            component.AddPlan(new XenogermPlan("Plan", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage));
-            component.AddPlan(new XenogermPlan("Plan 2", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage));
+            component.AddPlan(new XenogermPlan("Plan", [], PlanReadinessMode.Coverage));
+            component.AddPlan(new XenogermPlan("Plan 2", [], PlanReadinessMode.Coverage));
 
-            var automaticPlan = new XenogermPlan("Plan", Array.Empty<GeneDef>(), PlanReadinessMode.ExactPayload);
+            var automaticPlan = new XenogermPlan("Plan", [], PlanReadinessMode.ExactPayload);
 
             component.AddPlanWithAllocatedName(automaticPlan);
 
@@ -94,9 +81,9 @@ namespace XenogermPlanner.Tests.Plans
         public void AddPlanWithAllocatedName_RepeatedAddsUseSequentialNames()
         {
             var component = new XenogermPlanGameComponent(null);
-            var first = new XenogermPlan("Template", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
-            var second = new XenogermPlan("Template", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
-            var third = new XenogermPlan("Template", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var first = new XenogermPlan("Template", [], PlanReadinessMode.Coverage);
+            var second = new XenogermPlan("Template", [], PlanReadinessMode.Coverage);
+            var third = new XenogermPlan("Template", [], PlanReadinessMode.Coverage);
 
             component.AddPlanWithAllocatedName(first);
             component.AddPlanWithAllocatedName(second);
@@ -104,7 +91,7 @@ namespace XenogermPlanner.Tests.Plans
 
             Assert.That(
                 component.Plans.Select(plan => plan.Name),
-                Is.EqualTo(new[] { "Template", "Template 2", "Template 3" }));
+                Is.EqualTo(["Template", "Template 2", "Template 3"]));
         }
 
         [Test]
@@ -143,7 +130,7 @@ namespace XenogermPlanner.Tests.Plans
         public void TryValidatePlanName_OccupiedNameIgnoringCase_ReturnsConflict()
         {
             var component = new XenogermPlanGameComponent(null);
-            component.AddPlan(new XenogermPlan("Existing", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage));
+            component.AddPlan(new XenogermPlan("Existing", [], PlanReadinessMode.Coverage));
 
             bool valid = component.TryValidatePlanName(
                 " existing ",
@@ -160,7 +147,7 @@ namespace XenogermPlanner.Tests.Plans
         public void TryValidatePlanName_ExcludedPlanId_AllowsOwnName()
         {
             var component = new XenogermPlanGameComponent(null);
-            var plan = new XenogermPlan("Existing", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("Existing", [], PlanReadinessMode.Coverage);
             component.AddPlan(plan);
 
             bool valid = component.TryValidatePlanName(
@@ -178,8 +165,8 @@ namespace XenogermPlanner.Tests.Plans
         public void TryValidatePlanName_ExcludedPlanId_DoesNotHideConflictWithAnotherPlan()
         {
             var component = new XenogermPlanGameComponent(null);
-            var firstPlan = new XenogermPlan("Existing", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
-            var secondPlan = new XenogermPlan("Other", Array.Empty<GeneDef>(), PlanReadinessMode.ExactPayload);
+            var firstPlan = new XenogermPlan("Existing", [], PlanReadinessMode.Coverage);
+            var secondPlan = new XenogermPlan("Other", [], PlanReadinessMode.ExactPayload);
             component.AddPlan(firstPlan);
             component.AddPlan(secondPlan);
 
@@ -198,8 +185,8 @@ namespace XenogermPlanner.Tests.Plans
         public void AllocateUniquePlanName_UsesCurrentCollection()
         {
             var component = new XenogermPlanGameComponent(null);
-            component.AddPlan(new XenogermPlan("Plan", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage));
-            component.AddPlan(new XenogermPlan("Plan 2", Array.Empty<GeneDef>(), PlanReadinessMode.ExactPayload));
+            component.AddPlan(new XenogermPlan("Plan", [], PlanReadinessMode.Coverage));
+            component.AddPlan(new XenogermPlan("Plan 2", [], PlanReadinessMode.ExactPayload));
 
             string allocatedName = component.AllocateUniquePlanName("Plan");
 
@@ -210,7 +197,7 @@ namespace XenogermPlanner.Tests.Plans
         public void AllocateUniquePlanName_PreservesPreferredCasing()
         {
             var component = new XenogermPlanGameComponent(null);
-            component.AddPlan(new XenogermPlan("plan", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage));
+            component.AddPlan(new XenogermPlan("plan", [], PlanReadinessMode.Coverage));
 
             string allocatedName = component.AllocateUniquePlanName("PLAN");
 
@@ -222,11 +209,11 @@ namespace XenogermPlanner.Tests.Plans
         {
             GeneDef geneA = PlanTestData.CreateGene("GeneA");
             GeneDef geneB = PlanTestData.CreateGene("GeneB");
-            XenogermPlanSaveRecord[] records = new[]
-            {
-                CreateRecord("plan-a", "First", new[] { "GeneA" }, PlanReadinessMode.Coverage),
-                CreateRecord("plan-b", "Second", new[] { "GeneB" }, PlanReadinessMode.ExactPayload)
-            };
+            XenogermPlanSaveRecord[] records =
+            [
+                CreateRecord("plan-a", "First", ["GeneA"], PlanReadinessMode.Coverage),
+                CreateRecord("plan-b", "Second", ["GeneB"], PlanReadinessMode.ExactPayload)
+            ];
             var errors = new List<string>();
             var component = new XenogermPlanGameComponent(null);
 
@@ -234,7 +221,7 @@ namespace XenogermPlanner.Tests.Plans
 
             Assert.That(errors, Is.Empty);
             Assert.That(component.Plans, Has.Count.EqualTo(2));
-            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(new[] { "plan-a", "plan-b" }));
+            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(["plan-a", "plan-b"]));
             Assert.That(component.Plans[0].Name, Is.EqualTo("First"));
             Assert.That(component.Plans[0].ReadinessMode, Is.EqualTo(PlanReadinessMode.Coverage));
             Assert.That(component.Plans[1].Name, Is.EqualTo("Second"));
@@ -245,71 +232,71 @@ namespace XenogermPlanner.Tests.Plans
         public void RestorePlans_AllocatesUniqueNamesInRecordOrder()
         {
             XenogermPlanSaveRecord[] records =
-            {
-                CreateRecord("plan-a", "Plan", Array.Empty<string>(), PlanReadinessMode.Coverage),
-                CreateRecord("plan-b", "Plan", Array.Empty<string>(), PlanReadinessMode.Coverage),
-                CreateRecord("plan-c", "Plan", Array.Empty<string>(), PlanReadinessMode.ExactPayload)
-            };
+            [
+                CreateRecord("plan-a", "Plan", [], PlanReadinessMode.Coverage),
+                CreateRecord("plan-b", "Plan", [], PlanReadinessMode.Coverage),
+                CreateRecord("plan-c", "Plan", [], PlanReadinessMode.ExactPayload)
+            ];
             var errors = new List<string>();
             var component = new XenogermPlanGameComponent(null);
 
             component.RestorePlans(records, PlanTestData.CreateResolver(), errors.Add);
 
             Assert.That(errors, Is.Empty);
-            Assert.That(component.Plans.Select(plan => plan.Name), Is.EqualTo(new[] { "Plan", "Plan 2", "Plan 3" }));
-            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(new[] { "plan-a", "plan-b", "plan-c" }));
+            Assert.That(component.Plans.Select(plan => plan.Name), Is.EqualTo(["Plan", "Plan 2", "Plan 3"]));
+            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(["plan-a", "plan-b", "plan-c"]));
         }
 
         [Test]
         public void RestorePlans_UsesNormalizedCaseInsensitiveNameKeys()
         {
             XenogermPlanSaveRecord[] records =
-            {
-                CreateRecord("plan-a", "  Plan  ", Array.Empty<string>(), PlanReadinessMode.Coverage),
-                CreateRecord("plan-b", "plan", Array.Empty<string>(), PlanReadinessMode.Coverage),
-                CreateRecord("plan-c", "PLAN", Array.Empty<string>(), PlanReadinessMode.Coverage)
-            };
+            [
+                CreateRecord("plan-a", "  Plan  ", [], PlanReadinessMode.Coverage),
+                CreateRecord("plan-b", "plan", [], PlanReadinessMode.Coverage),
+                CreateRecord("plan-c", "PLAN", [], PlanReadinessMode.Coverage)
+            ];
             var errors = new List<string>();
             var component = new XenogermPlanGameComponent(null);
 
             component.RestorePlans(records, PlanTestData.CreateResolver(), errors.Add);
 
             Assert.That(errors, Is.Empty);
-            Assert.That(component.Plans.Select(plan => plan.Name), Is.EqualTo(new[] { "Plan", "plan 2", "PLAN 3" }));
+            Assert.That(component.Plans.Select(plan => plan.Name), Is.EqualTo(["Plan", "plan 2", "PLAN 3"]));
         }
 
         [Test]
         public void RestorePlans_ContinuesExistingNumericSuffix()
         {
             XenogermPlanSaveRecord[] records =
-            {
-                CreateRecord("plan-a", "Plan 2", Array.Empty<string>(), PlanReadinessMode.Coverage),
-                CreateRecord("plan-b", "Plan 2", Array.Empty<string>(), PlanReadinessMode.ExactPayload)
-            };
+            [
+                CreateRecord("plan-a", "Plan 2", [], PlanReadinessMode.Coverage),
+                CreateRecord("plan-b", "Plan 2", [], PlanReadinessMode.ExactPayload)
+            ];
             var errors = new List<string>();
             var component = new XenogermPlanGameComponent(null);
 
             component.RestorePlans(records, PlanTestData.CreateResolver(), errors.Add);
 
             Assert.That(errors, Is.Empty);
-            Assert.That(component.Plans.Select(plan => plan.Name), Is.EqualTo(new[] { "Plan 2", "Plan 3" }));
+            Assert.That(component.Plans.Select(plan => plan.Name), Is.EqualTo(["Plan 2", "Plan 3"]));
         }
 
         [Test]
         public void RestorePlans_IsolatesBlankNameRecordAndKeepsFollowingPlans()
         {
             XenogermPlanSaveRecord[] records =
-            {
-                CreateRecord("plan-a", "First", Array.Empty<string>(), PlanReadinessMode.Coverage),
-                CreateRecord("plan-b", "   ", Array.Empty<string>(), PlanReadinessMode.Coverage),
-                CreateRecord("plan-c", "Third", Array.Empty<string>(), PlanReadinessMode.ExactPayload)
-            };
+            [
+                CreateRecord("plan-a", "First", [], PlanReadinessMode.Coverage),
+                CreateRecord("plan-b", "   ", [], PlanReadinessMode.Coverage),
+                CreateRecord("plan-c", "Third", [], PlanReadinessMode.ExactPayload)
+            ];
             var errors = new List<string>();
             var component = new XenogermPlanGameComponent(null);
 
             component.RestorePlans(records, PlanTestData.CreateResolver(), errors.Add);
 
-            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(new[] { "plan-a", "plan-c" }));
+            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(["plan-a", "plan-c"]));
             Assert.That(errors, Has.Count.EqualTo(1));
             Assert.That(errors[0], Does.Contain("index 1"));
             Assert.That(errors[0], Does.Contain("name"));
@@ -320,25 +307,21 @@ namespace XenogermPlanner.Tests.Plans
         {
             GeneDef geneA = PlanTestData.CreateGene("GeneA");
             GeneDef geneC = PlanTestData.CreateGene("GeneC");
-            XenogermPlanSaveRecord[] records = new[]
-            {
-                CreateRecord("plan-a", "First", new[] { "GeneA" }, PlanReadinessMode.Coverage),
-                new XenogermPlanSaveRecord(
-                    string.Empty,
-                    "Invalid",
-                    Array.Empty<string>(),
-                    (int)PlanReadinessMode.Coverage),
-                CreateRecord("plan-b", "Degraded", new[] { "MissingGene" }, PlanReadinessMode.Coverage),
-                CreateRecord("plan-c", "Third", new[] { "GeneC" }, PlanReadinessMode.ExactPayload)
-            };
+            XenogermPlanSaveRecord[] records =
+            [
+                CreateRecord("plan-a", "First", ["GeneA"], PlanReadinessMode.Coverage),
+                new XenogermPlanSaveRecord(string.Empty, "Invalid", [], (int)PlanReadinessMode.Coverage),
+                CreateRecord("plan-b", "Degraded", ["MissingGene"], PlanReadinessMode.Coverage),
+                CreateRecord("plan-c", "Third", ["GeneC"], PlanReadinessMode.ExactPayload)
+            ];
             var errors = new List<string>();
             var component = new XenogermPlanGameComponent(null);
 
             component.RestorePlans(records, PlanTestData.CreateResolver(geneA, geneC), errors.Add);
 
-            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(new[] { "plan-a", "plan-b", "plan-c" }));
+            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(["plan-a", "plan-b", "plan-c"]));
             Assert.That(component.Plans[1].IsDegraded, Is.True);
-            Assert.That(component.Plans[1].UnresolvedDesiredGeneDefNames, Is.EquivalentTo(new[] { "MissingGene" }));
+            Assert.That(component.Plans[1].UnresolvedDesiredGeneDefNames, Is.EquivalentTo(["MissingGene"]));
             Assert.That(errors, Has.Count.EqualTo(1));
             Assert.That(errors[0], Does.Contain("index 1"));
         }
@@ -347,17 +330,17 @@ namespace XenogermPlanner.Tests.Plans
         public void RestorePlans_IsolatesNullRecord()
         {
             XenogermPlanSaveRecord[] records =
-            {
-                CreateRecord("plan-a", "First", Array.Empty<string>(), PlanReadinessMode.Coverage),
+            [
+                CreateRecord("plan-a", "First", [], PlanReadinessMode.Coverage),
                 null,
-                CreateRecord("plan-b", "Second", Array.Empty<string>(), PlanReadinessMode.ExactPayload)
-            };
+                CreateRecord("plan-b", "Second", [], PlanReadinessMode.ExactPayload)
+            ];
             var errors = new List<string>();
             var component = new XenogermPlanGameComponent(null);
 
             component.RestorePlans(records, PlanTestData.CreateResolver(), errors.Add);
 
-            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(new[] { "plan-a", "plan-b" }));
+            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(["plan-a", "plan-b"]));
             Assert.That(errors, Has.Count.EqualTo(1));
             Assert.That(errors[0], Does.Contain("index 1"));
             Assert.That(errors[0], Does.Contain("record is null"));
@@ -366,19 +349,19 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void RestorePlans_KeepsFirstRecordWhenPersistedIdsAreDuplicated()
         {
-            XenogermPlanSaveRecord[] records = new[]
-            {
-                CreateRecord("plan-a", "First", Array.Empty<string>(), PlanReadinessMode.Coverage),
-                CreateRecord("plan-a", "Duplicate", Array.Empty<string>(), PlanReadinessMode.ExactPayload),
-                CreateRecord("plan-b", "Unrelated", Array.Empty<string>(), PlanReadinessMode.ExactPayload)
-            };
+            XenogermPlanSaveRecord[] records =
+            [
+                CreateRecord("plan-a", "First", [], PlanReadinessMode.Coverage),
+                CreateRecord("plan-a", "Duplicate", [], PlanReadinessMode.ExactPayload),
+                CreateRecord("plan-b", "Unrelated", [], PlanReadinessMode.ExactPayload)
+            ];
             var errors = new List<string>();
             var component = new XenogermPlanGameComponent(null);
 
             component.RestorePlans(records, PlanTestData.CreateResolver(), errors.Add);
 
             Assert.That(component.Plans, Has.Count.EqualTo(2));
-            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(new[] { "plan-a", "plan-b" }));
+            Assert.That(component.Plans.Select(plan => plan.Id), Is.EqualTo(["plan-a", "plan-b"]));
             Assert.That(component.Plans[0].Name, Is.EqualTo("First"));
             Assert.That(errors, Has.Count.EqualTo(1));
             Assert.That(errors[0], Does.Contain("duplicate plan ID 'plan-a'"));
@@ -388,7 +371,7 @@ namespace XenogermPlanner.Tests.Plans
         public void RestorePlans_TreatsNullRecordsAsEmptyCollection()
         {
             var component = new XenogermPlanGameComponent(null);
-            component.AddPlan(new XenogermPlan("Existing", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage));
+            component.AddPlan(new XenogermPlan("Existing", [], PlanReadinessMode.Coverage));
             var errors = new List<string>();
 
             component.RestorePlans(null, PlanTestData.CreateResolver(), errors.Add);
@@ -401,10 +384,10 @@ namespace XenogermPlanner.Tests.Plans
         public void RestorePlans_TreatsEmptyRecordsAsEmptyCollection()
         {
             var component = new XenogermPlanGameComponent(null);
-            component.AddPlan(new XenogermPlan("Existing", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage));
+            component.AddPlan(new XenogermPlan("Existing", [], PlanReadinessMode.Coverage));
             var errors = new List<string>();
 
-            component.RestorePlans(Array.Empty<XenogermPlanSaveRecord>(), PlanTestData.CreateResolver(), errors.Add);
+            component.RestorePlans([], PlanTestData.CreateResolver(), errors.Add);
 
             Assert.That(component.Plans, Is.Empty);
             Assert.That(errors, Is.Empty);
@@ -414,11 +397,11 @@ namespace XenogermPlanner.Tests.Plans
         public void RestorePlans_PreservesIndependentNotificationSettingsAndBaselines()
         {
             XenogermPlanSaveRecord[] records =
-            {
+            [
                 new XenogermPlanSaveRecord(
                     "plan-a",
                     "First",
-                    Array.Empty<string>(),
+                    [],
                     (int)PlanReadinessMode.Coverage,
                     readinessNotificationsEnabled: false,
                     hasReadinessNotificationBaseline: true,
@@ -426,12 +409,12 @@ namespace XenogermPlanner.Tests.Plans
                 new XenogermPlanSaveRecord(
                     "plan-b",
                     "Second",
-                    Array.Empty<string>(),
+                    [],
                     (int)PlanReadinessMode.ExactPayload,
                     readinessNotificationsEnabled: true,
                     hasReadinessNotificationBaseline: true,
                     lastReadinessNotificationStateWasReady: false)
-            };
+            ];
             var errors = new List<string>();
             var component = new XenogermPlanGameComponent(null);
 

@@ -117,6 +117,7 @@ namespace XenogermPlanner.UI
 
                 case PlanAssemblerReadinessStatus.Blocked:
                 case PlanAssemblerReadinessStatus.Degraded:
+                case PlanAssemblerReadinessStatus.SearchIncomplete:
                     return RimWorldUiStyle.Colors.Warning;
 
                 case PlanAssemblerReadinessStatus.EmptyTarget:
@@ -211,8 +212,11 @@ namespace XenogermPlanner.UI
                 tooltip = tooltip + "\n\n" + actionHint.Colorize(RimWorldUiStyle.Colors.MutedText);
             }
 
-            tooltip = tooltip + "\n\n" + "XenogermPlanner.Planner.OpenInfoCardHint".Translate().ToString()
-                .Colorize(RimWorldUiStyle.Colors.MutedText);
+            tooltip = tooltip +
+                      "\n\n" +
+                      "XenogermPlanner.Planner.OpenInfoCardHint".Translate()
+                          .ToString()
+                          .Colorize(RimWorldUiStyle.Colors.MutedText);
 
             TooltipHandler.TipRegion(rect, tooltip);
         }
@@ -332,7 +336,8 @@ namespace XenogermPlanner.UI
             float tooltipGap = RimWorldUiStyle.Metrics.TooltipGap;
             float availableTooltipWidth = Mathf.Max(1f, bounds.width);
             float minimumTwoColumnWidth = tooltipPadding * 2f +
-                                          XenogermPlannerStyle.Metrics.TooltipMinimumGroupColumnWidth * 2f + groupGap;
+                                          XenogermPlannerStyle.Metrics.TooltipMinimumGroupColumnWidth * 2f +
+                                          groupGap;
             bool useTwoColumns = hasBothGeneGroups && availableTooltipWidth >= minimumTwoColumnWidth;
             float preferredTooltipWidth = useTwoColumns
                 ? XenogermPlannerStyle.Metrics.TooltipWideWidth
@@ -369,8 +374,12 @@ namespace XenogermPlanner.UI
             var inspectionHint = "XenogermPlanner.Planner.OpenInfoCardHint".Translate().ToString();
             string interactionHint = navigationHint + "\n" + inspectionHint;
             float interactionHintHeight = CalculateTextHeight(interactionHint, contentWidth, GameFont.Tiny);
-            float tooltipHeight = tooltipPadding + RimWorldUiStyle.Metrics.TooltipTitleHeight + tooltipGap +
-                                  RimWorldUiStyle.Metrics.TooltipLineHeight + tooltipGap + geneGroupsHeight;
+            float tooltipHeight = tooltipPadding +
+                                  RimWorldUiStyle.Metrics.TooltipTitleHeight +
+                                  tooltipGap +
+                                  RimWorldUiStyle.Metrics.TooltipLineHeight +
+                                  tooltipGap +
+                                  geneGroupsHeight;
 
             if (compatibilityHeight > 0f)
                 tooltipHeight += tooltipGap + compatibilityHeight;
@@ -1188,8 +1197,10 @@ namespace XenogermPlanner.UI
 
         private static void AddTargetNavigationTooltip(Rect rect, Thing target)
         {
-            string tooltip = target.LabelCap.Colorize(ColoredText.TipSectionTitleColor) + "\n\n" +
-                             "XenogermPlanner.Planner.TargetNavigationHint".Translate().ToString()
+            string tooltip = target.LabelCap.Colorize(ColoredText.TipSectionTitleColor) +
+                             "\n\n" +
+                             "XenogermPlanner.Planner.TargetNavigationHint".Translate()
+                                 .ToString()
                                  .Colorize(RimWorldUiStyle.Colors.MutedText);
 
             TooltipHandler.TipRegion(rect, tooltip);

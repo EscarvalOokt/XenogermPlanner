@@ -49,8 +49,8 @@ namespace XenogermPlanner.Tests.Api
             var degradedPlan = new XenogermPlan(
                 "degraded-plan",
                 "Degraded Plan",
-                new[] { coverageMissingGene },
-                new[] { "UnavailableGene" },
+                [coverageMissingGene],
+                ["UnavailableGene"],
                 PlanReadinessMode.Coverage);
 
             XenogermPlan prerequisitePlan = CreatePlan(
@@ -65,14 +65,14 @@ namespace XenogermPlanner.Tests.Api
             PlanGenepackInventorySnapshot inventory = PlanReadinessTestData.CreateInventory(conflictPack);
 
             XenogermPlan[] plans =
-            {
+            [
                 readyPlan,
                 degradedPlan,
                 exactPlan,
                 emptyTargetPlan,
                 prerequisitePlan,
                 coveragePlan
-            };
+            ];
 
             Dictionary<string, GeneDef> resolver = CreateResolver(
                 coverageMissingGene,
@@ -82,23 +82,21 @@ namespace XenogermPlanner.Tests.Api
                 prerequisiteGene,
                 dependentGene);
 
-            GenepackRelevanceRequest[] requests = new[]
-            {
+            GenepackRelevanceRequest[] requests =
+            [
                 new GenepackRelevanceRequest(
-                    new[]
-                    {
-                        coverageMissingGene.defName,
-                        coverageAdditionalGene.defName
-                    }),
-                new GenepackRelevanceRequest(new[] { exactConflictGene.defName }),
+                [
+                    coverageMissingGene.defName,
+                    coverageAdditionalGene.defName
+                ]),
+                new GenepackRelevanceRequest([exactConflictGene.defName]),
                 new GenepackRelevanceRequest(
-                    new[]
-                    {
-                        exactConflictGene.defName,
-                        exactOutsideGene.defName
-                    }),
-                new GenepackRelevanceRequest(new[] { prerequisiteGene.defName })
-            };
+                [
+                    exactConflictGene.defName,
+                    exactOutsideGene.defName
+                ]),
+                new GenepackRelevanceRequest([prerequisiteGene.defName])
+            ];
 
             GenepackRelevanceBatchResult result = Query(requests, plans, inventory, resolver, conflictPack);
 
@@ -111,7 +109,8 @@ namespace XenogermPlanner.Tests.Api
             AssertSuccessfulWithoutMatches(result.Results[3]);
 
             string[] returnedPlanIds = result.Results.SelectMany(item => item.Matches)
-                .Select(match => match.PlanId).ToArray();
+                .Select(match => match.PlanId)
+                .ToArray();
 
             Assert.That(returnedPlanIds, Does.Not.Contain(readyPlan.Id));
             Assert.That(returnedPlanIds, Does.Not.Contain(emptyTargetPlan.Id));
@@ -128,12 +127,12 @@ namespace XenogermPlanner.Tests.Api
             XenogermPlan secondById = CreatePlan("plan-b", "alpha", PlanReadinessMode.Coverage, missingGene);
             XenogermPlan firstById = CreatePlan("plan-a", "  Alpha  ", PlanReadinessMode.Coverage, missingGene);
 
-            XenogermPlan[] plans = { lastByName, secondById, firstById };
+            XenogermPlan[] plans = [lastByName, secondById, firstById];
             PlanGenepackInventorySnapshot inventory = PlanReadinessTestData.CreateInventory();
             Dictionary<string, GeneDef> resolver = CreateResolver(missingGene);
 
             GenepackRelevanceBatchResult result = Query(
-                new[] { new GenepackRelevanceRequest(new[] { missingGene.defName }) },
+                [new GenepackRelevanceRequest([missingGene.defName])],
                 plans,
                 inventory,
                 resolver);
@@ -143,10 +142,10 @@ namespace XenogermPlanner.Tests.Api
             Assert.That(result.Results[0].Status, Is.EqualTo(GenepackRelevanceItemStatus.Success));
             Assert.That(
                 result.Results[0].Matches.Select(match => match.PlanId),
-                Is.EqualTo(new[] { "plan-a", "plan-b", "plan-c" }));
+                Is.EqualTo(["plan-a", "plan-b", "plan-c"]));
             Assert.That(
                 result.Results[0].Matches.Select(match => match.DisplayName),
-                Is.EqualTo(new[] { "Alpha", "alpha", "Zulu" }));
+                Is.EqualTo(["Alpha", "alpha", "Zulu"]));
         }
 
         [Test]
@@ -160,31 +159,27 @@ namespace XenogermPlanner.Tests.Api
             Dictionary<string, GeneDef> resolver = CreateResolver(missingGene, additionalGene);
 
             GenepackRelevanceBatchResult firstResult = Query(
-                new[]
-                {
+                [
                     new GenepackRelevanceRequest(
-                        new[]
-                        {
-                            missingGene.defName,
-                            additionalGene.defName,
-                            missingGene.defName
-                        })
-                },
-                new[] { plan },
+                    [
+                        missingGene.defName,
+                        additionalGene.defName,
+                        missingGene.defName
+                    ])
+                ],
+                [plan],
                 inventory,
                 resolver);
 
             GenepackRelevanceBatchResult secondResult = Query(
-                new[]
-                {
+                [
                     new GenepackRelevanceRequest(
-                        new[]
-                        {
-                            additionalGene.defName,
-                            missingGene.defName
-                        })
-                },
-                new[] { plan },
+                    [
+                        additionalGene.defName,
+                        missingGene.defName
+                    ])
+                ],
+                [plan],
                 inventory,
                 resolver);
 
@@ -200,8 +195,8 @@ namespace XenogermPlanner.Tests.Api
             var relevantPlan = new XenogermPlan(
                 "relevant-plan",
                 "  Relevant Plan  ",
-                new[] { missingGene },
-                Array.Empty<string>(),
+                [missingGene],
+                [],
                 PlanReadinessMode.Coverage,
                 readinessNotificationsEnabled: false,
                 hasReadinessNotificationBaseline: true,
@@ -228,11 +223,10 @@ namespace XenogermPlanner.Tests.Api
             Genepack[] originalGenepackReferences = inventory.Genepacks.ToArray();
 
             GenepackRelevanceBatchResult result = Query(
-                new[]
-                {
-                    new GenepackRelevanceRequest(new[] { missingGene.defName }),
-                    new GenepackRelevanceRequest(new[] { inventoryGene.defName })
-                },
+                [
+                    new GenepackRelevanceRequest([missingGene.defName]),
+                    new GenepackRelevanceRequest([inventoryGene.defName])
+                ],
                 plans,
                 inventory,
                 resolver,
@@ -272,7 +266,7 @@ namespace XenogermPlanner.Tests.Api
 
             GeneDef ResolveGeneDef(string defName)
             {
-                return resolver.TryGetValue(defName, out GeneDef gene) ? gene : null;
+                return resolver.GetValueOrDefault(defName);
             }
 
             return XenogermPlannerRelevanceQuery.Query(
@@ -289,7 +283,7 @@ namespace XenogermPlanner.Tests.Api
             PlanReadinessMode readinessMode,
             params GeneDef[] desiredGenes)
         {
-            return new XenogermPlan(id, name, desiredGenes, Array.Empty<string>(), readinessMode);
+            return new XenogermPlan(id, name, desiredGenes, [], readinessMode);
         }
 
         private static Dictionary<string, GeneDef> CreateResolver(params GeneDef[] genes)

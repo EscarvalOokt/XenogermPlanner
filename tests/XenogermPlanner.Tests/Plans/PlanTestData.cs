@@ -53,7 +53,7 @@ namespace XenogermPlanner.Tests.Plans
             return new CustomXenogerm
             {
                 name = name,
-                genesets = new List<GeneSet>(geneSets)
+                genesets = [..geneSets]
             };
         }
 

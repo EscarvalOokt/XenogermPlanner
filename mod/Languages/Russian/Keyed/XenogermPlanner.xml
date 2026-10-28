@@ -68,6 +68,9 @@
     <XenogermPlanner.AssemblerBlocker.ArchogeneticsResearchMissing>Для использования необходимых генных пакетов требуется исследование «Архогенетика».</XenogermPlanner.AssemblerBlocker.ArchogeneticsResearchMissing>
     <XenogermPlanner.AssemblerBlocker.InsufficientArchiteCapsules>Требуется капсул с архитами: {0}. Доступно: {1}.</XenogermPlanner.AssemblerBlocker.InsufficientArchiteCapsules>
     <XenogermPlanner.AssemblerBlocker.Unknown>Сборка заблокирована по неизвестной причине.</XenogermPlanner.AssemblerBlocker.Unknown>
+    <XenogermPlanner.AssemblerReadinessStatus.SearchIncomplete>Проверка не завершена</XenogermPlanner.AssemblerReadinessStatus.SearchIncomplete>
+    <XenogermPlanner.Planner.AssemblerSearchIncomplete>Не все сочетания генных пакетов проверены. Готовность сборщика не определена.</XenogermPlanner.Planner.AssemblerSearchIncomplete>
+    <XenogermPlanner.AssemblerBlocker.MetabolismTooLow>Эффективность метаболизма: {0}. Допустимый минимум: {1}.</XenogermPlanner.AssemblerBlocker.MetabolismTooLow>
 
     <XenogermPlanner.Planner.GeneCoverage>Доступность генов</XenogermPlanner.Planner.GeneCoverage>
     <XenogermPlanner.Planner.GeneColumn>Ген</XenogermPlanner.Planner.GeneColumn>

@@ -5,11 +5,11 @@ namespace XenogermPlanner.Genes
 {
     internal sealed class ReferenceEqualityComparer<T> : IEqualityComparer<T> where T : class
     {
-        internal static ReferenceEqualityComparer<T> Instance { get; } = new ReferenceEqualityComparer<T>();
-
         private ReferenceEqualityComparer()
         {
         }
+
+        internal static ReferenceEqualityComparer<T> Instance { get; } = new ReferenceEqualityComparer<T>();
 
         public bool Equals(T left, T right)
         {

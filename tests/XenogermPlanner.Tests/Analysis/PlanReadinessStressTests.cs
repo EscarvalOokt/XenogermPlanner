@@ -206,7 +206,9 @@ namespace XenogermPlanner.Tests.Analysis
         private static PlanGenepackCompositionDiagnostic[] GetDistinctCompositions(PlanReadinessResult result)
         {
             return result.GeneCoverageDiagnostics.SelectMany(diagnostic => diagnostic.SourceGenepackCompositions)
-                .GroupBy(CreateCompositionSignature).Select(group => group.First()).ToArray();
+                .GroupBy(CreateCompositionSignature)
+                .Select(group => group.First())
+                .ToArray();
         }
 
         private static string CreateSemanticSignature(PlanReadinessResult result)
@@ -224,11 +226,18 @@ namespace XenogermPlanner.Tests.Analysis
                          current => current.Gene.defName,
                          StringComparer.Ordinal))
             {
-                signature.Append("Gene:").Append(diagnostic.Gene.defName).Append('|').Append(diagnostic.State)
-                    .Append('|').Append(diagnostic.IsCovered).Append('|');
+                signature.Append("Gene:")
+                    .Append(diagnostic.Gene.defName)
+                    .Append('|')
+                    .Append(diagnostic.State)
+                    .Append('|')
+                    .Append(diagnostic.IsCovered)
+                    .Append('|');
 
                 string[] compositionSignatures = diagnostic.SourceGenepackCompositions
-                    .Select(CreateCompositionSignature).OrderBy(current => current, StringComparer.Ordinal).ToArray();
+                    .Select(CreateCompositionSignature)
+                    .OrderBy(current => current, StringComparer.Ordinal)
+                    .ToArray();
 
                 signature.Append(string.Join(";", compositionSignatures));
                 signature.Append('\n');
@@ -239,8 +248,13 @@ namespace XenogermPlanner.Tests.Analysis
 
         private static string CreateCompositionSignature(PlanGenepackCompositionDiagnostic composition)
         {
-            return JoinGeneDefNames(composition.Genes) + "|Count=" + composition.PhysicalPackCount + "|Exact=" +
-                   composition.IsExactPayloadEligible + "|Additional=" + JoinGeneDefNames(composition.AdditionalGenes);
+            return JoinGeneDefNames(composition.Genes) +
+                   "|Count=" +
+                   composition.PhysicalPackCount +
+                   "|Exact=" +
+                   composition.IsExactPayloadEligible +
+                   "|Additional=" +
+                   JoinGeneDefNames(composition.AdditionalGenes);
         }
 
         private static string CreatePackSignature(PlanReadinessTestData.PackFixture pack)

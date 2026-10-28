@@ -8,8 +8,6 @@ namespace XenogermPlanner.Api
     {
         private readonly ReadOnlyCollection<string> _geneDefNames;
 
-        public IReadOnlyList<string> GeneDefNames => _geneDefNames;
-
         public GenepackRelevanceRequest(IEnumerable<string> geneDefNames)
         {
             if (geneDefNames == null)
@@ -17,5 +15,7 @@ namespace XenogermPlanner.Api
 
             _geneDefNames = new List<string>(geneDefNames).AsReadOnly();
         }
+
+        public IReadOnlyList<string> GeneDefNames => _geneDefNames;
     }
 }

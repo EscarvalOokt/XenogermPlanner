@@ -417,8 +417,9 @@ namespace XenogermPlanner.Tests.Assemblers
                 ReferenceEqualityComparer<Genepack>.Instance);
 
             return candidates.Select(candidate => string.Join(
-                "+",
-                candidate.Sources.Select(source => keysByPack[source.Genepack]))).ToArray();
+                    "+",
+                    candidate.Sources.Select(source => keysByPack[source.Genepack])))
+                .ToArray();
         }
     }
 }

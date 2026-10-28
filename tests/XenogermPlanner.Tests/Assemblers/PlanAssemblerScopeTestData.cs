@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using RimWorld;
 using Verse;
 using XenogermPlanner.Assemblers;
@@ -11,38 +11,6 @@ namespace XenogermPlanner.Tests.Assemblers
 {
     internal static class PlanAssemblerScopeTestData
     {
-        internal sealed class FacilityFixture
-        {
-            internal Thing Facility { get; }
-            internal bool HasGenepackContainer { get; set; }
-            internal bool PowerOn { get; set; }
-            internal List<Genepack> ContainedGenepacks { get; }
-
-            internal FacilityFixture(bool hasGenepackContainer, IEnumerable<Genepack> containedGenepacks)
-            {
-                Facility = CreateUninitialized<ThingWithComps>();
-                HasGenepackContainer = hasGenepackContainer;
-                PowerOn = true;
-                ContainedGenepacks = containedGenepacks == null
-                    ? new List<Genepack>()
-                    : new List<Genepack>(containedGenepacks);
-            }
-        }
-
-        internal sealed class AssemblerFixture
-        {
-            internal Building_GeneAssembler Assembler { get; }
-            internal List<FacilityFixture> ConnectedFacilities { get; }
-
-            internal AssemblerFixture(IEnumerable<FacilityFixture> connectedFacilities)
-            {
-                Assembler = CreateUninitialized<Building_GeneAssembler>();
-                ConnectedFacilities = connectedFacilities == null
-                    ? new List<FacilityFixture>()
-                    : new List<FacilityFixture>(connectedFacilities);
-            }
-        }
-
         internal static Building CreateOrdinaryBuilding()
         {
             return CreateUninitialized<Building>();
@@ -87,6 +55,8 @@ namespace XenogermPlanner.Tests.Assemblers
 
             return PlanAssemblerScopeScanner.Scan(
                 assemblerFixture.Assembler,
+                // Reject a different assembler to verify the scanner's input.
+                // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
                 assembler =>
                 {
                     if (!ReferenceEquals(assembler, assemblerFixture.Assembler))
@@ -120,7 +90,35 @@ namespace XenogermPlanner.Tests.Assemblers
 
         private static T CreateUninitialized<T>() where T : class
         {
-            return (T)FormatterServices.GetUninitializedObject(typeof(T));
+            return (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
+        }
+
+        internal sealed class FacilityFixture
+        {
+            internal FacilityFixture(bool hasGenepackContainer, IEnumerable<Genepack> containedGenepacks)
+            {
+                Facility = CreateUninitialized<ThingWithComps>();
+                HasGenepackContainer = hasGenepackContainer;
+                PowerOn = true;
+                ContainedGenepacks = containedGenepacks == null ? [] : [..containedGenepacks];
+            }
+
+            internal Thing Facility { get; }
+            internal bool HasGenepackContainer { get; set; }
+            internal bool PowerOn { get; set; }
+            internal List<Genepack> ContainedGenepacks { get; }
+        }
+
+        internal sealed class AssemblerFixture
+        {
+            internal AssemblerFixture(IEnumerable<FacilityFixture> connectedFacilities)
+            {
+                Assembler = CreateUninitialized<Building_GeneAssembler>();
+                ConnectedFacilities = connectedFacilities == null ? [] : [..connectedFacilities];
+            }
+
+            internal Building_GeneAssembler Assembler { get; }
+            internal List<FacilityFixture> ConnectedFacilities { get; }
         }
     }
 }

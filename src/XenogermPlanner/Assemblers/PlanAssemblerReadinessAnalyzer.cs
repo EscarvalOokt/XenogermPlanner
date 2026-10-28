@@ -10,34 +10,6 @@ namespace XenogermPlanner.Assemblers
 {
     internal static class PlanAssemblerReadinessAnalyzer
     {
-        private sealed class CandidateEvaluation
-        {
-            internal PlanAssemblerCandidate Candidate { get; }
-            internal IReadOnlyList<PlanAssemblerBlockerReason> Blockers { get; }
-            internal int RequiredComplexity { get; }
-            internal int RequiredArchiteCapsules { get; }
-            internal int ComplexityDeficit { get; }
-            internal int ArchiteCapsuleDeficit { get; }
-            internal bool IsPrerequisiteComplete => Candidate.IsPrerequisiteComplete;
-            internal bool IsReady => Blockers.Count == 0;
-
-            internal CandidateEvaluation(
-                PlanAssemblerCandidate candidate,
-                IReadOnlyList<PlanAssemblerBlockerReason> blockers,
-                int requiredComplexity,
-                int requiredArchiteCapsules,
-                int availableComplexity,
-                int availableArchiteCapsules)
-            {
-                Candidate = candidate ?? throw new ArgumentNullException(nameof(candidate));
-                Blockers = blockers ?? throw new ArgumentNullException(nameof(blockers));
-                RequiredComplexity = requiredComplexity;
-                RequiredArchiteCapsules = requiredArchiteCapsules;
-                ComplexityDeficit = Math.Max(0, requiredComplexity - availableComplexity);
-                ArchiteCapsuleDeficit = Math.Max(0, requiredArchiteCapsules - availableArchiteCapsules);
-            }
-        }
-
         internal static PlanAssemblerReadinessResult Analyze(XenogermPlan plan, Building_GeneAssembler assembler)
         {
             if (assembler == null)
@@ -56,7 +28,8 @@ namespace XenogermPlanner.Assemblers
             PlanAssemblerLiveState liveState,
             Func<Genepack, IEnumerable<GeneDef>> getGenepackGenes,
             Func<IEnumerable<GeneDef>, IEnumerable<GeneDef>> getNonOverriddenGenes,
-            Func<Genepack, string> getPhysicalKey)
+            Func<Genepack, string> getPhysicalKey,
+            PlanAssemblerSearchBudget searchBudget = null)
         {
             if (plan == null)
                 throw new ArgumentNullException(nameof(plan));
@@ -105,13 +78,16 @@ namespace XenogermPlanner.Assemblers
 
             CandidateEvaluation bestBlockedCandidate = null;
             var foundCandidate = false;
+            PlanAssemblerSearchBudget budget = searchBudget ?? new PlanAssemblerSearchBudget();
 
             IEnumerable<PlanAssemblerCandidate> candidates = PlanAssemblerCandidateSearcher.Search(
                 plan.DesiredGenes,
                 plan.ReadinessMode,
                 liveState.Scope,
                 getGenepackGenes,
-                getPhysicalKey);
+                getPhysicalKey,
+                budget,
+                includeHelpers: true);
 
             foreach (PlanAssemblerCandidate candidate in candidates)
             {
@@ -134,6 +110,9 @@ namespace XenogermPlanner.Assemblers
                 }
             }
 
+            if (budget.IsExhausted)
+                return PlanAssemblerReadinessResult.CreateSearchIncomplete(geneScopeResult, visibleGenepackCount);
+
             if (!foundCandidate || bestBlockedCandidate == null)
             {
                 throw new InvalidOperationException(
@@ -149,7 +128,8 @@ namespace XenogermPlanner.Assemblers
                 bestBlockedCandidate.RequiredArchiteCapsules,
                 liveState.AvailableArchiteCapsules,
                 bestBlockedCandidate.Candidate.Sources.Select(source => source.Genepack),
-                bestBlockedCandidate.Candidate.MissingPrerequisites);
+                bestBlockedCandidate.Candidate.MissingPrerequisites,
+                bestBlockedCandidate.ActualMetabolism);
         }
 
         private static CandidateEvaluation EvaluateCandidate(
@@ -210,9 +190,13 @@ namespace XenogermPlanner.Assemblers
 
             var distinctEffectiveGenes = new HashSet<GeneDef>(effectiveGenes);
             var requiredArchiteCapsules = 0;
+            var actualMetabolism = 0;
 
             foreach (GeneDef gene in distinctEffectiveGenes)
+            {
                 requiredArchiteCapsules += gene.biostatArc;
+                actualMetabolism += gene.biostatMet;
+            }
 
             var blockers = new List<PlanAssemblerBlockerReason>();
 
@@ -234,13 +218,17 @@ namespace XenogermPlanner.Assemblers
             if (requiredArchiteCapsules > liveState.AvailableArchiteCapsules)
                 blockers.Add(PlanAssemblerBlockerReason.InsufficientArchiteCapsules);
 
+            if (actualMetabolism < GeneTuning.BiostatRange.TrueMin)
+                blockers.Add(PlanAssemblerBlockerReason.MetabolismTooLow);
+
             return new CandidateEvaluation(
                 candidate,
                 blockers.AsReadOnly(),
                 requiredComplexity,
                 requiredArchiteCapsules,
                 liveState.MaxComplexity,
-                liveState.AvailableArchiteCapsules);
+                liveState.AvailableArchiteCapsules,
+                actualMetabolism);
         }
 
         private static bool IsBetterBlockedCandidate(CandidateEvaluation candidate, CandidateEvaluation currentBest)
@@ -265,6 +253,11 @@ namespace XenogermPlanner.Assemblers
             if (comparison != 0)
                 return comparison < 0;
 
+            comparison = candidate.MetabolismDeficit.CompareTo(currentBest.MetabolismDeficit);
+
+            if (comparison != 0)
+                return comparison < 0;
+
             return candidate.Candidate.Sources.Count < currentBest.Candidate.Sources.Count;
         }
 
@@ -281,7 +274,8 @@ namespace XenogermPlanner.Assemblers
                 liveState.MaxComplexity,
                 evaluation.RequiredArchiteCapsules,
                 liveState.AvailableArchiteCapsules,
-                evaluation.Candidate.Sources.Select(source => source.Genepack));
+                evaluation.Candidate.Sources.Select(source => source.Genepack),
+                evaluation.ActualMetabolism);
         }
 
         private static IEnumerable<GeneDef> GetNonOverriddenGenes(IEnumerable<GeneDef> genes)
@@ -319,6 +313,39 @@ namespace XenogermPlanner.Assemblers
         private static string GetStablePhysicalKey(Genepack genepack)
         {
             return genepack.ThingID ?? string.Empty;
+        }
+
+        private sealed class CandidateEvaluation
+        {
+            internal CandidateEvaluation(
+                PlanAssemblerCandidate candidate,
+                IReadOnlyList<PlanAssemblerBlockerReason> blockers,
+                int requiredComplexity,
+                int requiredArchiteCapsules,
+                int availableComplexity,
+                int availableArchiteCapsules,
+                int actualMetabolism)
+            {
+                Candidate = candidate ?? throw new ArgumentNullException(nameof(candidate));
+                Blockers = blockers ?? throw new ArgumentNullException(nameof(blockers));
+                RequiredComplexity = requiredComplexity;
+                RequiredArchiteCapsules = requiredArchiteCapsules;
+                ComplexityDeficit = Math.Max(0, requiredComplexity - availableComplexity);
+                ArchiteCapsuleDeficit = Math.Max(0, requiredArchiteCapsules - availableArchiteCapsules);
+                ActualMetabolism = actualMetabolism;
+                MetabolismDeficit = Math.Max(0, GeneTuning.BiostatRange.TrueMin - actualMetabolism);
+            }
+
+            internal PlanAssemblerCandidate Candidate { get; }
+            internal IReadOnlyList<PlanAssemblerBlockerReason> Blockers { get; }
+            internal int RequiredComplexity { get; }
+            internal int RequiredArchiteCapsules { get; }
+            internal int ComplexityDeficit { get; }
+            internal int ArchiteCapsuleDeficit { get; }
+            internal int ActualMetabolism { get; }
+            internal int MetabolismDeficit { get; }
+            internal bool IsPrerequisiteComplete => Candidate.IsPrerequisiteComplete;
+            internal bool IsReady => Blockers.Count == 0;
         }
     }
 }

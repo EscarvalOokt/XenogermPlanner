@@ -1,5 +1,5 @@
 using System;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using NUnit.Framework;
 using RimWorld;
 using Verse;
@@ -24,9 +24,9 @@ namespace XenogermPlanner.Tests.Trade
             PlanTraderAdvisoryOfferSnapshot secondOffer = Offer(secondPack, gene);
             PlanTraderAdvisorySourceState state = State(
                 trader,
-                new[] { firstOffer, secondOffer },
-                new PlanTraderAdvisoryOfferAnalysis(firstOffer, new[] { firstPlan, secondPlan }),
-                new PlanTraderAdvisoryOfferAnalysis(secondOffer, new[] { firstPlan }));
+                [firstOffer, secondOffer],
+                new PlanTraderAdvisoryOfferAnalysis(firstOffer, [firstPlan, secondPlan]),
+                new PlanTraderAdvisoryOfferAnalysis(secondOffer, [firstPlan]));
 
             PlanTraderAdvisoryNotificationTracker.EstablishBaseline(state);
 
@@ -47,8 +47,8 @@ namespace XenogermPlanner.Tests.Trade
             PlanTraderAdvisoryOfferSnapshot offer = Offer(genepack, gene);
             PlanTraderAdvisorySourceState state = State(
                 trader,
-                new[] { offer },
-                new PlanTraderAdvisoryOfferAnalysis(offer, new[] { plan }));
+                [offer],
+                new PlanTraderAdvisoryOfferAnalysis(offer, [plan]));
 
             PlanTraderAdvisoryNotification notification =
                 PlanTraderAdvisoryNotificationTracker.Reconcile(state, canTradeNow: false);
@@ -71,17 +71,17 @@ namespace XenogermPlanner.Tests.Trade
             PlanTraderAdvisoryOfferSnapshot secondOffer = Offer(secondPack, gene);
             PlanTraderAdvisorySourceState state = State(
                 trader,
-                new[] { firstOffer, secondOffer },
-                new PlanTraderAdvisoryOfferAnalysis(firstOffer, new[] { firstPlan, secondPlan }),
-                new PlanTraderAdvisoryOfferAnalysis(secondOffer, new[] { firstPlan }));
+                [firstOffer, secondOffer],
+                new PlanTraderAdvisoryOfferAnalysis(firstOffer, [firstPlan, secondPlan]),
+                new PlanTraderAdvisoryOfferAnalysis(secondOffer, [firstPlan]));
 
             PlanTraderAdvisoryNotification notification =
                 PlanTraderAdvisoryNotificationTracker.Reconcile(state, canTradeNow: true);
 
             Assert.That(notification, Is.Not.Null);
             Assert.That(notification.OfferCount, Is.EqualTo(2));
-            Assert.That(notification.Offers[0].MatchingPlans, Is.EqualTo(new[] { firstPlan, secondPlan }));
-            Assert.That(notification.Offers[1].MatchingPlans, Is.EqualTo(new[] { firstPlan }));
+            Assert.That(notification.Offers[0].MatchingPlans, Is.EqualTo([firstPlan, secondPlan]));
+            Assert.That(notification.Offers[1].MatchingPlans, Is.EqualTo([firstPlan]));
             Assert.That(state.IsPending(firstPack, firstPlan.Id), Is.True);
             Assert.That(state.IsPending(firstPack, secondPlan.Id), Is.True);
             Assert.That(state.IsPending(secondPack, firstPlan.Id), Is.True);
@@ -108,11 +108,11 @@ namespace XenogermPlanner.Tests.Trade
             PlanTraderAdvisoryOfferSnapshot offer = Offer(genepack, gene);
             PlanTraderAdvisorySourceState state = State(
                 trader,
-                new[] { offer },
-                new PlanTraderAdvisoryOfferAnalysis(offer, new[] { baselinePlan }));
+                [offer],
+                new PlanTraderAdvisoryOfferAnalysis(offer, [baselinePlan]));
 
             PlanTraderAdvisoryNotificationTracker.EstablishBaseline(state);
-            state.ReplaceAnalysis(new[] { new PlanTraderAdvisoryOfferAnalysis(offer, new[] { replacementPlan }) });
+            state.ReplaceAnalysis([new PlanTraderAdvisoryOfferAnalysis(offer, [replacementPlan])]);
 
             PlanTraderAdvisoryNotification notification =
                 PlanTraderAdvisoryNotificationTracker.Reconcile(state, canTradeNow: true);
@@ -131,13 +131,13 @@ namespace XenogermPlanner.Tests.Trade
             PlanTraderAdvisoryOfferSnapshot offer = Offer(genepack, gene);
             PlanTraderAdvisorySourceState state = State(
                 trader,
-                new[] { offer },
-                new PlanTraderAdvisoryOfferAnalysis(offer, new[] { plan }));
+                [offer],
+                new PlanTraderAdvisoryOfferAnalysis(offer, [plan]));
 
             PlanTraderAdvisoryNotificationTracker.EstablishBaseline(state);
-            state.ReplaceAnalysis(new[] { new PlanTraderAdvisoryOfferAnalysis(offer, Array.Empty<XenogermPlan>()) });
+            state.ReplaceAnalysis([new PlanTraderAdvisoryOfferAnalysis(offer, [])]);
             PlanTraderAdvisoryNotificationTracker.Reconcile(state, canTradeNow: true);
-            state.ReplaceAnalysis(new[] { new PlanTraderAdvisoryOfferAnalysis(offer, new[] { plan }) });
+            state.ReplaceAnalysis([new PlanTraderAdvisoryOfferAnalysis(offer, [plan])]);
 
             PlanTraderAdvisoryNotification notification =
                 PlanTraderAdvisoryNotificationTracker.Reconcile(state, canTradeNow: true);
@@ -156,13 +156,13 @@ namespace XenogermPlanner.Tests.Trade
             PlanTraderAdvisoryOfferSnapshot offer = Offer(genepack, gene);
             PlanTraderAdvisorySourceState state = State(
                 trader,
-                new[] { offer },
-                new PlanTraderAdvisoryOfferAnalysis(offer, new[] { plan }));
+                [offer],
+                new PlanTraderAdvisoryOfferAnalysis(offer, [plan]));
 
             PlanTraderAdvisoryNotificationTracker.Reconcile(state, canTradeNow: false);
             Assert.That(state.IsPending(genepack, plan.Id), Is.True);
 
-            state.ReplaceAnalysis(new[] { new PlanTraderAdvisoryOfferAnalysis(offer, Array.Empty<XenogermPlan>()) });
+            state.ReplaceAnalysis([new PlanTraderAdvisoryOfferAnalysis(offer, [])]);
             PlanTraderAdvisoryNotification notification =
                 PlanTraderAdvisoryNotificationTracker.Reconcile(state, canTradeNow: true);
 
@@ -181,14 +181,14 @@ namespace XenogermPlanner.Tests.Trade
             PlanTraderAdvisoryOfferSnapshot baselineOffer = Offer(baselinePack, gene);
             PlanTraderAdvisorySourceState state = State(
                 trader,
-                new[] { baselineOffer },
-                new PlanTraderAdvisoryOfferAnalysis(baselineOffer, new[] { plan }));
+                [baselineOffer],
+                new PlanTraderAdvisoryOfferAnalysis(baselineOffer, [plan]));
 
             PlanTraderAdvisoryNotificationTracker.EstablishBaseline(state);
 
             PlanTraderAdvisoryOfferSnapshot replacementOffer = Offer(replacementPack, gene);
             state.UpdateStock(Source(trader, replacementOffer));
-            state.ReplaceAnalysis(new[] { new PlanTraderAdvisoryOfferAnalysis(replacementOffer, new[] { plan }) });
+            state.ReplaceAnalysis([new PlanTraderAdvisoryOfferAnalysis(replacementOffer, [plan])]);
 
             PlanTraderAdvisoryNotification notification =
                 PlanTraderAdvisoryNotificationTracker.Reconcile(state, canTradeNow: true);
@@ -211,12 +211,12 @@ namespace XenogermPlanner.Tests.Trade
             PlanTraderAdvisoryOfferSnapshot offer = Offer(genepack, gene);
             PlanTraderAdvisorySourceState firstState = State(
                 firstTrader,
-                new[] { offer },
-                new PlanTraderAdvisoryOfferAnalysis(offer, new[] { plan }));
+                [offer],
+                new PlanTraderAdvisoryOfferAnalysis(offer, [plan]));
             PlanTraderAdvisorySourceState secondState = State(
                 secondTrader,
-                new[] { offer },
-                new PlanTraderAdvisoryOfferAnalysis(offer, new[] { plan }));
+                [offer],
+                new PlanTraderAdvisoryOfferAnalysis(offer, [plan]));
             PlanTraderAdvisoryNotification notification =
                 PlanTraderAdvisoryNotificationTracker.Reconcile(firstState, canTradeNow: true);
 
@@ -254,7 +254,7 @@ namespace XenogermPlanner.Tests.Trade
 
         private static XenogermPlan CreatePlan(string id, string name, params GeneDef[] genes)
         {
-            return new XenogermPlan(id, name, genes, Array.Empty<string>(), PlanReadinessMode.Coverage);
+            return new XenogermPlan(id, name, genes, [], PlanReadinessMode.Coverage);
         }
 
         private static GeneDef CreateGene(string defName)
@@ -264,7 +264,7 @@ namespace XenogermPlanner.Tests.Trade
 
         private static T CreateUninitialized<T>() where T : class
         {
-            return (T)FormatterServices.GetUninitializedObject(typeof(T));
+            return (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
         }
     }
 }

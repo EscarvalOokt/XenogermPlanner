@@ -20,26 +20,12 @@ namespace XenogermPlanner.UI
         private const float DonorTargetGap = RimWorldUiStyle.Metrics.ControlGap;
         private const float InitialScreenMargin = 35f;
 
-        private readonly GeneDef _gene;
-
         private readonly PotentialDonorPresentationProjectionCache _donorProjectionCache =
             new PotentialDonorPresentationProjectionCache();
 
+        private readonly GeneDef _gene;
+
         private Vector2 _scrollPosition;
-
-        public override Vector2 InitialSize =>
-            new Vector2(DialogWidth, DialogHeight);
-
-        protected override void SetInitialSizeAndPosition()
-        {
-            Vector2 initialSize = InitialSize;
-            float maximumX = Mathf.Max(0f, Verse.UI.screenWidth - initialSize.x);
-            float maximumY = Mathf.Max(0f, Verse.UI.screenHeight - initialSize.y);
-            float x = Mathf.Clamp(maximumX - InitialScreenMargin, 0f, maximumX);
-            float y = Mathf.Clamp(maximumY * 0.5f, 0f, maximumY);
-
-            windowRect = new Rect(x, y, initialSize.x, initialSize.y);
-        }
 
         public PotentialDonorDetailsDialog(GeneDef gene)
         {
@@ -50,6 +36,19 @@ namespace XenogermPlanner.UI
             closeOnClickedOutside = false;
             forcePause = true;
             draggable = true;
+        }
+
+        public override Vector2 InitialSize => new Vector2(DialogWidth, DialogHeight);
+
+        protected override void SetInitialSizeAndPosition()
+        {
+            Vector2 initialSize = InitialSize;
+            float maximumX = Mathf.Max(0f, Verse.UI.screenWidth - initialSize.x);
+            float maximumY = Mathf.Max(0f, Verse.UI.screenHeight - initialSize.y);
+            float x = Mathf.Clamp(maximumX - InitialScreenMargin, 0f, maximumX);
+            float y = Mathf.Clamp(maximumY * 0.5f, 0f, maximumY);
+
+            windowRect = new Rect(x, y, initialSize.x, initialSize.y);
         }
 
         public override void DoWindowContents(Rect inRect)
@@ -85,7 +84,8 @@ namespace XenogermPlanner.UI
         private void DrawTitle(Rect rect)
         {
             var title = "XenogermPlanner.PotentialDonors.Title".Translate(
-                XenogermPlannerPresentation.GetGeneDisplayName(_gene)).ToString();
+                    XenogermPlannerPresentation.GetGeneDisplayName(_gene))
+                .ToString();
 
             XenogermPlannerWidgets.DrawGeneLabel(
                 rect,
@@ -102,7 +102,7 @@ namespace XenogermPlanner.UI
 
             Rect innerRect = rect.ContractedBy(SectionPadding);
             PlanPotentialDonorAnalysisResult analysis = PlanPotentialDonorAnalyzer.Analyze(
-                new[] { _gene },
+                [_gene],
                 PlanPotentialDonorScopeScanner.Scan(Find.CurrentMap));
 
             if (!analysis.IsAvailable)

@@ -13,27 +13,6 @@ namespace XenogermPlanner.Assemblers
         private readonly ReadOnlyCollection<Genepack> _candidateGenepacks;
         private readonly ReadOnlyCollection<PlanGenePrerequisiteDiagnostic> _missingPrerequisites;
 
-        public PlanAssemblerReadinessStatus Status { get; }
-        public PlanReadinessResult GeneScopeResult { get; }
-        public int VisibleGenepackCount { get; }
-
-        public IReadOnlyList<PlanAssemblerBlockerReason> BlockerReasons =>
-            _blockerReasons;
-
-        public int RequiredComplexity { get; }
-        public int AvailableComplexity { get; }
-        public int RequiredArchiteCapsules { get; }
-        public int AvailableArchiteCapsules { get; }
-        public int CandidatePackCount => _candidateGenepacks.Count;
-
-        public IReadOnlyList<Genepack> CandidateGenepacks =>
-            _candidateGenepacks;
-
-        public IReadOnlyList<PlanGenePrerequisiteDiagnostic> MissingPrerequisites =>
-            _missingPrerequisites;
-
-        public bool IsReady => Status == PlanAssemblerReadinessStatus.Ready;
-
         private PlanAssemblerReadinessResult(
             PlanAssemblerReadinessStatus status,
             PlanReadinessResult geneScopeResult,
@@ -44,7 +23,8 @@ namespace XenogermPlanner.Assemblers
             int requiredArchiteCapsules,
             int availableArchiteCapsules,
             IEnumerable<Genepack> candidateGenepacks,
-            IEnumerable<PlanGenePrerequisiteDiagnostic> missingPrerequisites)
+            IEnumerable<PlanGenePrerequisiteDiagnostic> missingPrerequisites,
+            int actualMetabolism)
         {
             ValidateStatus(status);
 
@@ -102,6 +82,16 @@ namespace XenogermPlanner.Assemblers
                 copiedCandidateGenepacks,
                 copiedMissingPrerequisites);
 
+            int minimumMetabolism = GeneTuning.BiostatRange.TrueMin;
+            if (copiedCandidateGenepacks.Count > 0 &&
+                ContainsBlocker(copiedBlockerReasons, PlanAssemblerBlockerReason.MetabolismTooLow) !=
+                (actualMetabolism < minimumMetabolism))
+            {
+                throw new ArgumentException(
+                    "Candidate metabolism must match its blocker diagnostics.",
+                    nameof(actualMetabolism));
+            }
+
             Status = status;
             VisibleGenepackCount = visibleGenepackCount;
             _blockerReasons = copiedBlockerReasons.AsReadOnly();
@@ -109,9 +99,31 @@ namespace XenogermPlanner.Assemblers
             AvailableComplexity = availableComplexity;
             RequiredArchiteCapsules = requiredArchiteCapsules;
             AvailableArchiteCapsules = availableArchiteCapsules;
+            ActualMetabolism = actualMetabolism;
+            MinimumMetabolism = minimumMetabolism;
             _candidateGenepacks = copiedCandidateGenepacks.AsReadOnly();
             _missingPrerequisites = copiedMissingPrerequisites.AsReadOnly();
         }
+
+        public PlanAssemblerReadinessStatus Status { get; }
+        public PlanReadinessResult GeneScopeResult { get; }
+        public int VisibleGenepackCount { get; }
+
+        public IReadOnlyList<PlanAssemblerBlockerReason> BlockerReasons => _blockerReasons;
+
+        public int RequiredComplexity { get; }
+        public int AvailableComplexity { get; }
+        public int RequiredArchiteCapsules { get; }
+        public int AvailableArchiteCapsules { get; }
+        public int ActualMetabolism { get; }
+        public int MinimumMetabolism { get; }
+        public int CandidatePackCount => _candidateGenepacks.Count;
+
+        public IReadOnlyList<Genepack> CandidateGenepacks => _candidateGenepacks;
+
+        public IReadOnlyList<PlanGenePrerequisiteDiagnostic> MissingPrerequisites => _missingPrerequisites;
+
+        public bool IsReady => Status == PlanAssemblerReadinessStatus.Ready;
 
         internal static PlanAssemblerReadinessResult CreateReady(
             PlanReadinessResult geneScopeResult,
@@ -120,7 +132,8 @@ namespace XenogermPlanner.Assemblers
             int availableComplexity,
             int requiredArchiteCapsules,
             int availableArchiteCapsules,
-            IEnumerable<Genepack> candidateGenepacks)
+            IEnumerable<Genepack> candidateGenepacks,
+            int actualMetabolism)
         {
             return new PlanAssemblerReadinessResult(
                 PlanAssemblerReadinessStatus.Ready,
@@ -132,7 +145,8 @@ namespace XenogermPlanner.Assemblers
                 requiredArchiteCapsules,
                 availableArchiteCapsules,
                 candidateGenepacks,
-                Array.Empty<PlanGenePrerequisiteDiagnostic>());
+                Array.Empty<PlanGenePrerequisiteDiagnostic>(),
+                actualMetabolism);
         }
 
         internal static PlanAssemblerReadinessResult CreateBlocked(
@@ -144,7 +158,8 @@ namespace XenogermPlanner.Assemblers
             int requiredArchiteCapsules,
             int availableArchiteCapsules,
             IEnumerable<Genepack> candidateGenepacks,
-            IEnumerable<PlanGenePrerequisiteDiagnostic> missingPrerequisites)
+            IEnumerable<PlanGenePrerequisiteDiagnostic> missingPrerequisites,
+            int actualMetabolism)
         {
             return new PlanAssemblerReadinessResult(
                 PlanAssemblerReadinessStatus.Blocked,
@@ -156,7 +171,18 @@ namespace XenogermPlanner.Assemblers
                 requiredArchiteCapsules,
                 availableArchiteCapsules,
                 candidateGenepacks,
-                missingPrerequisites);
+                missingPrerequisites,
+                actualMetabolism);
+        }
+
+        internal static PlanAssemblerReadinessResult CreateSearchIncomplete(
+            PlanReadinessResult geneScopeResult,
+            int visibleGenepackCount)
+        {
+            return CreateWithoutCandidate(
+                PlanAssemblerReadinessStatus.SearchIncomplete,
+                geneScopeResult,
+                visibleGenepackCount);
         }
 
         internal static PlanAssemblerReadinessResult CreateNotReady(
@@ -198,7 +224,8 @@ namespace XenogermPlanner.Assemblers
                 0,
                 0,
                 Array.Empty<Genepack>(),
-                Array.Empty<PlanGenePrerequisiteDiagnostic>());
+                Array.Empty<PlanGenePrerequisiteDiagnostic>(),
+                0);
         }
 
         private static List<PlanAssemblerBlockerReason> CopyDistinctBlockerReasons(
@@ -263,7 +290,8 @@ namespace XenogermPlanner.Assemblers
                         nameof(missingPrerequisites));
                 }
 
-                string key = (diagnostic.DependentGene.defName ?? string.Empty) + "\u001f" +
+                string key = (diagnostic.DependentGene.defName ?? string.Empty) +
+                             "\u001f" +
                              (diagnostic.PrerequisiteGene.defName ?? string.Empty);
 
                 if (keys.Add(key))
@@ -275,9 +303,12 @@ namespace XenogermPlanner.Assemblers
 
         private static void ValidateStatus(PlanAssemblerReadinessStatus status)
         {
-            if (status != PlanAssemblerReadinessStatus.Ready && status != PlanAssemblerReadinessStatus.NotReady &&
-                status != PlanAssemblerReadinessStatus.Blocked && status != PlanAssemblerReadinessStatus.EmptyTarget &&
-                status != PlanAssemblerReadinessStatus.Degraded)
+            if (status != PlanAssemblerReadinessStatus.Ready &&
+                status != PlanAssemblerReadinessStatus.NotReady &&
+                status != PlanAssemblerReadinessStatus.Blocked &&
+                status != PlanAssemblerReadinessStatus.EmptyTarget &&
+                status != PlanAssemblerReadinessStatus.Degraded &&
+                status != PlanAssemblerReadinessStatus.SearchIncomplete)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(status),
@@ -293,7 +324,8 @@ namespace XenogermPlanner.Assemblers
                 blockerReason != PlanAssemblerBlockerReason.AssemblerUnpowered &&
                 blockerReason != PlanAssemblerBlockerReason.InsufficientComplexity &&
                 blockerReason != PlanAssemblerBlockerReason.ArchogeneticsResearchMissing &&
-                blockerReason != PlanAssemblerBlockerReason.InsufficientArchiteCapsules)
+                blockerReason != PlanAssemblerBlockerReason.InsufficientArchiteCapsules &&
+                blockerReason != PlanAssemblerBlockerReason.MetabolismTooLow)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(blockerReason),
@@ -372,6 +404,10 @@ namespace XenogermPlanner.Assemblers
 
             switch (status)
             {
+                case PlanAssemblerReadinessStatus.SearchIncomplete:
+                    expectedGeneScopeStatus = PlanReadinessStatus.Ready;
+                    break;
+
                 case PlanAssemblerReadinessStatus.NotReady:
                     expectedGeneScopeStatus = PlanReadinessStatus.NotReady;
                     break;

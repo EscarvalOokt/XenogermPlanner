@@ -14,9 +14,6 @@ namespace XenogermPlanner.UI
     {
         private readonly ReadOnlyCollection<Genepack> _genepacks;
 
-        internal PlanGenepackCompositionDiagnostic Composition { get; }
-        internal IReadOnlyList<Genepack> Genepacks => _genepacks;
-
         internal GeneCoverageTableSourceGroup(
             PlanGenepackCompositionDiagnostic composition,
             IEnumerable<Genepack> genepacks)
@@ -38,15 +35,14 @@ namespace XenogermPlanner.UI
 
             _genepacks = copiedGenepacks.AsReadOnly();
         }
+
+        internal PlanGenepackCompositionDiagnostic Composition { get; }
+        internal IReadOnlyList<Genepack> Genepacks => _genepacks;
     }
 
     internal sealed class GeneCoverageTablePresentationRow
     {
         private readonly ReadOnlyCollection<GeneCoverageTableSourceGroup> _sourceGroups;
-
-        internal GeneCoverageTableRow Row { get; }
-        internal IReadOnlyList<GeneCoverageTableSourceGroup> SourceGroups => _sourceGroups;
-        internal bool IsResolved => Row.IsResolved;
 
         internal GeneCoverageTablePresentationRow(
             GeneCoverageTableRow row,
@@ -69,14 +65,15 @@ namespace XenogermPlanner.UI
 
             _sourceGroups = copiedSourceGroups.AsReadOnly();
         }
+
+        internal GeneCoverageTableRow Row { get; }
+        internal IReadOnlyList<GeneCoverageTableSourceGroup> SourceGroups => _sourceGroups;
+        internal bool IsResolved => Row.IsResolved;
     }
 
     internal sealed class GeneCoverageTableProjection
     {
         private readonly ReadOnlyCollection<GeneCoverageTablePresentationRow> _rows;
-
-        internal IReadOnlyList<GeneCoverageTablePresentationRow> Rows => _rows;
-        internal bool ShowPotentialDonors { get; }
 
         private GeneCoverageTableProjection(
             IEnumerable<GeneCoverageTablePresentationRow> rows,
@@ -98,6 +95,9 @@ namespace XenogermPlanner.UI
             _rows = copiedRows.AsReadOnly();
             ShowPotentialDonors = showPotentialDonors;
         }
+
+        internal IReadOnlyList<GeneCoverageTablePresentationRow> Rows => _rows;
+        internal bool ShowPotentialDonors { get; }
 
         internal static GeneCoverageTableProjection Build(
             XenogermPlan plan,
@@ -236,7 +236,8 @@ namespace XenogermPlanner.UI
                 {
                     GeneDef gene = genes[geneIndex];
 
-                    if (gene == null || !compositionsByGene.TryGetValue(
+                    if (gene == null ||
+                        !compositionsByGene.TryGetValue(
                             gene,
                             out List<PlanGenepackCompositionDiagnostic> geneCompositions))
                     {
@@ -287,15 +288,15 @@ namespace XenogermPlanner.UI
 
     internal sealed class GeneCoverageTableProjectionCache
     {
-        private XenogermPlan _plan;
         private object _desiredGenesKey;
-        private object _unresolvedGenesKey;
-        private PlanReadinessResult _readinessResult;
-        private IReadOnlyList<Genepack> _sourceGenepacks;
-        private PlanPotentialDonorAnalysisResult _potentialDonorAnalysis;
-        private GeneCoverageSortState _sortState;
         private object _languageKey;
+        private XenogermPlan _plan;
+        private PlanPotentialDonorAnalysisResult _potentialDonorAnalysis;
         private GeneCoverageTableProjection _projection;
+        private PlanReadinessResult _readinessResult;
+        private GeneCoverageSortState _sortState;
+        private IReadOnlyList<Genepack> _sourceGenepacks;
+        private object _unresolvedGenesKey;
 
         internal GeneCoverageTableProjection GetOrBuild(
             XenogermPlan plan,
@@ -380,13 +381,15 @@ namespace XenogermPlanner.UI
             GeneCoverageSortState sortState,
             object languageKey)
         {
-            return _projection != null && ReferenceEquals(_plan, plan) &&
+            return _projection != null &&
+                   ReferenceEquals(_plan, plan) &&
                    ReferenceEquals(_desiredGenesKey, plan.DesiredGenes) &&
                    ReferenceEquals(_unresolvedGenesKey, plan.UnresolvedDesiredGeneDefNames) &&
                    ReferenceEquals(_readinessResult, readinessResult) &&
                    ReferenceEquals(_sourceGenepacks, sourceGenepacks) &&
                    ReferenceEquals(_potentialDonorAnalysis, potentialDonorAnalysis) &&
-                   _sortState.Column == sortState.Column && _sortState.Descending == sortState.Descending &&
+                   _sortState.Column == sortState.Column &&
+                   _sortState.Descending == sortState.Descending &&
                    Equals(_languageKey, languageKey);
         }
 

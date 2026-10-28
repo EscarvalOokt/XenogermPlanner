@@ -1,0 +1,162 @@
+<Project>
+    <PropertyGroup>
+        <_ModRepositoryDir>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..'))</_ModRepositoryDir>
+        <_ModSourceDir>$([MSBuild]::NormalizeDirectory('$(_ModRepositoryDir)', 'mod'))</_ModSourceDir>
+    </PropertyGroup>
+
+    <!-- Validate every cleanup path before touching an installed package. -->
+    <UsingTask TaskName="ValidateModDeploymentPaths"
+               TaskFactory="RoslynCodeTaskFactory"
+               AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <Root ParameterType="System.String" Required="true"/>
+            <RepositoryRoot ParameterType="System.String" Required="true"/>
+            <GameRoot ParameterType="System.String" Required="true"/>
+            <Directories ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true"/>
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System"/>
+            <Using Namespace="System.IO"/>
+            <Using Namespace="System.Collections.Generic"/>
+            <Code Type="Method" Language="cs"><![CDATA[
+            public override bool Execute()
+            {
+                try
+                {
+                    var comparison = Path.DirectorySeparatorChar == (char)92
+                        ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+                    var root = Path.GetFullPath(Root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    var prefix = root + Path.DirectorySeparatorChar;
+                    var repository = Path.GetFullPath(RepositoryRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                        + Path.DirectorySeparatorChar;
+                    var game = Path.GetFullPath(GameRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                        + Path.DirectorySeparatorChar;
+                    if (prefix.StartsWith(repository, comparison) || repository.StartsWith(prefix, comparison))
+                        throw new InvalidOperationException("Deployment must be outside the source repository and its ancestors.");
+                    if (game.StartsWith(prefix, comparison) || new DirectoryInfo(root).Parent == null)
+                        throw new InvalidOperationException("Deployment must name a mod directory, not the game directory or a filesystem root.");
+                    if (Directory.Exists(Path.Combine(root, ".git")) || File.Exists(Path.Combine(root, ".git")))
+                        throw new InvalidOperationException("Deployment cannot replace content in a Git checkout.");
+                    for (var parent = new DirectoryInfo(root); parent != null; parent = parent.Parent)
+                        if (parent.Exists && (parent.Attributes & FileAttributes.ReparsePoint) != 0)
+                            throw new InvalidOperationException("Deployment through symbolic links or junctions is not supported: " + parent.FullName);
+
+                    foreach (var item in Directories)
+                    {
+                        var path = Path.GetFullPath(item.ItemSpec);
+                        if (!path.StartsWith(prefix, comparison))
+                            throw new InvalidOperationException("Cleanup path is outside the mod directory: " + path);
+                        if (File.Exists(path))
+                            throw new InvalidOperationException("A managed directory is occupied by a file: " + path);
+                        if (!Directory.Exists(path)) continue;
+                        var pending = new Stack<string>();
+                        pending.Push(path);
+                        while (pending.Count != 0)
+                        {
+                            var current = pending.Pop();
+                            var attributes = File.GetAttributes(current);
+                            if ((attributes & FileAttributes.ReparsePoint) != 0)
+                                throw new InvalidOperationException("Managed content contains a symbolic link or junction: " + current);
+                            if ((attributes & FileAttributes.Directory) != 0)
+                                foreach (var child in Directory.EnumerateFileSystemEntries(current)) pending.Push(child);
+                        }
+                    }
+                    var loadFolders = Path.Combine(root, "LoadFolders.xml");
+                    if (File.Exists(loadFolders) && (File.GetAttributes(loadFolders) & FileAttributes.ReparsePoint) != 0)
+                        throw new InvalidOperationException("LoadFolders.xml must not be a symbolic link.");
+                    return true;
+                }
+                catch (Exception exception)
+                {
+                    Log.LogError(exception.Message);
+                    return false;
+                }
+            }
+            ]]></Code>
+        </Task>
+    </UsingTask>
+
+    <Target Name="ValidateModDeployment" BeforeTargets="PrepareForBuild" Condition="'$(DeployToGame)' == 'true'">
+        <Error Condition="'$(RimWorldModAssembliesDir)' == ''"
+               Text="DeployToGame requires RimWorldModAssembliesDir ending in Current/Assemblies/."/>
+        <Error Condition="!$([System.IO.Path]::IsPathRooted('$(RimWorldModAssembliesDir)'))"
+               Text="RimWorldModAssembliesDir must be an absolute Current/Assemblies/ path."/>
+        <PropertyGroup>
+            <_DeploymentPath>$([MSBuild]::NormalizeDirectory('$(RimWorldModAssembliesDir)'))</_DeploymentPath>
+            <_DeploymentPathForValidation>$(_DeploymentPath.Replace('\', '/').TrimEnd('/'))</_DeploymentPathForValidation>
+            <_DeploymentModRoot>$([MSBuild]::NormalizeDirectory('$(_DeploymentPath)', '..', '..'))</_DeploymentModRoot>
+        </PropertyGroup>
+        <Error Condition="!$(_DeploymentPathForValidation.EndsWith('/Current/Assemblies'))"
+               Text="Deployment is allowed only to Current/Assemblies/ (with this casing); historical versions are preserved separately."/>
+        <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(CurrentRimWorldVersion)', '^[0-9]+\.[0-9]+$'))"
+               Text="CurrentRimWorldVersion must be a major.minor game version."/>
+        <Error Condition="'@(HistoricalModVersion)' == ''"
+               Text="Declare the preserved historical versions and their SHA-256 hashes before deploying."/>
+        <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('%(HistoricalModVersion.Identity)', '^[0-9]+\.[0-9]+$'))"
+               Text="Invalid historical version directory: %(HistoricalModVersion.Identity)."/>
+        <Error Condition="!Exists('$(_ModSourceDir)About/About.xml') or !Exists('$(_ModSourceDir)LoadFolders.xml')"
+               Text="The source mod/ directory must contain About/About.xml and LoadFolders.xml."/>
+        <Error Condition="Exists('$(_ModSourceDir)Current') or Exists('$(_ModSourceDir)Assemblies')"
+               Text="mod/ contains an unexpected Current or Assemblies directory. Current DLLs belong only in bin/ and the deployment destination."/>
+        <Error Condition="Exists('$(_ModSourceDir)$(CurrentRimWorldVersion)')"
+               Text="mod/$(CurrentRimWorldVersion) is not a historical directory while this version uses Current. Remove the obsolete generated directory."/>
+
+        <ItemGroup>
+            <_SharedModFolder Include="About;Defs;Patches;Languages;Textures;Sounds;Resources;Common"/>
+            <_SourceModFolder Include="@(_SharedModFolder);@(HistoricalModVersion)"/>
+            <_OwnedDeploymentDirectory Include="@(_SourceModFolder->'$(_DeploymentModRoot)%(Identity)');$(_DeploymentModRoot)Current;$(_DeploymentModRoot)Assemblies;$(_DeploymentModRoot)$(CurrentRimWorldVersion)"/>
+            <_PreservedModAssembly Include="@(HistoricalModVersion->'$(_ModSourceDir)%(Identity)/Assemblies/$(AssemblyName).dll')"/>
+        </ItemGroup>
+        <ValidateModDeploymentPaths Root="$(_DeploymentModRoot)" RepositoryRoot="$(_ModRepositoryDir)"
+                                    GameRoot="$(RimWorldManagedDir)" Directories="@(_OwnedDeploymentDirectory)"/>
+        <Error Condition="!Exists('%(_PreservedModAssembly.Identity)')"
+               Text="Preserved historical DLL is missing: %(_PreservedModAssembly.Identity). Restore the released artifact; do not rebuild it from current sources."/>
+        <GetFileHash Files="@(_PreservedModAssembly)" Algorithm="SHA256">
+            <Output TaskParameter="Items" ItemName="_PreservedModAssemblyHash"/>
+        </GetFileHash>
+        <Error Condition="'%(_PreservedModAssemblyHash.FileHash)' != '%(_PreservedModAssemblyHash.Sha256)'"
+               Text="Preserved historical DLL checksum mismatch: %(_PreservedModAssemblyHash.Identity)."/>
+
+        <XmlPeek XmlInputPath="$(_ModSourceDir)LoadFolders.xml" Query="/loadFolders/v$(CurrentRimWorldVersion)/li/text()">
+            <Output TaskParameter="Result" ItemName="_CurrentLoadFolder"/>
+        </XmlPeek>
+        <Error Condition="'@(_CurrentLoadFolder)' != '/;Current'"
+               Text="LoadFolders.xml must map the current game version to the shared root and Current, in that order."/>
+        <XmlPeek XmlInputPath="$(_ModSourceDir)About/About.xml" Query="/ModMetaData/packageId/text()">
+            <Output TaskParameter="Result" PropertyName="_SourcePackageId"/>
+        </XmlPeek>
+        <Error Condition="'$(_SourcePackageId)' == ''" Text="Source About.xml must declare a packageId."/>
+        <XmlPeek XmlInputPath="$(_DeploymentModRoot)About/About.xml" Query="/ModMetaData/packageId/text()"
+                 Condition="Exists('$(_DeploymentModRoot)About/About.xml')">
+            <Output TaskParameter="Result" PropertyName="_InstalledPackageId"/>
+        </XmlPeek>
+        <Error Condition="Exists('$(_DeploymentModRoot)About/About.xml') and '$(_InstalledPackageId)' != '$(_SourcePackageId)'"
+               Text="The destination belongs to another mod (packageId '$(_InstalledPackageId)'). Choose the intended mod directory."/>
+        <PropertyGroup>
+            <_ModSourceGlobs>@(_SourceModFolder->'$(_ModSourceDir)%(Identity)/**/*')</_ModSourceGlobs>
+        </PropertyGroup>
+        <ItemGroup>
+            <_ModSourceFile Include="$(_ModSourceGlobs);$(_ModSourceDir)LoadFolders.xml"/>
+            <_ModSourceFile>
+                <DestinationPath>$(_DeploymentModRoot)$([MSBuild]::MakeRelative('$(_ModSourceDir)', '%(_ModSourceFile.FullPath)'))</DestinationPath>
+            </_ModSourceFile>
+        </ItemGroup>
+        <Error Condition="!Exists('%(_ModSourceFile.Identity)')" Text="Deployment source file is missing: %(_ModSourceFile.Identity)."/>
+    </Target>
+
+    <Target Name="DeployModToGame" AfterTargets="Build" DependsOnTargets="ValidateModDeployment"
+            Condition="'$(DeployToGame)' == 'true' and '$(IsCrossTargetingBuild)' != 'true'">
+        <Error Condition="!Exists('$(TargetPath)')" Text="The current mod DLL has not been built."/>
+        <ItemGroup Condition="Exists('$(_DeploymentModRoot)About/PublishedFileId.txt') and !Exists('$(_ModSourceDir)About/PublishedFileId.txt')">
+            <_LocalPublishedFileId Include="$(_DeploymentModRoot)About/PublishedFileId.txt"/>
+        </ItemGroup>
+        <Copy SourceFiles="@(_LocalPublishedFileId)" DestinationFiles="@(_LocalPublishedFileId->'$(IntermediateOutputPath)deployment/PublishedFileId.txt')"/>
+        <!-- All inputs and cleanup paths are validated before deleting managed content. -->
+        <RemoveDir Directories="@(_OwnedDeploymentDirectory)"/>
+        <Copy SourceFiles="@(_ModSourceFile)" DestinationFiles="@(_ModSourceFile->'%(DestinationPath)')"/>
+        <Copy SourceFiles="@(_LocalPublishedFileId->'$(IntermediateOutputPath)deployment/PublishedFileId.txt')" DestinationFiles="@(_LocalPublishedFileId)"/>
+        <MakeDir Directories="$(_DeploymentPath)"/>
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(_DeploymentPath)"/>
+        <Message Importance="high" Text="Deployed the complete $(AssemblyName) mod to $(_DeploymentModRoot)"/>
+    </Target>
+</Project>

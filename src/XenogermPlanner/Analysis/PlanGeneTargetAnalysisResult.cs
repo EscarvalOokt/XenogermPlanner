@@ -9,16 +9,8 @@ namespace XenogermPlanner.Analysis
     public sealed class PlanGeneTargetAnalysisResult
     {
         private readonly ReadOnlyCollection<PlanGeneConflictDiagnostic> _conflicts;
-        private readonly ReadOnlyCollection<PlanGeneRandomChoiceGroupDiagnostic> _randomChoiceGroups;
         private readonly ReadOnlyCollection<PlanGenePrerequisiteDiagnostic> _missingPrerequisites;
-
-        public IReadOnlyList<PlanGeneConflictDiagnostic> Conflicts => _conflicts;
-        public IReadOnlyList<PlanGeneRandomChoiceGroupDiagnostic> RandomChoiceGroups => _randomChoiceGroups;
-        public IReadOnlyList<PlanGenePrerequisiteDiagnostic> MissingPrerequisites => _missingPrerequisites;
-        public bool HasConflicts => _conflicts.Count > 0 || _randomChoiceGroups.Count > 0;
-        public bool HasMissingPrerequisites => _missingPrerequisites.Count > 0;
-        public bool HasDiagnostics => HasConflicts || HasMissingPrerequisites;
-        public int DiagnosticCount => _conflicts.Count + _randomChoiceGroups.Count + _missingPrerequisites.Count;
+        private readonly ReadOnlyCollection<PlanGeneRandomChoiceGroupDiagnostic> _randomChoiceGroups;
 
         internal PlanGeneTargetAnalysisResult(
             IEnumerable<PlanGeneConflictDiagnostic> conflicts,
@@ -29,6 +21,14 @@ namespace XenogermPlanner.Analysis
             _randomChoiceGroups = CopyRandomChoiceGroups(randomChoiceGroups).AsReadOnly();
             _missingPrerequisites = CopyPrerequisites(missingPrerequisites).AsReadOnly();
         }
+
+        public IReadOnlyList<PlanGeneConflictDiagnostic> Conflicts => _conflicts;
+        public IReadOnlyList<PlanGeneRandomChoiceGroupDiagnostic> RandomChoiceGroups => _randomChoiceGroups;
+        public IReadOnlyList<PlanGenePrerequisiteDiagnostic> MissingPrerequisites => _missingPrerequisites;
+        public bool HasConflicts => _conflicts.Count > 0 || _randomChoiceGroups.Count > 0;
+        public bool HasMissingPrerequisites => _missingPrerequisites.Count > 0;
+        public bool HasDiagnostics => HasConflicts || HasMissingPrerequisites;
+        public int DiagnosticCount => _conflicts.Count + _randomChoiceGroups.Count + _missingPrerequisites.Count;
 
         private static List<PlanGeneConflictDiagnostic> CopyConflicts(IEnumerable<PlanGeneConflictDiagnostic> conflicts)
         {
@@ -113,7 +113,8 @@ namespace XenogermPlanner.Analysis
                         nameof(prerequisites));
                 }
 
-                string key = (diagnostic.DependentGene.defName ?? string.Empty) + "\u001f" +
+                string key = (diagnostic.DependentGene.defName ?? string.Empty) +
+                             "\u001f" +
                              (diagnostic.PrerequisiteGene.defName ?? string.Empty);
 
                 if (!pairs.Add(key))

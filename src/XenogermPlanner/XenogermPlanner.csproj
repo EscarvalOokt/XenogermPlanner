@@ -1,36 +1,52 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net472</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <RootNamespace>XenogermPlanner</RootNamespace>
         <AssemblyName>XenogermPlanner</AssemblyName>
+        <Version>1.2.0</Version>
         <Nullable>disable</Nullable>
         <ImplicitUsings>disable</ImplicitUsings>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-        <EscarvalRimWorldUiProjectDir>$(MSBuildThisFileDirectory)..\..\..\Escarval.RimWorld.UI\src\Escarval.RimWorld.UI</EscarvalRimWorldUiProjectDir>
+        <CurrentRimWorldVersion>1.7</CurrentRimWorldVersion>
     </PropertyGroup>
 
     <ItemGroup>
         <InternalsVisibleTo Include="XenogermPlanner.Tests"/>
     </ItemGroup>
 
-    <Import Project="..\XenogermPlanner.Local.props" Condition="Exists('..\XenogermPlanner.Local.props')"/>
+    <Import Project="..\XenogermPlanner.Local.props"
+            Condition="Exists('..\XenogermPlanner.Local.props')"/>
 
-    <Target Name="ValidateLocalConfiguration" BeforeTargets="ResolveReferences">
-        <Error Condition="'$(RimWorldManagedDir)' == ''" Text="RimWorldManagedDir is not configured. Create src\XenogermPlanner.Local.props from docs\XenogermPlanner.Local.props.example and set the path to RimWorld's Managed directory."/>
-        <Error Condition="'$(RimWorldManagedDir)' != '' and !Exists('$(RimWorldManagedDir)\Assembly-CSharp.dll')" Text="Assembly-CSharp.dll was not found in '$(RimWorldManagedDir)'. Update RimWorldManagedDir in src\XenogermPlanner.Local.props."/>
+    <PropertyGroup>
+        <DeployToGame Condition="'$(DeployToGame)' == ''">false</DeployToGame>
+        <EscarvalRimWorldUiProjectDir Condition="'$(EscarvalRimWorldUiProjectDir)' == '' and Exists('$(MSBuildThisFileDirectory)..\..\..\Escarval.RimWorld.UI\src\Escarval.RimWorld.UI\Escarval.RimWorld.UI.Source.projitems')">$(MSBuildThisFileDirectory)..\..\..\Escarval.RimWorld.UI\src\Escarval.RimWorld.UI</EscarvalRimWorldUiProjectDir>
+        <EscarvalRimWorldUiProjectDir Condition="'$(EscarvalRimWorldUiProjectDir)' == ''">$(MSBuildThisFileDirectory)..\..\..\..\Escarval.RimWorld.UI\src\Escarval.RimWorld.UI</EscarvalRimWorldUiProjectDir>
+    </PropertyGroup>
+
+    <Import Project="$(EscarvalRimWorldUiProjectDir)\Escarval.RimWorld.UI.Source.projitems"
+            Condition="Exists('$(EscarvalRimWorldUiProjectDir)\Escarval.RimWorld.UI.Source.projitems')"
+            Label="Shared"/>
+
+    <Target Name="ValidateLocalConfiguration"
+            BeforeTargets="ResolveReferences">
+        <Error Condition="'$(RimWorldManagedDir)' == ''"
+               Text="RimWorldManagedDir is not configured. Create src\XenogermPlanner.Local.props from docs\XenogermPlanner.Local.props.example and set the RimWorld 1.7 directory containing Assembly-CSharp.dll and UnityStubs.dll."/>
+
+        <Error Condition="'$(RimWorldManagedDir)' != '' and !Exists('$(RimWorldManagedDir)\Assembly-CSharp.dll')"
+               Text="Assembly-CSharp.dll was not found in '$(RimWorldManagedDir)'. Update RimWorldManagedDir in src\XenogermPlanner.Local.props."/>
+
+        <Error Condition="'$(RimWorldManagedDir)' != '' and !Exists('$(RimWorldManagedDir)\UnityStubs.dll')"
+               Text="UnityStubs.dll was not found in '$(RimWorldManagedDir)'. Set RimWorldManagedDir to the RimWorld 1.7 game directory."/>
+
+        <Error Condition="'$(DeployToGame)' != 'true' and '$(DeployToGame)' != 'false'"
+               Text="DeployToGame must be true or false. Ordinary builds and tests do not deploy to the game."/>
     </Target>
 
-    <Target Name="ValidateSharedUiProject" BeforeTargets="PrepareForBuild">
-        <Error Condition="!Exists('$(EscarvalRimWorldUiProjectDir)\Escarval.RimWorld.UI.csproj')" Text="Escarval.RimWorld.UI project was not found at '$(EscarvalRimWorldUiProjectDir)'. Keep Escarval.RimWorld.UI and XenogermPlanner as sibling directories under the same RimWorldMods directory."/>
-        <Error Condition="!Exists('$(EscarvalRimWorldUiProjectDir)\Source')" Text="Escarval.RimWorld.UI source directory was not found at '$(EscarvalRimWorldUiProjectDir)\Source'. Verify the external shared UI project structure."/>
+    <Target Name="ValidateSharedUiSource"
+            BeforeTargets="PrepareForBuild">
+        <Error Condition="!Exists('$(EscarvalRimWorldUiProjectDir)\Escarval.RimWorld.UI.Source.projitems')"
+               Text="Escarval.RimWorld.UI.Source.projitems was not found in '$(EscarvalRimWorldUiProjectDir)'. Set EscarvalRimWorldUiProjectDir to the shared UI checkout's src\Escarval.RimWorld.UI directory in src\XenogermPlanner.Local.props."/>
     </Target>
-
-    <ItemGroup>
-        <ProjectReference Include="$(EscarvalRimWorldUiProjectDir)\Escarval.RimWorld.UI.csproj" ReferenceOutputAssembly="false"/>
-
-        <Compile Include="$(EscarvalRimWorldUiProjectDir)\Source\**\*.cs"
-                 Link="SharedUI\%(RecursiveDir)%(Filename)%(Extension)"/>
-    </ItemGroup>
 
     <ItemGroup Condition="'$(RimWorldManagedDir)' != ''">
         <Reference Include="Assembly-CSharp">
@@ -38,30 +54,15 @@
             <Private>false</Private>
         </Reference>
 
-        <Reference Include="UnityEngine" Condition="Exists('$(RimWorldManagedDir)\UnityEngine.dll')">
-            <HintPath>$(RimWorldManagedDir)\UnityEngine.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-
-        <Reference Include="UnityEngine.CoreModule" Condition="Exists('$(RimWorldManagedDir)\UnityEngine.CoreModule.dll')">
-            <HintPath>$(RimWorldManagedDir)\UnityEngine.CoreModule.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-
-        <Reference Include="UnityEngine.TextRenderingModule" Condition="Exists('$(RimWorldManagedDir)\UnityEngine.TextRenderingModule.dll')">
-            <HintPath>$(RimWorldManagedDir)\UnityEngine.TextRenderingModule.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-
-        <Reference Include="UnityEngine.IMGUIModule" Condition="Exists('$(RimWorldManagedDir)\UnityEngine.IMGUIModule.dll')">
-            <HintPath>$(RimWorldManagedDir)\UnityEngine.IMGUIModule.dll</HintPath>
+        <Reference Include="UnityStubs">
+            <HintPath>$(RimWorldManagedDir)\UnityStubs.dll</HintPath>
             <Private>false</Private>
         </Reference>
     </ItemGroup>
 
-    <Target Name="CopyAssemblyToMod" AfterTargets="Build">
-        <MakeDir Directories="$(RimWorldModAssembliesDir)"/>
+    <ItemGroup>
+        <HistoricalModVersion Include="1.6" Sha256="9D0CC140522FE767B4AA756340F89309444065952DD263B64A0E1999D95C00B3"/>
+    </ItemGroup>
 
-        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(RimWorldModAssembliesDir)" SkipUnchangedFiles="true"/>
-    </Target>
+    <Import Project="..\..\build\ModDeployment.targets"/>
 </Project>

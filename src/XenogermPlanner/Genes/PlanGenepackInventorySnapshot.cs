@@ -9,12 +9,6 @@ namespace XenogermPlanner.Genes
     {
         private readonly ReadOnlyCollection<Genepack> _genepacks;
 
-        public bool IsAvailable { get; }
-        public IReadOnlyList<Genepack> Genepacks => _genepacks;
-
-        internal static PlanGenepackInventorySnapshot Unavailable { get; } =
-            new PlanGenepackInventorySnapshot(false, Array.Empty<Genepack>());
-
         private PlanGenepackInventorySnapshot(bool isAvailable, IEnumerable<Genepack> genepacks)
         {
             if (genepacks == null)
@@ -44,6 +38,12 @@ namespace XenogermPlanner.Genes
             IsAvailable = isAvailable;
             _genepacks = copiedGenepacks.AsReadOnly();
         }
+
+        public bool IsAvailable { get; }
+        public IReadOnlyList<Genepack> Genepacks => _genepacks;
+
+        internal static PlanGenepackInventorySnapshot Unavailable { get; } =
+            new PlanGenepackInventorySnapshot(false, Array.Empty<Genepack>());
 
         internal static PlanGenepackInventorySnapshot CreateAvailable(IEnumerable<Genepack> genepacks)
         {

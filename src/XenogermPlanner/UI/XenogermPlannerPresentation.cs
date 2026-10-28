@@ -39,9 +39,8 @@ namespace XenogermPlanner.UI
                 if (plan == null)
                     continue;
 
-                if (query.Length == 0 || GetPlanDisplayName(plan).IndexOf(
-                        query,
-                        StringComparison.CurrentCultureIgnoreCase) >= 0)
+                if (query.Length == 0 ||
+                    GetPlanDisplayName(plan).IndexOf(query, StringComparison.CurrentCultureIgnoreCase) >= 0)
                 {
                     filteredPlans.Add(plan);
                 }
@@ -77,10 +76,9 @@ namespace XenogermPlanner.UI
             foreach (XenogermPlan plan in affectedPlans)
                 planNames.Add(GetPlanDisplayName(plan));
 
-            return GetTraderAdvisoryNotificationTranslationKey().Translate(
-                traderName,
-                notification.OfferCount,
-                string.Join(", ", planNames)).ToString();
+            return GetTraderAdvisoryNotificationTranslationKey()
+                .Translate(traderName, notification.OfferCount, string.Join(", ", planNames))
+                .ToString();
         }
 
         internal static string GetTraderAdvisoryNotificationTranslationKey()
@@ -122,8 +120,7 @@ namespace XenogermPlanner.UI
             {
                 foreach (XenogermPlan plan in offer.MatchingPlans)
                 {
-                    if (!plansById.ContainsKey(plan.Id))
-                        plansById.Add(plan.Id, plan);
+                    plansById.TryAdd(plan.Id, plan);
                 }
             }
 
@@ -245,7 +242,8 @@ namespace XenogermPlanner.UI
             string disabledTranslationKey = GetTemplateCreationDisabledTranslationKey(result);
 
             return disabledTranslationKey == null
-                ? "XenogermPlanner.Template.Create".Translate().ToString() + "\n\n" +
+                ? "XenogermPlanner.Template.Create".Translate().ToString() +
+                  "\n\n" +
                   "XenogermPlanner.Template.CreateDescription".Translate().ToString()
                 : disabledTranslationKey.Translate().ToString();
         }
@@ -260,10 +258,9 @@ namespace XenogermPlanner.UI
             if (candidate == null)
                 throw new ArgumentNullException(nameof(candidate));
 
-            return GetTemplateCandidateSummaryTranslationKey().Translate(
-                candidate.GeneSetCount,
-                candidate.AdditionalGenes.Count,
-                candidate.TotalGeneOccurrences).ToString();
+            return GetTemplateCandidateSummaryTranslationKey()
+                .Translate(candidate.GeneSetCount, candidate.AdditionalGenes.Count, candidate.TotalGeneOccurrences)
+                .ToString();
         }
 
         internal static string GetTemplateCandidateLabel(int candidateIndex, bool automatic)
@@ -334,25 +331,33 @@ namespace XenogermPlanner.UI
 
         internal static string GetAssemblerReadinessStatusLabel(PlanAssemblerReadinessStatus status)
         {
+            return GetAssemblerReadinessStatusTranslationKey(status).Translate().ToString();
+        }
+
+        internal static string GetAssemblerReadinessStatusTranslationKey(PlanAssemblerReadinessStatus status)
+        {
             switch (status)
             {
                 case PlanAssemblerReadinessStatus.Ready:
-                    return "XenogermPlanner.ReadinessStatus.Ready".Translate().ToString();
+                    return "XenogermPlanner.ReadinessStatus.Ready";
 
                 case PlanAssemblerReadinessStatus.NotReady:
-                    return "XenogermPlanner.ReadinessStatus.NotReady".Translate().ToString();
+                    return "XenogermPlanner.ReadinessStatus.NotReady";
 
                 case PlanAssemblerReadinessStatus.Blocked:
-                    return "XenogermPlanner.AssemblerReadinessStatus.Blocked".Translate().ToString();
+                    return "XenogermPlanner.AssemblerReadinessStatus.Blocked";
 
                 case PlanAssemblerReadinessStatus.EmptyTarget:
-                    return "XenogermPlanner.ReadinessStatus.EmptyTarget".Translate().ToString();
+                    return "XenogermPlanner.ReadinessStatus.EmptyTarget";
 
                 case PlanAssemblerReadinessStatus.Degraded:
-                    return "XenogermPlanner.ReadinessStatus.Degraded".Translate().ToString();
+                    return "XenogermPlanner.ReadinessStatus.Degraded";
+
+                case PlanAssemblerReadinessStatus.SearchIncomplete:
+                    return "XenogermPlanner.AssemblerReadinessStatus.SearchIncomplete";
 
                 default:
-                    return "XenogermPlanner.AssemblerReadinessStatus.Unknown".Translate().ToString();
+                    return "XenogermPlanner.AssemblerReadinessStatus.Unknown";
             }
         }
 
@@ -377,6 +382,9 @@ namespace XenogermPlanner.UI
                 case PlanAssemblerBlockerReason.InsufficientArchiteCapsules:
                     return translationKey.Translate(result.RequiredArchiteCapsules, result.AvailableArchiteCapsules)
                         .ToString();
+
+                case PlanAssemblerBlockerReason.MetabolismTooLow:
+                    return translationKey.Translate(result.ActualMetabolism, result.MinimumMetabolism).ToString();
 
                 default:
                     return translationKey.Translate().ToString();
@@ -404,6 +412,9 @@ namespace XenogermPlanner.UI
 
                 case PlanAssemblerBlockerReason.InsufficientArchiteCapsules:
                     return "XenogermPlanner.AssemblerBlocker.InsufficientArchiteCapsules";
+
+                case PlanAssemblerBlockerReason.MetabolismTooLow:
+                    return "XenogermPlanner.AssemblerBlocker.MetabolismTooLow";
 
                 default:
                     return "XenogermPlanner.AssemblerBlocker.Unknown";
@@ -440,13 +451,15 @@ namespace XenogermPlanner.UI
             if (diagnostic.Kind == PlanGeneConflictKind.Ordinary && diagnostic.HasPredictedWinner)
             {
                 return translationKey.Translate(
-                    GetGeneDisplayName(diagnostic.OverridingGene),
-                    GetGeneDisplayName(diagnostic.OverriddenGene)).ToString();
+                        GetGeneDisplayName(diagnostic.OverridingGene),
+                        GetGeneDisplayName(diagnostic.OverriddenGene))
+                    .ToString();
             }
 
             return translationKey.Translate(
-                GetGeneDisplayName(diagnostic.FirstGene),
-                GetGeneDisplayName(diagnostic.SecondGene)).ToString();
+                    GetGeneDisplayName(diagnostic.FirstGene),
+                    GetGeneDisplayName(diagnostic.SecondGene))
+                .ToString();
         }
 
         internal static string GetGeneRandomChoiceGroupTranslationKey(PlanGeneRandomChoiceGroupDiagnostic diagnostic)
@@ -502,9 +515,11 @@ namespace XenogermPlanner.UI
             if (diagnostic == null)
                 throw new ArgumentNullException(nameof(diagnostic));
 
-            return GetGenePrerequisiteTranslationKey(readinessMode).Translate(
-                GetGeneDisplayName(diagnostic.DependentGene),
-                GetGeneDisplayName(diagnostic.PrerequisiteGene)).ToString();
+            return GetGenePrerequisiteTranslationKey(readinessMode)
+                .Translate(
+                    GetGeneDisplayName(diagnostic.DependentGene),
+                    GetGeneDisplayName(diagnostic.PrerequisiteGene))
+                .ToString();
         }
 
         internal static List<PlanGeneConflictDiagnostic> GetSortedGeneConflictDiagnostics(
@@ -636,7 +651,8 @@ namespace XenogermPlanner.UI
             if (result == null)
                 throw new ArgumentNullException(nameof(result));
 
-            return result.Status == PlanReadinessStatus.Ready || result.Status == PlanReadinessStatus.NotReady ||
+            return result.Status == PlanReadinessStatus.Ready ||
+                   result.Status == PlanReadinessStatus.NotReady ||
                    result.Status == PlanReadinessStatus.Degraded;
         }
 
@@ -971,8 +987,9 @@ namespace XenogermPlanner.UI
             {
                 relations.Add(
                     "XenogermPlanner.GeneDiagnostics.Prerequisite.Relation".Translate(
-                        GetGeneDisplayName(diagnostic.DependentGene),
-                        GetGeneDisplayName(diagnostic.PrerequisiteGene)).ToString());
+                            GetGeneDisplayName(diagnostic.DependentGene),
+                            GetGeneDisplayName(diagnostic.PrerequisiteGene))
+                        .ToString());
             }
 
             return string.Join("; ", relations);
@@ -990,7 +1007,7 @@ namespace XenogermPlanner.UI
                 potentialDonorAnalysis,
                 out PlanPotentialDonorGeneDiagnostic potentialDonorDiagnostic)
                 ? potentialDonorDiagnostic.DonorCount
-                : (int?)null;
+                : null;
         }
 
         private static int CountDisplayedGenepacks(

@@ -9,8 +9,6 @@ namespace XenogermPlanner.Analysis
     {
         private readonly ReadOnlyCollection<GeneDef> _genes;
 
-        public IReadOnlyList<GeneDef> Genes => _genes;
-
         internal PlanGeneRandomChoiceGroupDiagnostic(IEnumerable<GeneDef> genes)
         {
             if (genes == null)
@@ -40,6 +38,8 @@ namespace XenogermPlanner.Analysis
             copied.Sort(CompareGenes);
             _genes = copied.AsReadOnly();
         }
+
+        public IReadOnlyList<GeneDef> Genes => _genes;
 
         private static int CompareGenes(GeneDef left, GeneDef right)
         {

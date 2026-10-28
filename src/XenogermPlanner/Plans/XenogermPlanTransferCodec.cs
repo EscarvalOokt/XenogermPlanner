@@ -129,9 +129,8 @@ namespace XenogermPlanner.Plans
 
                 if (line.StartsWith(ReadinessModePrefix, StringComparison.Ordinal))
                 {
-                    if (hasReadinessMode || !TryParseReadinessMode(
-                            line.Substring(ReadinessModePrefix.Length),
-                            out readinessMode))
+                    if (hasReadinessMode ||
+                        !TryParseReadinessMode(line.Substring(ReadinessModePrefix.Length), out readinessMode))
                     {
                         failure = XenogermPlanTransferFailure.MalformedPayload;
 
@@ -163,7 +162,8 @@ namespace XenogermPlanner.Plans
                 return false;
             }
 
-            if (!hasName || !hasReadinessMode ||
+            if (!hasName ||
+                !hasReadinessMode ||
                 !XenogermPlanNameAllocator.TryNormalize(name, out string normalizedName))
             {
                 failure = XenogermPlanTransferFailure.MalformedPayload;
@@ -195,9 +195,9 @@ namespace XenogermPlanner.Plans
                 return null;
 
             string normalizedPayload = payload.Replace("\r\n", "\n").Replace('\r', '\n');
-            var lines = new List<string>(normalizedPayload.Split(new[] { '\n' }, StringSplitOptions.None));
+            var lines = new List<string>(normalizedPayload.Split(['\n'], StringSplitOptions.None));
 
-            while (lines.Count > 0 && lines[lines.Count - 1].Length == 0)
+            while (lines.Count > 0 && lines[^1].Length == 0)
                 lines.RemoveAt(lines.Count - 1);
 
             return lines;

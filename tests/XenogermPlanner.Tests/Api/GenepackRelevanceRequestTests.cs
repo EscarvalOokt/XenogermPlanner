@@ -23,23 +23,23 @@ namespace XenogermPlanner.Tests.Api
             source[0] = "Changed";
             source.Add("GeneC");
 
-            Assert.That(request.GeneDefNames, Is.EqualTo(new[] { "GeneA", "GeneB" }));
+            Assert.That(request.GeneDefNames, Is.EqualTo(["GeneA", "GeneB"]));
         }
 
         [Test]
         public void Constructor_PreservesDuplicatesForBoundaryNormalization()
         {
-            var request = new GenepackRelevanceRequest(new[] { "GeneA", "GeneA", "genea" });
+            var request = new GenepackRelevanceRequest(["GeneA", "GeneA", "genea"]);
 
-            Assert.That(request.GeneDefNames, Is.EqualTo(new[] { "GeneA", "GeneA", "genea" }));
+            Assert.That(request.GeneDefNames, Is.EqualTo(["GeneA", "GeneA", "genea"]));
         }
 
         [Test]
         public void Constructor_PreservesStructurallyInvalidValuesForStatusBasedValidation()
         {
-            var request = new GenepackRelevanceRequest(new[] { "GeneA", null, " " });
+            var request = new GenepackRelevanceRequest(["GeneA", null, " "]);
 
-            Assert.That(request.GeneDefNames, Is.EqualTo(new[] { "GeneA", null, " " }));
+            Assert.That(request.GeneDefNames, Is.EqualTo(["GeneA", null, " "]));
         }
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using RimWorld;
 using Verse;
 using XenogermPlanner.Assemblers;
@@ -14,54 +14,18 @@ namespace XenogermPlanner.Tests.Assemblers
 {
     internal static class PlanAssemblerReadinessTestData
     {
-        internal sealed class PackFixture
-        {
-            internal Genepack Genepack { get; }
-            internal PlanAssemblerGenepackSource Source { get; }
-            internal List<GeneDef> Genes { get; }
-            internal string PhysicalKey { get; }
-
-            internal PackFixture(string physicalKey, bool facilityPowerOn, IEnumerable<GeneDef> genes)
-            {
-                if (string.IsNullOrWhiteSpace(physicalKey))
-                {
-                    throw new ArgumentException(
-                        "Physical key cannot be null, empty or whitespace.",
-                        nameof(physicalKey));
-                }
-
-                if (genes == null)
-                    throw new ArgumentNullException(nameof(genes));
-
-                Genepack = GenepackInventoryTestData.CreateGenepack();
-                PhysicalKey = physicalKey;
-                Genes = new List<GeneDef>();
-
-                foreach (GeneDef gene in genes)
-                {
-                    if (gene == null)
-                        throw new ArgumentNullException(nameof(genes));
-
-                    Genes.Add(gene);
-                }
-
-                Source = new PlanAssemblerGenepackSource(
-                    Genepack,
-                    CreateUninitialized<ThingWithComps>(),
-                    facilityPowerOn);
-            }
-        }
-
         internal static GeneDef CreateGene(
             string defName,
             int complexity = 0,
             int archite = 0,
-            GeneDef prerequisite = null)
+            GeneDef prerequisite = null,
+            int metabolism = 0)
         {
             GeneDef gene = PlanTestData.CreateGene(defName);
             gene.biostatCpx = complexity;
             gene.biostatArc = archite;
             gene.prerequisite = prerequisite;
+            gene.biostatMet = metabolism;
             return gene;
         }
 
@@ -107,6 +71,15 @@ namespace XenogermPlanner.Tests.Assemblers
 
         internal static IReadOnlyList<PlanAssemblerCandidate> Search(XenogermPlan plan, params PackFixture[] packs)
         {
+            return Search(plan, new PlanAssemblerSearchBudget(), false, packs);
+        }
+
+        internal static IReadOnlyList<PlanAssemblerCandidate> Search(
+            XenogermPlan plan,
+            PlanAssemblerSearchBudget budget,
+            bool includeHelpers,
+            params PackFixture[] packs)
+        {
             if (plan == null)
                 throw new ArgumentNullException(nameof(plan));
 
@@ -114,11 +87,15 @@ namespace XenogermPlanner.Tests.Assemblers
             Dictionary<Genepack, PackFixture> fixturesByPack = CreatePackLookup(packs);
 
             return PlanAssemblerCandidateSearcher.Search(
-                plan.DesiredGenes,
-                plan.ReadinessMode,
-                CreateScope(packs),
-                genepack => FindPack(fixturesByPack, genepack).Genes,
-                genepack => FindPack(fixturesByPack, genepack).PhysicalKey).ToList().AsReadOnly();
+                    plan.DesiredGenes,
+                    plan.ReadinessMode,
+                    CreateScope(packs),
+                    genepack => FindPack(fixturesByPack, genepack).Genes,
+                    genepack => FindPack(fixturesByPack, genepack).PhysicalKey,
+                    budget,
+                    includeHelpers)
+                .ToList()
+                .AsReadOnly();
         }
 
         internal static PlanAssemblerReadinessResult Analyze(
@@ -133,6 +110,16 @@ namespace XenogermPlanner.Tests.Assemblers
             XenogermPlan plan,
             PlanAssemblerLiveState liveState,
             Func<IEnumerable<GeneDef>, IEnumerable<GeneDef>> getNonOverriddenGenes,
+            params PackFixture[] packs)
+        {
+            return Analyze(plan, liveState, getNonOverriddenGenes, null, packs);
+        }
+
+        internal static PlanAssemblerReadinessResult Analyze(
+            XenogermPlan plan,
+            PlanAssemblerLiveState liveState,
+            Func<IEnumerable<GeneDef>, IEnumerable<GeneDef>> getNonOverriddenGenes,
+            PlanAssemblerSearchBudget budget,
             params PackFixture[] packs)
         {
             if (plan == null)
@@ -154,7 +141,8 @@ namespace XenogermPlanner.Tests.Assemblers
                 liveState,
                 genepack => FindPack(fixturesByPack, genepack).Genes,
                 getNonOverriddenGenes,
-                genepack => FindPack(fixturesByPack, genepack).PhysicalKey);
+                genepack => FindPack(fixturesByPack, genepack).PhysicalKey,
+                budget);
         }
 
         internal static bool CandidateContains(PlanAssemblerCandidate candidate, PackFixture pack)
@@ -185,10 +173,7 @@ namespace XenogermPlanner.Tests.Assemblers
 
             foreach (PackFixture pack in packs)
             {
-                if (!fixturesByPack.ContainsKey(pack.Genepack))
-                {
-                    fixturesByPack.Add(pack.Genepack, pack);
-                }
+                fixturesByPack.TryAdd(pack.Genepack, pack);
             }
 
             return fixturesByPack;
@@ -222,7 +207,45 @@ namespace XenogermPlanner.Tests.Assemblers
 
         private static T CreateUninitialized<T>() where T : class
         {
-            return (T)FormatterServices.GetUninitializedObject(typeof(T));
+            return (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
+        }
+
+        internal sealed class PackFixture
+        {
+            internal PackFixture(string physicalKey, bool facilityPowerOn, IEnumerable<GeneDef> genes)
+            {
+                if (string.IsNullOrWhiteSpace(physicalKey))
+                {
+                    throw new ArgumentException(
+                        "Physical key cannot be null, empty or whitespace.",
+                        nameof(physicalKey));
+                }
+
+                if (genes == null)
+                    throw new ArgumentNullException(nameof(genes));
+
+                Genepack = GenepackInventoryTestData.CreateGenepack();
+                PhysicalKey = physicalKey;
+                Genes = new List<GeneDef>();
+
+                foreach (GeneDef gene in genes)
+                {
+                    if (gene == null)
+                        throw new ArgumentNullException(nameof(genes));
+
+                    Genes.Add(gene);
+                }
+
+                Source = new PlanAssemblerGenepackSource(
+                    Genepack,
+                    CreateUninitialized<ThingWithComps>(),
+                    facilityPowerOn);
+            }
+
+            internal Genepack Genepack { get; }
+            internal PlanAssemblerGenepackSource Source { get; }
+            internal List<GeneDef> Genes { get; }
+            internal string PhysicalKey { get; }
         }
     }
 }

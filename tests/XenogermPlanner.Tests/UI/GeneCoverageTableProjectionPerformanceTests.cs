@@ -165,20 +165,14 @@ namespace XenogermPlanner.Tests.UI
             private const int FewSourceReferencedCompositionCount = 4;
             private const int MissingOnlyDesiredGeneCount = 16;
             private const int CopiesPerComposition = 4;
+            private readonly Comparison<Genepack> _comparePhysicalGenepacks;
+            private readonly IReadOnlyDictionary<Genepack, IReadOnlyList<GeneDef>> _genesByPack;
+            private readonly Func<Genepack, IReadOnlyList<GeneDef>> _getGenepackGenes;
+            private readonly IReadOnlyDictionary<Genepack, int> _physicalOrderByPack;
 
             private readonly XenogermPlan _plan;
             private readonly PlanReadinessResult _readiness;
             private readonly IReadOnlyList<Genepack> _sourceGenepacks;
-            private readonly IReadOnlyDictionary<Genepack, IReadOnlyList<GeneDef>> _genesByPack;
-            private readonly IReadOnlyDictionary<Genepack, int> _physicalOrderByPack;
-            private readonly Func<Genepack, IReadOnlyList<GeneDef>> _getGenepackGenes;
-            private readonly Comparison<Genepack> _comparePhysicalGenepacks;
-
-            internal int SourceGenepackCount => _sourceGenepacks.Count;
-            internal int ExpectedRowCount { get; }
-            internal int ExpectedReferencedCompositionCount { get; }
-            internal int ExpectedCopiesPerReferencedComposition { get; }
-            internal int ExpectedDisplayedPhysicalPackCount { get; }
 
             private GeneCoverageProjectionPerformanceScenario(
                 XenogermPlan plan,
@@ -205,6 +199,12 @@ namespace XenogermPlanner.Tests.UI
                 _comparePhysicalGenepacks = ComparePhysicalGenepacks;
             }
 
+            internal int SourceGenepackCount => _sourceGenepacks.Count;
+            internal int ExpectedRowCount { get; }
+            internal int ExpectedReferencedCompositionCount { get; }
+            internal int ExpectedCopiesPerReferencedComposition { get; }
+            internal int ExpectedDisplayedPhysicalPackCount { get; }
+
             internal static GeneCoverageProjectionPerformanceScenario CreateManyReferencedSourceCompositions()
             {
                 GeneDef[] targetGenes = CreateGenes("TargetGene", ManySourceDesiredGeneCount);
@@ -222,35 +222,22 @@ namespace XenogermPlanner.Tests.UI
                 {
                     GeneDef targetGene = targetGenes[geneIndex];
                     var composition = new PlanGenepackCompositionDiagnostic(
-                        new[] { targetGene },
+                        [targetGene],
                         CopiesPerComposition,
                         isExactPayloadEligible: true,
-                        additionalGenes: Array.Empty<GeneDef>());
+                        additionalGenes: []);
                     diagnostics.Add(
-                        new PlanGeneCoverageDiagnostic(
-                            targetGene,
-                            PlanGeneCoverageState.Available,
-                            new[] { composition }));
+                        new PlanGeneCoverageDiagnostic(targetGene, PlanGeneCoverageState.Available, [composition]));
 
                     for (var copyIndex = 0; copyIndex < CopiesPerComposition; copyIndex++)
                     {
-                        AddPack(
-                            sourceGenepacks,
-                            genesByPack,
-                            physicalOrderByPack,
-                            ref physicalOrder,
-                            new[] { targetGene });
+                        AddPack(sourceGenepacks, genesByPack, physicalOrderByPack, ref physicalOrder, [targetGene]);
                     }
                 }
 
                 foreach (GeneDef unrelatedGene in unrelatedGenes)
                 {
-                    AddPack(
-                        sourceGenepacks,
-                        genesByPack,
-                        physicalOrderByPack,
-                        ref physicalOrder,
-                        new[] { unrelatedGene });
+                    AddPack(sourceGenepacks, genesByPack, physicalOrderByPack, ref physicalOrder, [unrelatedGene]);
                 }
 
                 var plan = new XenogermPlan("Projection Plan", targetGenes, PlanReadinessMode.Coverage);
@@ -290,46 +277,29 @@ namespace XenogermPlanner.Tests.UI
                     if (geneIndex < FewSourceReferencedCompositionCount)
                     {
                         var composition = new PlanGenepackCompositionDiagnostic(
-                            new[] { targetGene },
+                            [targetGene],
                             CopiesPerComposition,
                             isExactPayloadEligible: true,
-                            additionalGenes: Array.Empty<GeneDef>());
+                            additionalGenes: []);
                         diagnostics.Add(
-                            new PlanGeneCoverageDiagnostic(
-                                targetGene,
-                                PlanGeneCoverageState.Available,
-                                new[] { composition }));
+                            new PlanGeneCoverageDiagnostic(targetGene, PlanGeneCoverageState.Available, [composition]));
                         availableGenes.Add(targetGene);
 
                         for (var copyIndex = 0; copyIndex < CopiesPerComposition; copyIndex++)
                         {
-                            AddPack(
-                                sourceGenepacks,
-                                genesByPack,
-                                physicalOrderByPack,
-                                ref physicalOrder,
-                                new[] { targetGene });
+                            AddPack(sourceGenepacks, genesByPack, physicalOrderByPack, ref physicalOrder, [targetGene]);
                         }
 
                         continue;
                     }
 
-                    diagnostics.Add(
-                        new PlanGeneCoverageDiagnostic(
-                            targetGene,
-                            PlanGeneCoverageState.Missing,
-                            Array.Empty<PlanGenepackCompositionDiagnostic>()));
+                    diagnostics.Add(new PlanGeneCoverageDiagnostic(targetGene, PlanGeneCoverageState.Missing, []));
                     missingGenes.Add(targetGene);
                 }
 
                 foreach (GeneDef unrelatedGene in unrelatedGenes)
                 {
-                    AddPack(
-                        sourceGenepacks,
-                        genesByPack,
-                        physicalOrderByPack,
-                        ref physicalOrder,
-                        new[] { unrelatedGene });
+                    AddPack(sourceGenepacks, genesByPack, physicalOrderByPack, ref physicalOrder, [unrelatedGene]);
                 }
 
                 var plan = new XenogermPlan("Few Source Projection Plan", targetGenes, PlanReadinessMode.Coverage);
@@ -364,26 +334,17 @@ namespace XenogermPlanner.Tests.UI
 
                 foreach (GeneDef targetGene in targetGenes)
                 {
-                    diagnostics.Add(
-                        new PlanGeneCoverageDiagnostic(
-                            targetGene,
-                            PlanGeneCoverageState.Missing,
-                            Array.Empty<PlanGenepackCompositionDiagnostic>()));
+                    diagnostics.Add(new PlanGeneCoverageDiagnostic(targetGene, PlanGeneCoverageState.Missing, []));
                 }
 
                 foreach (GeneDef unrelatedGene in unrelatedGenes)
                 {
-                    AddPack(
-                        sourceGenepacks,
-                        genesByPack,
-                        physicalOrderByPack,
-                        ref physicalOrder,
-                        new[] { unrelatedGene });
+                    AddPack(sourceGenepacks, genesByPack, physicalOrderByPack, ref physicalOrder, [unrelatedGene]);
                 }
 
                 var plan = new XenogermPlan("Missing Projection Plan", targetGenes, PlanReadinessMode.Coverage);
                 var readiness = PlanReadinessResult.CreateNotReady(
-                    Array.Empty<GeneDef>(),
+                    [],
                     targetGenes,
                     hasExactPayloadConflict: false,
                     geneCoverageDiagnostics: diagnostics);

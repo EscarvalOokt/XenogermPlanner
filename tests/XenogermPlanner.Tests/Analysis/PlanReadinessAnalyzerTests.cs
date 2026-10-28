@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Verse;
@@ -55,10 +53,7 @@ namespace XenogermPlanner.Tests.Analysis
         [Test]
         public void Analyze_UnavailableInventoryTakesPrecedenceOverDegradedPlan()
         {
-            XenogermPlan plan = PlanReadinessTestData.CreateDegradedPlan(
-                PlanReadinessMode.Coverage,
-                Array.Empty<GeneDef>(),
-                "MissingGene");
+            XenogermPlan plan = PlanReadinessTestData.CreateDegradedPlan(PlanReadinessMode.Coverage, [], "MissingGene");
 
             PlanReadinessResult result = PlanReadinessTestData.Analyze(
                 plan,
@@ -88,7 +83,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneA = PlanReadinessTestData.CreateGene("GeneA");
             XenogermPlan plan = PlanReadinessTestData.CreateDegradedPlan(
                 PlanReadinessMode.Coverage,
-                new[] { geneA },
+                [geneA],
                 "MissingGene");
 
             PlanReadinessResult result = PlanReadinessTestData.Analyze(plan, PlanReadinessTestData.CreatePack(geneA));
@@ -104,7 +99,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneX = PlanReadinessTestData.CreateGene("GeneX");
             XenogermPlan plan = PlanReadinessTestData.CreateDegradedPlan(
                 PlanReadinessMode.ExactPayload,
-                new[] { geneA },
+                [geneA],
                 "MissingGene");
 
             PlanReadinessResult result = PlanReadinessTestData.Analyze(
@@ -117,7 +112,7 @@ namespace XenogermPlanner.Tests.Analysis
             Assert.That(
                 result.GeneCoverageDiagnostics.Single().State,
                 Is.EqualTo(PlanGeneCoverageState.ExactPayloadConflict));
-            Assert.That(result.CoveredGenes, Is.EquivalentTo(new[] { geneA }));
+            Assert.That(result.CoveredGenes, Is.EquivalentTo([geneA]));
             Assert.That(result.MissingGenes, Is.Empty);
         }
 
@@ -128,12 +123,12 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
             XenogermPlan plan = PlanReadinessTestData.CreateDegradedPlan(
                 PlanReadinessMode.Coverage,
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 "MissingGene");
 
             PlanReadinessResult result = PlanReadinessTestData.Analyze(plan, PlanReadinessTestData.CreatePack(geneA));
 
-            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.CoveredGenes), Is.EqualTo(new[] { "GeneA" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.CoveredGenes), Is.EqualTo(["GeneA"]));
         }
 
         [Test]
@@ -143,12 +138,12 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneB = PlanReadinessTestData.CreateGene("GeneB");
             XenogermPlan plan = PlanReadinessTestData.CreateDegradedPlan(
                 PlanReadinessMode.Coverage,
-                new[] { geneA, geneB },
+                [geneA, geneB],
                 "MissingGene");
 
             PlanReadinessResult result = PlanReadinessTestData.Analyze(plan, PlanReadinessTestData.CreatePack(geneA));
 
-            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.MissingGenes), Is.EqualTo(new[] { "GeneB" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.MissingGenes), Is.EqualTo(["GeneB"]));
         }
 
         [Test]
@@ -266,7 +261,7 @@ namespace XenogermPlanner.Tests.Analysis
 
             Assert.That(result.Status, Is.EqualTo(PlanReadinessStatus.NotReady));
             Assert.That(result.HasExactPayloadConflict, Is.True);
-            Assert.That(result.CoveredGenes, Is.EquivalentTo(new[] { geneA }));
+            Assert.That(result.CoveredGenes, Is.EquivalentTo([geneA]));
             Assert.That(result.MissingGenes, Is.Empty);
             Assert.That(diagnostic.State, Is.EqualTo(PlanGeneCoverageState.ExactPayloadConflict));
             Assert.That(diagnostic.IsCovered, Is.True);
@@ -286,8 +281,8 @@ namespace XenogermPlanner.Tests.Analysis
 
             Assert.That(result.Status, Is.EqualTo(PlanReadinessStatus.NotReady));
             Assert.That(result.HasExactPayloadConflict, Is.False);
-            Assert.That(result.CoveredGenes, Is.EquivalentTo(new[] { geneA }));
-            Assert.That(result.MissingGenes, Is.EquivalentTo(new[] { geneB }));
+            Assert.That(result.CoveredGenes, Is.EquivalentTo([geneA]));
+            Assert.That(result.MissingGenes, Is.EquivalentTo([geneB]));
             Assert.That(
                 result.GeneCoverageDiagnostics.Single(diagnostic => ReferenceEquals(diagnostic.Gene, geneA)).State,
                 Is.EqualTo(PlanGeneCoverageState.ExactPayloadConflict));
@@ -308,9 +303,7 @@ namespace XenogermPlanner.Tests.Analysis
                 PlanReadinessTestData.CreatePack(geneA),
                 PlanReadinessTestData.CreatePack(geneB));
 
-            Assert.That(
-                PlanReadinessTestData.GetGeneDefNames(result.CoveredGenes),
-                Is.EqualTo(new[] { "GeneA", "GeneB" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.CoveredGenes), Is.EqualTo(["GeneA", "GeneB"]));
         }
 
         [Test]
@@ -336,8 +329,8 @@ namespace XenogermPlanner.Tests.Analysis
                 PlanReadinessTestData.CreatePack(geneA, geneA),
                 PlanReadinessTestData.CreatePack(geneA));
 
-            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.CoveredGenes), Is.EqualTo(new[] { "GeneA" }));
-            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.MissingGenes), Is.EqualTo(new[] { "GeneB" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.CoveredGenes), Is.EqualTo(["GeneA"]));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.MissingGenes), Is.EqualTo(["GeneB"]));
         }
 
         [Test]
@@ -352,8 +345,8 @@ namespace XenogermPlanner.Tests.Analysis
 
             pack.Genes.Add(geneB);
 
-            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.CoveredGenes), Is.EqualTo(new[] { "GeneA" }));
-            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.MissingGenes), Is.EqualTo(new[] { "GeneB" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.CoveredGenes), Is.EqualTo(["GeneA"]));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.MissingGenes), Is.EqualTo(["GeneB"]));
         }
 
 
@@ -441,7 +434,7 @@ namespace XenogermPlanner.Tests.Analysis
             Assert.That(
                 PlanReadinessTestData.GetGeneDefNames(
                     geneADiagnostic.SourceGenepackCompositions.Single().AdditionalGenes),
-                Is.EqualTo(new[] { "GeneX" }));
+                Is.EqualTo(["GeneX"]));
             Assert.That(geneBDiagnostic.State, Is.EqualTo(PlanGeneCoverageState.Available));
             Assert.That(geneBDiagnostic.SourceGenepackCompositions.Single().IsExactPayloadEligible, Is.True);
         }
@@ -486,7 +479,7 @@ namespace XenogermPlanner.Tests.Analysis
             PlanGenepackCompositionDiagnostic composition =
                 result.GeneCoverageDiagnostics.Single().SourceGenepackCompositions.Single();
 
-            Assert.That(PlanReadinessTestData.GetGeneDefNames(composition.Genes), Is.EqualTo(new[] { "GeneA" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(composition.Genes), Is.EqualTo(["GeneA"]));
             Assert.That(composition.IsExactPayloadEligible, Is.True);
             Assert.That(composition.AdditionalGenes, Is.Empty);
         }
@@ -506,7 +499,7 @@ namespace XenogermPlanner.Tests.Analysis
             Assert.That(
                 PlanReadinessTestData.GetGeneDefNames(
                     result.GeneCoverageDiagnostics.Select(diagnostic => diagnostic.Gene)),
-                Is.EqualTo(new[] { "GeneA", "GeneB" }));
+                Is.EqualTo(["GeneA", "GeneB"]));
         }
 
         [Test]
@@ -514,8 +507,8 @@ namespace XenogermPlanner.Tests.Analysis
         {
             GeneDef first = PlanReadinessTestData.CreateGene("First");
             GeneDef second = PlanReadinessTestData.CreateGene("Second");
-            first.exclusionTags = new List<string> { "Conflict" };
-            second.exclusionTags = new List<string> { "Conflict" };
+            first.exclusionTags = ["Conflict"];
+            second.exclusionTags = ["Conflict"];
             XenogermPlan plan = PlanReadinessTestData.CreatePlan(PlanReadinessMode.ExactPayload, first, second);
 
             PlanReadinessResult result = PlanReadinessTestData.Analyze(
@@ -523,7 +516,7 @@ namespace XenogermPlanner.Tests.Analysis
                 PlanReadinessTestData.CreatePack(first, second));
 
             Assert.That(result.Status, Is.EqualTo(PlanReadinessStatus.Ready));
-            Assert.That(result.CoveredGenes, Is.EquivalentTo(new[] { first, second }));
+            Assert.That(result.CoveredGenes, Is.EquivalentTo([first, second]));
         }
 
         [Test]
@@ -539,7 +532,7 @@ namespace XenogermPlanner.Tests.Analysis
                 PlanReadinessTestData.CreatePack(dependent));
 
             Assert.That(result.Status, Is.EqualTo(PlanReadinessStatus.Ready));
-            Assert.That(result.CoveredGenes, Is.EquivalentTo(new[] { dependent }));
+            Assert.That(result.CoveredGenes, Is.EquivalentTo([dependent]));
         }
 
         [Test]
@@ -553,7 +546,7 @@ namespace XenogermPlanner.Tests.Analysis
 
             Assert.That(result.Status, Is.EqualTo(PlanReadinessStatus.NotReady));
             Assert.That(result.CoveredGenes, Is.Empty);
-            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.MissingGenes), Is.EqualTo(new[] { "GeneA" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.MissingGenes), Is.EqualTo(["GeneA"]));
         }
 
         [Test]
@@ -605,7 +598,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef geneA = PlanReadinessTestData.CreateGene("GeneA");
             XenogermPlan plan = PlanReadinessTestData.CreateDegradedPlan(
                 PlanReadinessMode.Coverage,
-                new[] { geneA },
+                [geneA],
                 "MissingGene");
 
             PlanReadinessResult result = PlanReadinessTestData.AnalyzeAvailableGenepacks(
@@ -613,7 +606,7 @@ namespace XenogermPlanner.Tests.Analysis
                 PlanReadinessTestData.CreatePack(geneA));
 
             Assert.That(result.Status, Is.EqualTo(PlanReadinessStatus.Degraded));
-            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.CoveredGenes), Is.EqualTo(new[] { "GeneA" }));
+            Assert.That(PlanReadinessTestData.GetGeneDefNames(result.CoveredGenes), Is.EqualTo(["GeneA"]));
         }
 
         [Test]

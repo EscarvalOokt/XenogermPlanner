@@ -7,16 +7,8 @@ namespace XenogermPlanner.Analysis
 {
     internal sealed class PlanGenepackCombinationSearchResult
     {
-        private readonly ReadOnlyCollection<GeneDef> _availableGenes;
         private readonly ReadOnlyCollection<PlanGenepackCompositionDiagnostic> _availableGenepackCompositions;
-
-        internal bool HasValidCombination { get; }
-
-        internal IReadOnlyCollection<GeneDef> AvailableGenes =>
-            _availableGenes;
-
-        internal IReadOnlyList<PlanGenepackCompositionDiagnostic> AvailableGenepackCompositions =>
-            _availableGenepackCompositions;
+        private readonly ReadOnlyCollection<GeneDef> _availableGenes;
 
         internal PlanGenepackCombinationSearchResult(
             bool hasValidCombination,
@@ -74,5 +66,12 @@ namespace XenogermPlanner.Analysis
             _availableGenes = copiedGenes.AsReadOnly();
             _availableGenepackCompositions = copiedCompositions.AsReadOnly();
         }
+
+        internal bool HasValidCombination { get; }
+
+        internal IReadOnlyCollection<GeneDef> AvailableGenes => _availableGenes;
+
+        internal IReadOnlyList<PlanGenepackCompositionDiagnostic> AvailableGenepackCompositions =>
+            _availableGenepackCompositions;
     }
 }

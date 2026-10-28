@@ -170,9 +170,7 @@ namespace XenogermPlanner.Tests.Genes
         public void ShouldInclude_GeneCollectionContainingOnlyNullValuesReturnsFalse()
         {
             Map map = GenepackInventoryTestData.CreateMap();
-            GenepackInventoryTestData.CandidateFixture fixture = GenepackInventoryTestData.CreateCandidate(
-                map,
-                new GeneDef[] { null });
+            GenepackInventoryTestData.CandidateFixture fixture = GenepackInventoryTestData.CreateCandidate(map, [null]);
 
             bool shouldInclude = GenepackInventoryTestData.EvaluatePolicy(map, fixture);
 

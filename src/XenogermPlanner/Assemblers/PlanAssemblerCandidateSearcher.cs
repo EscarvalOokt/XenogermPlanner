@@ -14,34 +14,6 @@ namespace XenogermPlanner.Assemblers
         private static readonly IEqualityComparer<HashSet<GeneDef>> _geneSetComparer =
             HashSet<GeneDef>.CreateSetComparer();
 
-        private sealed class CompositionGroup
-        {
-            private readonly List<PlanAssemblerGenepackSource> _sources;
-
-            internal HashSet<GeneDef> Genes { get; }
-            internal string CompositionKey { get; }
-
-            internal PlanAssemblerGenepackSource RepresentativeSource =>
-                _sources[0];
-
-            internal CompositionGroup(HashSet<GeneDef> genes, string compositionKey)
-            {
-                Genes = new HashSet<GeneDef>(genes);
-                CompositionKey = compositionKey;
-                _sources = new List<PlanAssemblerGenepackSource>();
-            }
-
-            internal void AddSource(PlanAssemblerGenepackSource source)
-            {
-                _sources.Add(source);
-            }
-
-            internal void SortSources(Func<Genepack, string> getPhysicalKey)
-            {
-                _sources.Sort((left, right) => CompareSources(left, right, getPhysicalKey));
-            }
-        }
-
         internal static IEnumerable<PlanAssemblerCandidate> Search(
             IReadOnlyCollection<GeneDef> desiredGenes,
             PlanReadinessMode readinessMode,
@@ -60,7 +32,9 @@ namespace XenogermPlanner.Assemblers
             PlanReadinessMode readinessMode,
             PlanAssemblerScopeSnapshot scope,
             Func<Genepack, IEnumerable<GeneDef>> getGenepackGenes,
-            Func<Genepack, string> getPhysicalKey)
+            Func<Genepack, string> getPhysicalKey,
+            PlanAssemblerSearchBudget budget = null,
+            bool includeHelpers = false)
         {
             if (desiredGenes == null)
                 throw new ArgumentNullException(nameof(desiredGenes));
@@ -90,12 +64,18 @@ namespace XenogermPlanner.Assemblers
                 getGenepackGenes,
                 getPhysicalKey);
 
-            return SearchCandidates(targetGenes, compositionGroups);
+            return SearchCandidates(
+                targetGenes,
+                compositionGroups,
+                budget ?? new PlanAssemblerSearchBudget(),
+                includeHelpers && readinessMode == PlanReadinessMode.Coverage);
         }
 
         private static IEnumerable<PlanAssemblerCandidate> SearchCandidates(
             HashSet<GeneDef> targetGenes,
-            IReadOnlyList<CompositionGroup> compositionGroups)
+            IReadOnlyList<CompositionGroup> compositionGroups,
+            PlanAssemblerSearchBudget budget,
+            bool includeHelpers)
         {
             Dictionary<GeneDef, List<CompositionGroup>> groupsByGene = CreateGroupsByGene(compositionGroups);
             var selectedGroups = new List<CompositionGroup>();
@@ -110,7 +90,27 @@ namespace XenogermPlanner.Assemblers
                          selectedGroups,
                          selectedGroupSet,
                          selectedGenes,
-                         emittedCandidateKeys))
+                         emittedCandidateKeys,
+                         budget))
+            {
+                yield return candidate;
+            }
+
+            if (budget.IsExhausted || !includeHelpers || compositionGroups.Count <= 1)
+                yield break;
+
+            // The first pass preserves the small requirement-contributing search. The fallback
+            // also admits packs needed only for metabolism or an override of another live blocker.
+            selectedGroups.Clear();
+            selectedGenes.Clear();
+            foreach (PlanAssemblerCandidate candidate in SearchHelperCandidates(
+                         targetGenes,
+                         compositionGroups,
+                         selectedGroups,
+                         selectedGenes,
+                         0,
+                         emittedCandidateKeys,
+                         budget))
             {
                 yield return candidate;
             }
@@ -123,8 +123,12 @@ namespace XenogermPlanner.Assemblers
             List<CompositionGroup> selectedGroups,
             HashSet<CompositionGroup> selectedGroupSet,
             HashSet<GeneDef> selectedGenes,
-            HashSet<string> emittedCandidateKeys)
+            HashSet<string> emittedCandidateKeys,
+            PlanAssemblerSearchBudget budget)
         {
+            if (!budget.TryVisitState())
+                yield break;
+
             List<GeneDef> missingTargetGenes = GetMissingGenes(targetGenes, selectedGenes);
             List<PlanGenePrerequisiteDiagnostic> missingPrerequisites =
                 PlanGeneTargetAnalyzer.FindMissingPrerequisites(selectedGenes);
@@ -172,7 +176,8 @@ namespace XenogermPlanner.Assemblers
                              selectedGroups,
                              selectedGroupSet,
                              selectedGenes,
-                             emittedCandidateKeys))
+                             emittedCandidateKeys,
+                             budget))
                 {
                     yield return candidate;
                 }
@@ -193,7 +198,8 @@ namespace XenogermPlanner.Assemblers
                          selectedGroups,
                          selectedGroupSet,
                          selectedGenes,
-                         emittedCandidateKeys))
+                         emittedCandidateKeys,
+                         budget))
             {
                 yield return candidate;
             }
@@ -207,13 +213,17 @@ namespace XenogermPlanner.Assemblers
             List<CompositionGroup> selectedGroups,
             HashSet<CompositionGroup> selectedGroupSet,
             HashSet<GeneDef> selectedGenes,
-            HashSet<string> emittedCandidateKeys)
+            HashSet<string> emittedCandidateKeys,
+            PlanAssemblerSearchBudget budget)
         {
             if (!groupsByGene.TryGetValue(requirement, out List<CompositionGroup> groups))
                 yield break;
 
             foreach (CompositionGroup group in groups)
             {
+                if (budget.IsExhausted)
+                    yield break;
+
                 if (selectedGroupSet.Contains(group))
                     continue;
 
@@ -238,7 +248,8 @@ namespace XenogermPlanner.Assemblers
                              selectedGroups,
                              selectedGroupSet,
                              selectedGenes,
-                             emittedCandidateKeys))
+                             emittedCandidateKeys,
+                             budget))
                 {
                     yield return candidate;
                 }
@@ -257,9 +268,11 @@ namespace XenogermPlanner.Assemblers
             HashSet<GeneDef> targetGenes,
             IReadOnlyList<CompositionGroup> selectedGroups,
             IReadOnlyList<PlanGenePrerequisiteDiagnostic> missingPrerequisites,
-            ISet<string> emittedCandidateKeys)
+            ISet<string> emittedCandidateKeys,
+            bool requireIrredundant = true)
         {
-            if (selectedGroups.Count == 0 || !IsCandidateIrredundant(targetGenes, selectedGroups))
+            if (selectedGroups.Count == 0 ||
+                (requireIrredundant && !IsCandidateIrredundant(targetGenes, selectedGroups)))
                 return null;
 
             var orderedGroups = new List<CompositionGroup>(selectedGroups);
@@ -281,6 +294,71 @@ namespace XenogermPlanner.Assemblers
                 return null;
 
             return new PlanAssemblerCandidate(representativeSources, missingPrerequisites);
+        }
+
+        private static IEnumerable<PlanAssemblerCandidate> SearchHelperCandidates(
+            HashSet<GeneDef> targetGenes,
+            IReadOnlyList<CompositionGroup> groups,
+            List<CompositionGroup> selectedGroups,
+            HashSet<GeneDef> selectedGenes,
+            int nextIndex,
+            ISet<string> emittedCandidateKeys,
+            PlanAssemblerSearchBudget budget)
+        {
+            if (!budget.TryVisitState())
+                yield break;
+
+            List<PlanGenePrerequisiteDiagnostic> missingPrerequisites =
+                PlanGeneTargetAnalyzer.FindMissingPrerequisites(selectedGenes);
+
+            if (targetGenes.IsSubsetOf(selectedGenes))
+            {
+                PlanAssemblerCandidate candidate = TryCreateCandidate(
+                    targetGenes,
+                    selectedGroups,
+                    missingPrerequisites,
+                    emittedCandidateKeys,
+                    requireIrredundant: false);
+
+                if (candidate != null)
+                    yield return candidate;
+            }
+
+            // Raw membership is monotonic. Effective biostats are not: a later pack can
+            // override genes, so current metabolism/complexity cannot prune this branch.
+            var reachableGenes = new HashSet<GeneDef>(selectedGenes);
+            for (int index = nextIndex; index < groups.Count; index++)
+                reachableGenes.UnionWith(groups[index].Genes);
+
+            if (!targetGenes.IsSubsetOf(reachableGenes) ||
+                missingPrerequisites.Any(diagnostic => !reachableGenes.Contains(diagnostic.PrerequisiteGene)))
+            {
+                yield break;
+            }
+
+            for (int index = nextIndex; index < groups.Count; index++)
+            {
+                if (budget.IsExhausted)
+                    yield break;
+
+                selectedGroups.Add(groups[index]);
+                selectedGenes.UnionWith(groups[index].Genes);
+
+                foreach (PlanAssemblerCandidate candidate in SearchHelperCandidates(
+                             targetGenes,
+                             groups,
+                             selectedGroups,
+                             selectedGenes,
+                             index + 1,
+                             emittedCandidateKeys,
+                             budget))
+                {
+                    yield return candidate;
+                }
+
+                selectedGroups.RemoveAt(selectedGroups.Count - 1);
+                RebuildSelectedGenes(selectedGroups, selectedGenes);
+            }
         }
 
         private static bool IsCandidateIrredundant(
@@ -404,8 +482,8 @@ namespace XenogermPlanner.Assemblers
                     }
                 }
 
-                if (sourceCount < selectedSourceCount || (sourceCount == selectedSourceCount &&
-                                                          CompareGenes(requirement, selectedRequirement) < 0))
+                if (sourceCount < selectedSourceCount ||
+                    (sourceCount == selectedSourceCount && CompareGenes(requirement, selectedRequirement) < 0))
                 {
                     selectedRequirement = requirement;
                     selectedSourceCount = sourceCount;
@@ -459,7 +537,8 @@ namespace XenogermPlanner.Assemblers
             foreach (PlanGenePrerequisiteDiagnostic prerequisite in prerequisites)
             {
                 keys.Add(
-                    (prerequisite.DependentGene.defName ?? string.Empty) + "\u001f" +
+                    (prerequisite.DependentGene.defName ?? string.Empty) +
+                    "\u001f" +
                     (prerequisite.PrerequisiteGene.defName ?? string.Empty));
             }
 
@@ -508,6 +587,33 @@ namespace XenogermPlanner.Assemblers
                     nameof(readinessMode),
                     readinessMode,
                     "Unsupported plan readiness mode.");
+            }
+        }
+
+        private sealed class CompositionGroup
+        {
+            private readonly List<PlanAssemblerGenepackSource> _sources;
+
+            internal CompositionGroup(HashSet<GeneDef> genes, string compositionKey)
+            {
+                Genes = new HashSet<GeneDef>(genes);
+                CompositionKey = compositionKey;
+                _sources = new List<PlanAssemblerGenepackSource>();
+            }
+
+            internal HashSet<GeneDef> Genes { get; }
+            internal string CompositionKey { get; }
+
+            internal PlanAssemblerGenepackSource RepresentativeSource => _sources[0];
+
+            internal void AddSource(PlanAssemblerGenepackSource source)
+            {
+                _sources.Add(source);
+            }
+
+            internal void SortSources(Func<Genepack, string> getPhysicalKey)
+            {
+                _sources.Sort((left, right) => CompareSources(left, right, getPhysicalKey));
             }
         }
     }

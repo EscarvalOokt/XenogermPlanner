@@ -3,6 +3,7 @@ using Verse;
 
 namespace XenogermPlanner
 {
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class XenogermPlannerMod : Mod
     {
         internal const string LogPrefix = "[XenogermPlanner]";

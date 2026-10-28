@@ -36,7 +36,9 @@ namespace XenogermPlanner.UI
         {
             Event currentEvent = Event.current;
 
-            if (currentEvent == null || currentEvent.type != EventType.MouseDown || currentEvent.button != 1 ||
+            if (currentEvent == null ||
+                currentEvent.type != EventType.MouseDown ||
+                currentEvent.button != 1 ||
                 !Mouse.IsOver(rect))
             {
                 return false;
@@ -54,7 +56,7 @@ namespace XenogermPlanner.UI
 
         private static bool CanInspect(Genepack genepack)
         {
-            return genepack != null && !genepack.Destroyed;
+            return genepack is { Destroyed: false };
         }
 
         private static void OpenInfoCard(GeneDef gene)

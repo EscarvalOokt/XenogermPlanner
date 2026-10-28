@@ -9,11 +9,8 @@ namespace XenogermPlanner.Assemblers
     internal sealed class PlanAssemblerScopeSnapshot
     {
         private readonly ReadOnlyCollection<PlanAssemblerGenepackSource> _sources;
-        private readonly ReadOnlyCollection<Genepack> _visibleGenepacks;
         private readonly Dictionary<Genepack, PlanAssemblerGenepackSource> _sourcesByGenepack;
-
-        internal IReadOnlyList<PlanAssemblerGenepackSource> Sources => _sources;
-        internal IReadOnlyList<Genepack> VisibleGenepacks => _visibleGenepacks;
+        private readonly ReadOnlyCollection<Genepack> _visibleGenepacks;
 
         internal PlanAssemblerScopeSnapshot(IEnumerable<PlanAssemblerGenepackSource> sources)
         {
@@ -34,14 +31,13 @@ namespace XenogermPlanner.Assemblers
                         nameof(sources));
                 }
 
-                if (_sourcesByGenepack.ContainsKey(source.Genepack))
+                if (!_sourcesByGenepack.TryAdd(source.Genepack, source))
                 {
                     throw new ArgumentException(
                         "Assembler genepack source collection cannot contain duplicate physical genepack references.",
                         nameof(sources));
                 }
 
-                _sourcesByGenepack.Add(source.Genepack, source);
                 copiedSources.Add(source);
                 copiedGenepacks.Add(source.Genepack);
             }
@@ -49,6 +45,9 @@ namespace XenogermPlanner.Assemblers
             _sources = copiedSources.AsReadOnly();
             _visibleGenepacks = copiedGenepacks.AsReadOnly();
         }
+
+        internal IReadOnlyList<PlanAssemblerGenepackSource> Sources => _sources;
+        internal IReadOnlyList<Genepack> VisibleGenepacks => _visibleGenepacks;
 
         internal bool TryGetSource(Genepack genepack, out PlanAssemblerGenepackSource source)
         {

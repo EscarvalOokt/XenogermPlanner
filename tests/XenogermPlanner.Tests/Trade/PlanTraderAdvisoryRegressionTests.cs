@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using RimWorld;
 using Verse;
 using XenogermPlanner.Analysis;
 using XenogermPlanner.Genes;
@@ -19,9 +17,9 @@ namespace XenogermPlanner.Tests.Trade
             XenogermPlan plan = CreatePlan("plan-id", "Plan", PlanReadinessMode.Coverage, gene);
             PlanGenepackInventorySnapshot inventory = EmptyInventory();
             PlanReadinessResult readinessBefore = PlanReadinessAnalyzer.Analyze(plan, inventory);
-            var analyzer = new PlanGenepackRelevanceAnalyzer(new[] { plan }, inventory);
+            var analyzer = new PlanGenepackRelevanceAnalyzer([plan], inventory);
 
-            IReadOnlyList<XenogermPlan> matches = analyzer.Evaluate(new[] { gene });
+            IReadOnlyList<XenogermPlan> matches = analyzer.Evaluate([gene]);
             PlanReadinessResult readinessAfter = PlanReadinessAnalyzer.Analyze(plan, inventory);
 
             Assert.That(matches, Has.Count.EqualTo(1));
@@ -29,8 +27,8 @@ namespace XenogermPlanner.Tests.Trade
             Assert.That(inventory.Genepacks, Is.Empty);
             Assert.That(readinessBefore.Status, Is.EqualTo(PlanReadinessStatus.NotReady));
             Assert.That(readinessAfter.Status, Is.EqualTo(PlanReadinessStatus.NotReady));
-            Assert.That(readinessBefore.MissingGenes, Is.EquivalentTo(new[] { gene }));
-            Assert.That(readinessAfter.MissingGenes, Is.EquivalentTo(new[] { gene }));
+            Assert.That(readinessBefore.MissingGenes, Is.EquivalentTo([gene]));
+            Assert.That(readinessAfter.MissingGenes, Is.EquivalentTo([gene]));
         }
 
         [Test]
@@ -40,16 +38,16 @@ namespace XenogermPlanner.Tests.Trade
             var plan = new XenogermPlan(
                 "plan-id",
                 "Plan",
-                new[] { gene },
-                Array.Empty<string>(),
+                [gene],
+                [],
                 PlanReadinessMode.Coverage,
                 readinessNotificationsEnabled: false,
                 hasReadinessNotificationBaseline: true,
                 lastReadinessNotificationStateWasReady: true);
             PlanGenepackInventorySnapshot inventory = EmptyInventory();
-            var analyzer = new PlanGenepackRelevanceAnalyzer(new[] { plan }, inventory);
+            var analyzer = new PlanGenepackRelevanceAnalyzer([plan], inventory);
 
-            IReadOnlyList<XenogermPlan> matches = analyzer.Evaluate(new[] { gene });
+            IReadOnlyList<XenogermPlan> matches = analyzer.Evaluate([gene]);
 
             Assert.That(matches, Has.Count.EqualTo(1));
             Assert.That(matches[0], Is.SameAs(plan));
@@ -68,12 +66,11 @@ namespace XenogermPlanner.Tests.Trade
                 "Coverage",
                 PlanReadinessMode.Coverage,
                 missingGene);
-            var coverageAnalyzer = new PlanGenepackRelevanceAnalyzer(new[] { coveragePlan }, EmptyInventory());
+            var coverageAnalyzer = new PlanGenepackRelevanceAnalyzer([coveragePlan], EmptyInventory());
 
-            IReadOnlyList<XenogermPlan> coverageMatches =
-                coverageAnalyzer.Evaluate(new[] { missingGene, additionalGene });
+            IReadOnlyList<XenogermPlan> coverageMatches = coverageAnalyzer.Evaluate([missingGene, additionalGene]);
 
-            Assert.That(coverageMatches, Is.EqualTo(new[] { coveragePlan }));
+            Assert.That(coverageMatches, Is.EqualTo([coveragePlan]));
 
             GeneDef exactMissingGene = CreateGene("ExactMissingGene");
             GeneDef outsideGene = CreateGene("OutsideGene");
@@ -82,12 +79,10 @@ namespace XenogermPlanner.Tests.Trade
                 "Exact Missing",
                 PlanReadinessMode.ExactPayload,
                 exactMissingGene);
-            var exactMissingAnalyzer = new PlanGenepackRelevanceAnalyzer(new[] { exactMissingPlan }, EmptyInventory());
+            var exactMissingAnalyzer = new PlanGenepackRelevanceAnalyzer([exactMissingPlan], EmptyInventory());
 
-            Assert.That(
-                exactMissingAnalyzer.Evaluate(new[] { exactMissingGene }),
-                Is.EqualTo(new[] { exactMissingPlan }));
-            Assert.That(exactMissingAnalyzer.Evaluate(new[] { exactMissingGene, outsideGene }), Is.Empty);
+            Assert.That(exactMissingAnalyzer.Evaluate([exactMissingGene]), Is.EqualTo([exactMissingPlan]));
+            Assert.That(exactMissingAnalyzer.Evaluate([exactMissingGene, outsideGene]), Is.Empty);
 
             GeneDef conflictGene = CreateGene("ConflictGene");
             XenogermPlan exactConflictPlan = CreatePlan(
@@ -97,38 +92,32 @@ namespace XenogermPlanner.Tests.Trade
                 conflictGene);
             PlanReadinessResult conflictReadiness = CreateExactPayloadConflictResult(conflictGene);
             var exactConflictAnalyzer = new PlanGenepackRelevanceAnalyzer(
-                new[] { exactConflictPlan },
+                [exactConflictPlan],
                 EmptyInventory(),
-                (_, __) => conflictReadiness);
+                (_, _) => conflictReadiness);
 
-            Assert.That(
-                exactConflictAnalyzer.Evaluate(new[] { conflictGene }),
-                Is.EqualTo(new[] { exactConflictPlan }));
+            Assert.That(exactConflictAnalyzer.Evaluate([conflictGene]), Is.EqualTo([exactConflictPlan]));
         }
 
         private static PlanGenepackInventorySnapshot EmptyInventory()
         {
-            return PlanGenepackInventorySnapshot.CreateAvailable(Array.Empty<Genepack>());
+            return PlanGenepackInventorySnapshot.CreateAvailable([]);
         }
 
         private static PlanReadinessResult CreateExactPayloadConflictResult(GeneDef gene)
         {
             GeneDef additionalGene = CreateGene(gene.defName + "_Additional");
             var sourceComposition = new PlanGenepackCompositionDiagnostic(
-                new[] { gene, additionalGene },
+                [gene, additionalGene],
                 1,
                 false,
-                new[] { additionalGene });
+                [additionalGene]);
             var diagnostic = new PlanGeneCoverageDiagnostic(
                 gene,
                 PlanGeneCoverageState.ExactPayloadConflict,
-                new[] { sourceComposition });
+                [sourceComposition]);
 
-            return PlanReadinessResult.CreateNotReady(
-                new[] { gene },
-                Array.Empty<GeneDef>(),
-                true,
-                new[] { diagnostic });
+            return PlanReadinessResult.CreateNotReady([gene], [], true, [diagnostic]);
         }
 
         private static XenogermPlan CreatePlan(
@@ -137,7 +126,7 @@ namespace XenogermPlanner.Tests.Trade
             PlanReadinessMode readinessMode,
             params GeneDef[] genes)
         {
-            return new XenogermPlan(id, name, genes, Array.Empty<string>(), readinessMode);
+            return new XenogermPlan(id, name, genes, [], readinessMode);
         }
 
         private static GeneDef CreateGene(string defName)

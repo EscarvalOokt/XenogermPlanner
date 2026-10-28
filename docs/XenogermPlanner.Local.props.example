@@ -1,18 +1,41 @@
 <Project>
     <PropertyGroup>
         <!--
-        Set this to the Managed directory of your local RimWorld installation.
+        Set this to the RimWorld 1.7 directory containing Assembly-CSharp.dll
+        and UnityStubs.dll (the game root on Windows).
         Example for a default Steam installation on Windows:
-        C:\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed
+        C:\Program Files (x86)\Steam\steamapps\common\RimWorld
         -->
-        <RimWorldManagedDir>C:\Path\To\RimWorld\RimWorldWin64_Data\Managed</RimWorldManagedDir>
+        <RimWorldManagedDir>C:\Path\To\RimWorld</RimWorldManagedDir>
 
         <!--
-        Set this to the Assemblies directory of the local RimWorld mod installation
-        used for development deployment.
-        Example:
-        C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\XenogermPlanner\Assemblies\Current
+        Ordinary build and test commands leave the installed mod unchanged.
+        Set an absolute destination ending in Current\Assemblies (with this
+        casing), then explicitly build with -p:DeployToGame=true.
+        Deployment creates or updates the complete mod: shared content,
+        historical DLLs and the current DLL. Managed content directories are
+        replaced, so keep personal files outside them. Historical checksums
+        and the destination are validated before cleanup. Close RimWorld first.
+        An external staging directory can be used instead of the game installation.
         -->
-        <RimWorldModAssembliesDir>C:\Path\To\RimWorld\Mods\XenogermPlanner\Assemblies\Current</RimWorldModAssembliesDir>
+        <!-- <RimWorldModAssembliesDir>C:\Path\To\RimWorld\Mods\XenogermPlanner\Current\Assemblies</RimWorldModAssembliesDir> -->
+
+        <!--
+        Download and extract the complete source archive from:
+        https://github.com/EscarvalOokt/Escarval.RimWorld.UI/releases/tag/v1.0.0
+        Set an absolute path to the extracted src/Escarval.RimWorld.UI directory
+        containing Escarval.RimWorld.UI.Source.projitems, as in the example below.
+        Specify the directory, not the source root or the .projitems file itself.
+        The versioned archive folder is not discovered automatically.
+
+        A checkout of tag v1.0.0 named Escarval.RimWorld.UI can also be discovered
+        in either of these locations, relative to the mod repository root:
+        ../Escarval.RimWorld.UI/src/Escarval.RimWorld.UI
+        ../../Escarval.RimWorld.UI/src/Escarval.RimWorld.UI
+        The project imports the shared source directly from this directory;
+        it does not download the library or enforce the selected version.
+        The shared UI standalone project does not need to be built.
+        -->
+        <!-- <EscarvalRimWorldUiProjectDir>C:\Dependencies\Escarval.RimWorld.UI-1.0.0\src\Escarval.RimWorld.UI</EscarvalRimWorldUiProjectDir> -->
     </PropertyGroup>
 </Project>

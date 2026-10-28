@@ -10,11 +10,6 @@ namespace XenogermPlanner.UI
     {
         private readonly ReadOnlyCollection<GeneDef> _desiredGenes;
 
-        internal string PlanName { get; }
-        internal IReadOnlyCollection<GeneDef> DesiredGenes => _desiredGenes;
-        internal PlanReadinessMode ReadinessMode { get; }
-        internal bool ReadinessNotificationsEnabled { get; }
-
         internal XenogermPlanEditorInitialState(
             string planName,
             IEnumerable<GeneDef> desiredGenes,
@@ -44,6 +39,11 @@ namespace XenogermPlanner.UI
             ReadinessMode = readinessMode;
             ReadinessNotificationsEnabled = readinessNotificationsEnabled;
         }
+
+        internal string PlanName { get; }
+        internal IReadOnlyCollection<GeneDef> DesiredGenes => _desiredGenes;
+        internal PlanReadinessMode ReadinessMode { get; }
+        internal bool ReadinessNotificationsEnabled { get; }
 
         internal static XenogermPlanEditorInitialState CreateEmpty()
         {

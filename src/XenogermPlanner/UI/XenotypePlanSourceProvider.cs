@@ -10,57 +10,17 @@ namespace XenogermPlanner.UI
 {
     internal sealed class XenotypePlanSourceProvider : IXenogermPlanSourceProvider
     {
-        internal delegate bool TryLoadCustomXenotype(string path, out CustomXenotype source);
-
-        private sealed class PremadeSourceToken
-        {
-            internal PremadeSourceToken(XenotypeDef source, int sourceIndex)
-            {
-                Source = source;
-                SourceIndex = sourceIndex;
-            }
-
-            internal XenotypeDef Source { get; }
-            internal int SourceIndex { get; }
-        }
-
-        private sealed class SavedSourceToken
-        {
-            internal SavedSourceToken(string path)
-            {
-                Path = path;
-            }
-
-            internal string Path { get; }
-        }
-
-        private sealed class SavedSourceCacheEntry
-        {
-            internal SavedSourceCacheEntry(
-                long length,
-                DateTime lastWriteTimeUtc,
-                XenogermPlanSourceResolveResult result)
-            {
-                Length = length;
-                LastWriteTimeUtc = lastWriteTimeUtc;
-                Result = result;
-            }
-
-            internal long Length { get; }
-            internal DateTime LastWriteTimeUtc { get; }
-            internal XenogermPlanSourceResolveResult Result { get; }
-        }
-
         private const string PremadeGroupKey = "premade-xenotypes";
         private const string SavedGroupKey = "saved-xenotypes";
+        private readonly Action<string, Action> _checkVersionAndLoad;
 
         private readonly Func<IEnumerable<XenotypeDef>> _getPremadeSources;
         private readonly Func<IEnumerable<FileInfo>> _getSavedSources;
-        private readonly Action<string, Action> _checkVersionAndLoad;
-        private readonly TryLoadCustomXenotype _tryLoadCustomXenotype;
 
         private readonly Dictionary<string, SavedSourceCacheEntry> _savedSourceCache =
             new Dictionary<string, SavedSourceCacheEntry>(StringComparer.OrdinalIgnoreCase);
+
+        private readonly TryLoadCustomXenotype _tryLoadCustomXenotype;
 
         private ReadOnlyCollection<XenogermPlanSourceGroup> _groups;
 
@@ -87,14 +47,11 @@ namespace XenogermPlanner.UI
             Refresh();
         }
 
-        public string TitleKey =>
-            "XenogermPlanner.PlanSource.Xenotype.Title";
+        public string TitleKey => "XenogermPlanner.PlanSource.Xenotype.Title";
 
-        public string EmptySourcesKey =>
-            "XenogermPlanner.PlanSource.Xenotype.EmptySources";
+        public string EmptySourcesKey => "XenogermPlanner.PlanSource.Xenotype.EmptySources";
 
-        public IReadOnlyList<XenogermPlanSourceGroup> Groups =>
-            _groups;
+        public IReadOnlyList<XenogermPlanSourceGroup> Groups => _groups;
 
         public void Refresh()
         {
@@ -257,7 +214,8 @@ namespace XenogermPlanner.UI
             }
 
             if (_savedSourceCache.TryGetValue(token.Path, out SavedSourceCacheEntry cached) &&
-                cached.Length == file.Length && cached.LastWriteTimeUtc == file.LastWriteTimeUtc)
+                cached.Length == file.Length &&
+                cached.LastWriteTimeUtc == file.LastWriteTimeUtc)
             {
                 onResolved(cached.Result);
                 return;
@@ -452,6 +410,47 @@ namespace XenogermPlanner.UI
         private static bool TryLoadCustomXenotypeFile(string path, out CustomXenotype source)
         {
             return GameDataSaveLoader.TryLoadXenotype(path, out source);
+        }
+
+        internal delegate bool TryLoadCustomXenotype(string path, out CustomXenotype source);
+
+        private sealed class PremadeSourceToken
+        {
+            internal PremadeSourceToken(XenotypeDef source, int sourceIndex)
+            {
+                Source = source;
+                SourceIndex = sourceIndex;
+            }
+
+            internal XenotypeDef Source { get; }
+            internal int SourceIndex { get; }
+        }
+
+        private sealed class SavedSourceToken
+        {
+            internal SavedSourceToken(string path)
+            {
+                Path = path;
+            }
+
+            internal string Path { get; }
+        }
+
+        private sealed class SavedSourceCacheEntry
+        {
+            internal SavedSourceCacheEntry(
+                long length,
+                DateTime lastWriteTimeUtc,
+                XenogermPlanSourceResolveResult result)
+            {
+                Length = length;
+                LastWriteTimeUtc = lastWriteTimeUtc;
+                Result = result;
+            }
+
+            internal long Length { get; }
+            internal DateTime LastWriteTimeUtc { get; }
+            internal XenogermPlanSourceResolveResult Result { get; }
         }
     }
 }

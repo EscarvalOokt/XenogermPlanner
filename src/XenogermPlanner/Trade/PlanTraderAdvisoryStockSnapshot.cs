@@ -10,13 +10,6 @@ namespace XenogermPlanner.Trade
     {
         private readonly ReadOnlyCollection<PlanTraderAdvisorySourceSnapshot> _sources;
 
-        internal bool IsAvailable { get; }
-        internal IReadOnlyList<PlanTraderAdvisorySourceSnapshot> Sources => _sources;
-
-        internal static PlanTraderAdvisoryStockSnapshot Unavailable { get; } = new PlanTraderAdvisoryStockSnapshot(
-            false,
-            Array.Empty<PlanTraderAdvisorySourceSnapshot>());
-
         private PlanTraderAdvisoryStockSnapshot(bool isAvailable, IEnumerable<PlanTraderAdvisorySourceSnapshot> sources)
         {
             if (sources == null)
@@ -48,6 +41,13 @@ namespace XenogermPlanner.Trade
             IsAvailable = isAvailable;
             _sources = copiedSources.AsReadOnly();
         }
+
+        internal bool IsAvailable { get; }
+        internal IReadOnlyList<PlanTraderAdvisorySourceSnapshot> Sources => _sources;
+
+        internal static PlanTraderAdvisoryStockSnapshot Unavailable { get; } = new PlanTraderAdvisoryStockSnapshot(
+            false,
+            Array.Empty<PlanTraderAdvisorySourceSnapshot>());
 
         internal static PlanTraderAdvisoryStockSnapshot CreateAvailable(
             IEnumerable<PlanTraderAdvisorySourceSnapshot> sources)

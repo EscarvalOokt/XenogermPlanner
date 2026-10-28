@@ -19,8 +19,9 @@ src/XenogermPlanner.Local.props
 docs/local/
 docs/release/
 
-# Deployed mod assemblies
+# Obsolete/generated assembly layouts are not source content
 mod/Assemblies/
+mod/Current/
 
 # OS-generated files
 .DS_Store

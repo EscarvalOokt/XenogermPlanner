@@ -68,6 +68,9 @@
     <XenogermPlanner.AssemblerBlocker.ArchogeneticsResearchMissing>Для використання потрібних генопаків необхідне дослідження «Архогенетика».</XenogermPlanner.AssemblerBlocker.ArchogeneticsResearchMissing>
     <XenogermPlanner.AssemblerBlocker.InsufficientArchiteCapsules>Потрібно архітних капсул: {0}. Доступно: {1}.</XenogermPlanner.AssemblerBlocker.InsufficientArchiteCapsules>
     <XenogermPlanner.AssemblerBlocker.Unknown>Збирання заблоковано з невідомої причини.</XenogermPlanner.AssemblerBlocker.Unknown>
+    <XenogermPlanner.AssemblerReadinessStatus.SearchIncomplete>Перевірку не завершено</XenogermPlanner.AssemblerReadinessStatus.SearchIncomplete>
+    <XenogermPlanner.Planner.AssemblerSearchIncomplete>Не всі поєднання генопаків перевірено. Готовність збирача не визначена.</XenogermPlanner.Planner.AssemblerSearchIncomplete>
+    <XenogermPlanner.AssemblerBlocker.MetabolismTooLow>Ефективність метаболізму: {0}. Допустимий мінімум: {1}.</XenogermPlanner.AssemblerBlocker.MetabolismTooLow>
 
     <XenogermPlanner.Planner.GeneCoverage>Доступність генів</XenogermPlanner.Planner.GeneCoverage>
     <XenogermPlanner.Planner.GeneColumn>Ген</XenogermPlanner.Planner.GeneColumn>

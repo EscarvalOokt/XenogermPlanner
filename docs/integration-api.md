@@ -209,7 +209,9 @@ A composition containing any gene outside the target is not relevant to that Exa
 * A plan already ready through current product inventory is not returned.
 * The offer is not added to product inventory and does not satisfy readiness.
 * The query does not calculate or persist a hypothetical post-purchase state.
-* The query does not reserve genepacks or alter plan, inventory or notification state.
+* The query does not reserve genepacks or alter physical genepacks, plan state or notification cursors.
+
+Relevance uses product-level readiness. A selected assembler's metabolism, infrastructure blockers or `SearchIncomplete` result do not change API relevance.
 
 ## Ordering and determinism
 
@@ -225,18 +227,23 @@ Equivalent effective input sets produce equivalent ordered public results. Batch
 The API reads:
 
 * the current saved plan collection;
-* the current active-map Planner product-inventory snapshot;
-* existing Planner readiness analysis and target-gene diagnostics.
+* the current active-map Planner product-inventory snapshot.
+
+From these inputs, it computes plan readiness and target-gene diagnostics for the query.
 
 A query does not mutate:
 
 * plan IDs, names, targets or readiness modes;
-* product inventory or its snapshot;
+* physical genepacks or their ownership;
 * readiness-notification settings;
 * notification delivery cursors;
 * save data or consumer state.
 
-The API does not publish change events. A consumer decides when to query again. Settlement Trade Overview, for example, is expected to rebuild its transient relevance projection during its normal window-reopen lifecycle rather than modifying stock-cache ownership.
+Obtaining the current inventory snapshot can refresh Planner's derived cache when it is invalidated, the active map changes or its refresh interval expires. Read-only does not mean that the cached snapshot reference remains unchanged. The offered composition is never inserted into that inventory.
+
+Invoke the query synchronously on the game's main thread. It reads live game components, map inventory and definitions; the runtime-free DTO surface does not make those operations independent of the game lifecycle.
+
+The API does not publish change events. A consumer decides when to query again.
 
 ## Minimal soft-binding example
 
@@ -368,7 +375,7 @@ A consumer must not:
 
 ## Compatibility expectations and non-goals
 
-The API version `1` contract assumes the supported Xenogerm Planner baseline: RimWorld 1.6 with Biotech and the standard genetics boundaries documented by the project.
+The API version `1` contract applies to the matching Xenogerm Planner DLL in the supported RimWorld 1.6/1.7 package, with Biotech and the standard genetics boundaries in [Compatibility](compatibility.md). Current source targets RimWorld 1.7 and `net10.0`; the package preserves the released 1.6 DLL. API versioning is independent from both the game version and target framework.
 
 The API does not guarantee compatibility with third-party mods that replace or substantially patch Planner-owned or vanilla genetics behavior.
 

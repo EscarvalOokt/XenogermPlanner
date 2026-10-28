@@ -9,16 +9,9 @@ namespace XenogermPlanner.Templates
 {
     internal sealed class PlanXenogermTemplateCandidate
     {
+        private readonly ReadOnlyCollection<GeneDef> _additionalGenes;
         private readonly ReadOnlyCollection<PlanXenogermTemplateComposition> _compositions;
         private readonly ReadOnlyCollection<GeneDef> _unionGenes;
-        private readonly ReadOnlyCollection<GeneDef> _additionalGenes;
-
-        internal IReadOnlyList<PlanXenogermTemplateComposition> Compositions => _compositions;
-        internal IReadOnlyList<GeneDef> UnionGenes => _unionGenes;
-        internal IReadOnlyList<GeneDef> AdditionalGenes => _additionalGenes;
-        internal int GeneSetCount => _compositions.Count;
-        internal int TotalGeneOccurrences { get; }
-        internal string CandidateKey { get; }
 
         internal PlanXenogermTemplateCandidate(
             IEnumerable<PlanXenogermTemplateComposition> compositions,
@@ -68,8 +61,9 @@ namespace XenogermPlanner.Templates
             var orderedUnionGenes = unionGenes.OrderBy(gene => gene.defName ?? string.Empty, StringComparer.Ordinal)
                 .ToList();
             var orderedAdditionalGenes = additionalGenes.OrderBy(
-                gene => gene.defName ?? string.Empty,
-                StringComparer.Ordinal).ToList();
+                    gene => gene.defName ?? string.Empty,
+                    StringComparer.Ordinal)
+                .ToList();
 
             _compositions = copiedCompositions.AsReadOnly();
             _unionGenes = orderedUnionGenes.AsReadOnly();
@@ -77,5 +71,12 @@ namespace XenogermPlanner.Templates
             TotalGeneOccurrences = totalGeneOccurrences;
             CandidateKey = string.Join("\u001e", copiedCompositions.Select(composition => composition.CompositionKey));
         }
+
+        internal IReadOnlyList<PlanXenogermTemplateComposition> Compositions => _compositions;
+        internal IReadOnlyList<GeneDef> UnionGenes => _unionGenes;
+        internal IReadOnlyList<GeneDef> AdditionalGenes => _additionalGenes;
+        internal int GeneSetCount => _compositions.Count;
+        internal int TotalGeneOccurrences { get; }
+        internal string CandidateKey { get; }
     }
 }

@@ -15,12 +15,12 @@ namespace XenogermPlanner.Tests.UI
         {
             GeneDef gene = PlanTestData.CreateGene("GeneA");
 
-            var state = XenogermPlanEditorInitialState.CreateFromSource("Plan", new[] { gene });
+            var state = XenogermPlanEditorInitialState.CreateFromSource("Plan", [gene]);
 
             Assert.That(state.PlanName, Is.EqualTo("Plan"));
             Assert.That(state.ReadinessMode, Is.EqualTo(PlanReadinessMode.Coverage));
             Assert.That(state.ReadinessNotificationsEnabled, Is.True);
-            Assert.That(state.DesiredGenes, Is.EquivalentTo(new[] { gene }));
+            Assert.That(state.DesiredGenes, Is.EquivalentTo([gene]));
         }
 
         [Test]
@@ -33,7 +33,7 @@ namespace XenogermPlanner.Tests.UI
             var state = XenogermPlanEditorInitialState.CreateFromSource("Plan", genes);
             genes.Add(geneB);
 
-            Assert.That(state.DesiredGenes, Is.EquivalentTo(new[] { geneA }));
+            Assert.That(state.DesiredGenes, Is.EquivalentTo([geneA]));
         }
 
         [Test]

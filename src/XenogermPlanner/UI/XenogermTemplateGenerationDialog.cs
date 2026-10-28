@@ -17,15 +17,13 @@ namespace XenogermPlanner.UI
         private const float PanelPadding = RimWorldUiStyle.Metrics.PanelPadding;
         private const float TitleHeight = RimWorldUiStyle.Metrics.HeaderHeight;
         private const float StatusGap = RimWorldUiStyle.Metrics.SectionGap;
+        private readonly PlanGenepackInventoryGameComponent _inventoryComponent;
 
         private readonly XenogermPlan _plan;
-        private readonly PlanGenepackInventoryGameComponent _inventoryComponent;
+        private bool _generationStarted;
 
         private bool _hasRenderedFrame;
         private int _renderedFrame;
-        private bool _generationStarted;
-
-        public override Vector2 InitialSize => new Vector2(DialogWidth, DialogHeight);
 
         internal XenogermTemplateGenerationDialog(
             XenogermPlan plan,
@@ -41,6 +39,8 @@ namespace XenogermPlanner.UI
             forcePause = true;
             absorbInputAroundWindow = true;
         }
+
+        public override Vector2 InitialSize => new Vector2(DialogWidth, DialogHeight);
 
         public override void DoWindowContents(Rect inRect)
         {

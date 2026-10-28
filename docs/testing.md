@@ -1,438 +1,126 @@
-
 # Xenogerm Planner testing policy
 
-This document defines the accepted automated testing and runtime acceptance boundaries of Xenogerm Planner. The current baseline includes the completed shared UI and layout-cache migration, tint-aware icon call-site migration, normalized primary and button assets, collection-level unique-name policy, target-gene `ExactPayloadConflict` analysis and presentation, separately versioned read-only integration API version `1`, window-owned analysis caching, the validated unified plan-creation flow and the implemented trader advisory lifecycle. The external shared source is compiled into the Planner assembly and its ownership boundary has consumer integration coverage. Public reflection shape, DTO invariants, batch orchestration, Planner-owned relevance semantics, semantic integration, read-only API behavior, analysis-cache reuse and invalidation, source transformation and revalidation, xenotype source projection, trader current-stock transformation, reference-identity reconciliation, notification deduplication, delivery gating and cross-subsystem regression boundaries are covered. The final SVG sources and regenerated packaged PNG textures are present under the normalized paths. The current Release build, complete NUnit suite, repeated UI profiling and runtime regression validation, including trader advisory runtime scenarios, have been validated successfully.
-
-It is a testing policy, not a product architecture specification or vanilla implementation reference.
+This document defines automated boundaries and reproducible acceptance scenarios for the current RimWorld 1.7 source and the complete 1.6/1.7 package. Build commands are in [README](../README.md#development), implementation contracts in [Architecture](architecture.md), and player-facing limitations in [Compatibility](compatibility.md).
 
 ## Testing principle
 
-Xenogerm Planner uses a risk-based, contract-oriented testing approach.
+Protect meaningful project-owned behavior: target semantics, readiness decisions, persisted data, state transitions, deterministic search, failure isolation and presentation policies. Use the smallest existing seam that reproduces a realistic regression.
+
+Do not reproduce RimWorld, Scribe, the engine or a third-party mod in a test host. Inspect external APIs when adapting an integration, and use the game for actual Def initialization, save/load, native input/rendering and gameplay lifecycles. Test counts and broad method coverage are not acceptance goals.
+
+<a id="automated-boundaries"></a>
+
+## Automated test boundary
+
+The [NUnit project](../tests/XenogermPlanner.Tests/XenogermPlanner.Tests.csproj) runs on .NET 10 outside the complete game and references the production project.
+
+| Area | Contracts to protect |
+| --- | --- |
+| Plans and names | Stable IDs, distinct physical targets, conflicting genes retained, Trim/OrdinalIgnoreCase uniqueness, rejection of manual conflicts, deterministic duplicate/source/paste/restore naming. |
+| Persistence | Save-record round trips, unresolved requirements, invalid-record isolation, notification settings/cursors, defaults for absent optional fields and duplicate-name normalization. |
+| Clipboard | Versioned round trips, new identity on paste, unresolved definition names, excluded source identity/notification state, malformed data and unsupported versions. |
+| Product readiness | Coverage/Exact set semantics, special-state precedence, reference identity, composition grouping, Missing versus ExactPayloadConflict and deterministic ordering. |
+| Inventory | Current-map/faction/holder policy, physical deduplication, unavailable state, invalidation, map changes, snapshot reuse and 600-tick fallback. |
+| Assembler scope | Exact connected packs, facility identity/power, stable representative choice and independent product versus connected scope. |
+| Assembler search | Requirement and helper combinations, full prerequisites, Coverage extras, Exact exclusion, duplicate composition handling, deterministic results and complete candidate evaluation. |
+| Metabolism | Distinct effective physical payload, boundary values below/at/above -5, values above +5, overrides, duplicate occurrences, helper packs and unmet helper prerequisites. Target-only or raw-sum calculations must not determine the result. |
+| Search budget | One shared 10,000-state budget across base/helper DFS; a ready last-permitted state succeeds; only refusal of an unvisited state marks exhaustion; exhaustion without Ready yields SearchIncomplete without final blocked-candidate diagnostics. |
+| Assembler result | Every live blocker, deterministic blocked-candidate selection, SearchIncomplete distinct from Blocked/NotReady, and no assembler status leaking into product readiness, templates or API relevance. |
+| Window cache | Structural live-input equality, copied gene sequences, bounded 30-tick polling, unchanged-input reuse, immediate plan/mode/map/assembler invalidation and explicit Refresh. |
+| Target/donor analysis | Ordinary/random/mixed conflicts, prerequisites, extraction participation, spawned current-map gene-tracker scope and transient exact pawn references. |
+| Templates | Valid fallback, bounded search, irredundancy/deduplication, deterministic scoring, complete/incomplete alternatives, current physical re-resolution and safe failed saves. |
+| Sources | Template/xenotype transformation, distinct-gene editor state, lazy saved-file loading, unchanged-file reuse, changed-file reload, source revalidation and isolated failures. |
+| Readiness notifications | Silent first determinate baseline, Unavailable handling, non-ready→ready transition, re-arming, disabled-delivery cursor updates and independent failures. |
+| Trader advisory | 60-tick polling, source/reference identity, silent load/map baselines, lifetime deduplication, pending delivery, CanTradeNow gating, aggregation, relevance reuse and subsystem isolation. |
+| API version 1 | Public reflection shape, DTO invariants, enum values, validation, batch correspondence, per-item isolation, ordering, optional context and read-only semantics. Derived snapshot refresh is allowed; physical inventory, plans and notification cursors are not mutated by a query. |
+| Presentation | Diagnostic precedence, numeric formatting, applicability, meaningful sort order, safe fallbacks and cache keys. |
+| Source composition | Shared UI types belong to XenogermPlanner.dll; no standalone UI or DTO runtime assembly is required. |
+
+Generic fixed/variable-height layout, control and layout-cache tests belong to `Escarval.RimWorld.UI.Tests`. Planner owns its composition/integration tests and the in-game rendering scenarios below.
+
+For helper-search regressions, include cases where a zero/negative-metabolism gene improves the effective result through an override, where a compensating pack introduces another prerequisite, and where reaching -5 still leaves a blocker removable by another pack. Do not assume metabolism, complexity or prerequisites improve monotonically as packs are added.
+
+An exhausted search must not be tested as proof of impossibility. Keep the no-Ready/completed case separate from the no-Ready/incomplete case.
+
+## Build and package checks
+
+Use isolated output and deployment directories for build-target checks. Deployment to a clean external directory prepares the complete candidate; the source `mod/` directory has no current DLL.
+
+1. Build and test with deployment disabled. Verify that neither the game installation nor `mod/` receives output.
+2. Resolve UI source from a v1.0.0 archive or tagged checkout. Check the configured path and both supported automatic layouts. A missing manifest must produce a useful configuration error.
+3. Inspect compile items: include the manifest's shared source once, exclude its bin/obj output, and retain Planner-owned source. A standalone UI build must not be needed.
+4. Deploy with `DeployToGame=true` to an absolute external `Current/Assemblies/` destination. Compare all installed source-content and historical DLL hashes, and compare the current DLL to the build output. Verify that no current directory is created in source `mod/`.
+5. Repeat deployment after adding stale files to managed directories and obsolete root `Assemblies/` and `1.7/` directories. They must disappear; unrelated root files and a local source-absent `About/PublishedFileId.txt` must survive. Reject missing, relative, historical or wrongly cased destinations, source-tree/ancestor/game-root destinations, another installed package ID, symbolic links/junctions, invalid current load mapping and missing/changed historical DLLs before modifying the destination.
+6. Parse metadata, Defs, translations and `LoadFolders.xml`; check keys, parameters, main-button DefInjected placement and texture references. Inspect package contents for game/reference DLLs, test DLLs, a standalone UI DLL and generated build metadata.
+7. Check actual assembly selection in both game versions using R01.
+
+## Runtime acceptance setup
+
+Record the candidate package path, both DLL hashes, source and shared-source revisions, game version/revision, OS, DLC/mod list and load order, language, resolution and UI scale. Confirm the installed assembly matches the candidate.
+
+Use separate configurations for clean Biotech, representative data-driven gene mods, optional Settlement Trade Overview, multiple maps/world layers, and deliberately malformed/incompatible fixtures. Record a missing prerequisite as not run instead of treating an unavailable scenario as passed.
+
+Use disposable save copies. Preserve starting saves and record map identities, plan IDs, relevant pawns/packs/facilities, gene definitions and game ticks. Separate first-load logs from logs after resaving. Keep diagnostics and instrumentation in an isolated candidate and remove them before final package checks.
+
+Internal assertions require observation: use breakpoints/watches or temporary counters for scans, analysis calls, state visits, cache identities, delivery acknowledgements and actual selected assembly paths. A visual result alone does not establish those counts.
+
+## Runtime scenarios
+
+| ID | Setup | Action | Expected result |
+| --- | --- | --- | --- |
+| R01 | Same complete package in clean separate RimWorld 1.6 and 1.7 installations; Biotech enabled. | Start each game, inspect selected assembly path/hash, open Planner and perform a short create/edit/save-load check. | One Planner DLL loads: preserved DLL from `1.6/Assemblies/` or current DLL from `Current/Assemblies/`. Shared Defs, translations and textures resolve. No root-level, game/reference, test or standalone UI DLL is loaded from the mod. |
+| R02 | Clean 1.7 Biotech colony without Planner-owned plans. | Open Planner, create from scratch, change mode/notification setting and save. | A new independent plan appears; the editor exposes the full runtime gene catalog and preserves chosen settings. |
+| R03 | Runtime xenogerm template, premade xenotype and saved custom xenotype; separate missing/invalid saved file. | Open each source, preview, cancel, continue, edit and save. Change/remove a source between selection and Continue. | Cancel creates no plan. Continue opens an editor with default Coverage/notifications; saving creates one independent plan. Source changes revalidate or fail safely without damaging other plans. |
+| R04 | Plans with colliding names, conflicting genes and unavailable definition names; valid and malformed clipboard text. | Rename, duplicate, copy/paste and save/reload. | Manual duplicates are rejected; automatic names are deterministic. IDs remain independent, conflicting genes remain targets, unresolved names stay degraded, malformed paste does not corrupt the collection. |
+| R05 | Loose, Gene Bank, nested and pawn-carried packs; foreign-faction, ship, caravan, other-map and detached cases. | Open Planner and Refresh; move packs between supported and excluded scopes. | Only eligible current-map physical packs count. Forbidden state, bank power and assembler connection alone do not change product membership. |
+| R06 | Stable plan/inventory; two maps or layers and controlled tick progression. | Reopen, Refresh, change the active map and advance through the inventory fallback interval. Observe scan/snapshot identity. | Opening/Refresh invalidates, map changes replace scope, fallback occurs at 600 ticks, and stable cached data is reused between refreshes. No previous-map packs remain authoritative. |
+| R07 | Coverage and Exact plans with ready, missing, extra-gene-only and mixed compatible/incompatible source compositions. | Switch modes and inspect availability, status and tooltips. | Product readiness follows the selected payload relation. ExactPayloadConflict remains distinct from Missing; compatible sources restore Available. No assembler infrastructure requirement changes product readiness. |
+| R08 | Selected assembler with overlapping facilities, powered/unpowered banks, available/unavailable research and capsule counts. | Change one live condition at a time, destroy/remove the selected assembler and switch maps. | Connected scope and candidate-specific blockers match current infrastructure; selection clears safely and is not silently replaced. Product readiness remains independent. |
+| R09 | Controlled candidate fixtures with effective metabolism -6, -5 and above +5; duplicate and overriding genes. | Compare the 1.7 native assembly constraint with Planner's selected-assembler result and diagnostic. | MetabolismTooLow applies only below -5 and reports the full candidate's effective value/minimum. Duplicates are not counted twice for metabolism; +5 is not an upper rejection threshold. |
+| R10 | Coverage target requiring separate compensating packs, with zero/negative raw metabolism overrides, helper prerequisites and an alternative fixing another live blocker. | Select the assembler and compare supported combinations; repeat in Exact mode. | Coverage can find a fully usable extended candidate without accepting unmet helper requirements. Exact rejects extras. Passing metabolism alone is not Ready. |
+| R11 | Isolated large candidate fixture capable of exhausting the 10,000-state search; a separate completed blocked fixture and a ready-at-limit fixture. | Observe state visits, result and displayed diagnostics; press Refresh. | Unresolved exhaustion shows Check incomplete without asserted final blockers or candidate. Completed search may show Blocked; a ready last-permitted state is Ready. Refresh reruns the bounded analysis; there is no background continuation. |
+| R12 | Selected assembler and unchanged live inputs; diagnostic scan/analysis counters. | Leave the assembler view open through several 30-tick intervals, then change pack/facility/power/gene sequence/scalars, plan mode and selection one at a time. Finally Refresh. | Polling can scan live state; expensive analysis is reused when structural inputs match and reruns for relevant changes. Copied gene data detects in-place mutation. Explicit Refresh invalidates immediately. |
+| R13 | Modded gene conflicts/prerequisites, an unchanged degraded plan and several target edits. | Inspect Gene effects and editor totals; compare native effective-gene projection and metabolism-to-hunger conversion. | Diagnostics do not silently normalize the physical target. Degraded totals are partial; edits recalculate. Raw composition and effective total values are not conflated. |
+| R14 | Spawned gene-bearing pawns with varying faction/status and extractor eligibility; a stale donor target. | Inspect donor counts, open details, navigate, change genes/spawn state and remove a donor. | Counts reflect extraction participation, not usable extractor infrastructure or guaranteed output. Exact rows navigate safely; stale references become no-ops. |
+| R15 | Product-ready Coverage/Exact plans, small complete and large incomplete template candidate spaces. | Generate a template, inspect feedback/preview, select an alternative and save; remove a required physical composition before another save. | Feedback renders before search, candidates are valid, incomplete alternatives are labelled, and stale compositions fail safely. Native same-name replacement works without changing the source plan or starting assembly. |
+| R16 | A plan crossing non-ready→ready, multiple plans and disabled notifications; disposable save. | Change inventory, toggle notification settings and save/reload. | First determinate evaluation is silent; only re-armed non-ready→ready transitions deliver. Unavailable does not advance the cursor, disabled delivery still tracks state, and the persisted cursor prevents duplicate ready messages. |
+| R17 | Orbital trader and visiting trade caravan on the active map; controlled relevant offers. | Let traders arrive/depart, perform an actual trade, change plans and switch away/back. Observe stock polls and relevance. | 60-tick polling discovers current stock and releases departed sources. Plan/inventory changes can reevaluate known offers. Load/map baselines are silent and offers never satisfy physical readiness. |
+| R18 | New post-baseline relevant offer while CanTradeNow is false; multiple offers and plans. | Make trade available, lose/regain relevance, rename a plan, then introduce a new physical pack or plan ID. | Pending current pairs deliver once when allowed, aggregated per trader. Acknowledged pairs stay suppressed within that source lifetime; new identities can deliver. Caravan messages navigate; orbital messages remain text-only. |
+| R19 | Isolated failing trader/source/provider or unavailable integration context alongside healthy plans/sources. | Exercise refresh and notification delivery. | One failure is isolated. Other plans, sources, persistence and the Planner UI remain usable. |
+| R20 | Compatible STO on 1.7, then Planner absent or an incompatible consumer fixture; known Coverage/Exact/ready/degraded plans. | Query/open both trade views, mutate plans and reopen; inspect API results. | API v1 preserves index/status/order contracts and excludes ready/degraded/prerequisite-only matches. Optional failure remains neutral. Queries may refresh derived inventory but do not mutate plans, physical packs or delivery cursors. |
+| R21 | All Planner windows, long gene/plan lists, empty results, different UI scales and each [supplied language](../README.md#languages). | Search, sort, collapse groups, scroll, remove final visible selected genes, hover and use left/right clicks, open/close modal dialogs. | No stale index, unbalanced scroll state, stuck modal or raw translation key. Icons, clipping, tooltips and hit targets align; modal pause/input ownership and native window chrome work. |
+| R22 | Exact loose/held packs and genes, plus targets destroyed while a context menu is open. | Open native info cards and navigate from the same surfaces. | Inspection uses the exact gene/pack; navigation uses the current-map holder. Right-click does not trigger left-click actions; stale targets are safe. |
+| R23 | Save made without Planner and save with multiple plans, cursor state, degraded requirements and a vanilla generated template. | Add Planner to the first; remove it from a copy of the second, load, save under a new name and reload. | Addition initializes empty Planner state. Removal leaves the colony accessible with first-load component errors; resave removes Planner data/errors. Planner plans are lost; vanilla templates remain vanilla data. |
+| R24 | Disposable 1.6 save with known plan IDs/names/modes/cursors, generated templates and modded gene requirements. | Load on 1.7 with the complete package, inspect data, save under a new name and reload. | Planner-owned fields and available definitions retain their meaning; unresolved requirements remain degraded. Derived state is rebuilt. No Planner-specific corruption or duplicate components. Record other mods' migration failures separately. |
+| R25 | Plan referencing a modded gene and a vanilla template containing it; disposable save branches. | Remove the definition provider, load/resave, then restore it and reload each branch. | Planner preserves unresolved names for later resolution. Do not require vanilla template recovery after unresolved entries were removed; verify the documented distinction without reconstruction from labels. |
+| R26 | Representative normal and large saves with fixed camera, UI scale and profiling method. | Measure initial inventory capture, each active tab, plan switching, source search, template generation and background trader polling separately. | Steady UI reuses stable analysis/projections, list drawing is virtualized and callbacks follow bounded refresh lifecycles. Record synchronous capture/search hitches separately from continuous rendering cost. |
+
+<a id="candidate-validation"></a>
+
+## Release candidate validation
+
+A release candidate is the complete package, not just a build output. Identify both versioned DLLs, inspect shared content and install into clean locations. Run R01 for both supported versions and the applicable 1.7 cases above.
+
+Record observed behavior, diagnostics, failures and unavailable fixtures separately. Retain a failing case's starting save and exact actions. After fixes, rerun affected cases and identify the final installed candidate. No source-level or automated result substitutes for actual runtime acceptance.
+
+## Stress and performance checks
+
+Keep deterministic stress tests in the ordinary suite when they protect search correctness, data-shape handling, determinism or cache contracts. Explicit performance fixtures are separate diagnostic runs.
 
-The primary question before adding or retaining an automated test is:
-
-> Which meaningful Xenogerm Planner-owned contract does this test protect, and which realistic regression can it detect?
-
-Automated tests are expected to protect behavior where a regression can silently change planning or readiness semantics, corrupt or lose mod-owned persisted data, break meaningful state transitions, or change a non-trivial deterministic algorithm.
-
-Test count and broad method-level coverage are not goals by themselves.
-
-A test that does not protect a concrete project contract should not be retained only because the corresponding class or method exists.
-
-## What automated tests protect
-
-Automated tests should focus on the following areas.
-
-### Core semantics
-
-Core project-owned semantics should be tested thoroughly.
-
-This includes:
-
-* `XenogermPlan` invariants;
-* stable plan identity and collection-level display-name normalization through `Trim()` and `OrdinalIgnoreCase`;
-* deterministic unique-name allocation for duplicate, source-based creation, paste and restore paths;
-* manual create and rename conflict rejection without silent renaming;
-* distinct desired-gene semantics;
-* degraded unresolved requirements;
-* independent identity and mutable state for duplicated and pasted plans;
-* Coverage and Exact payload semantics;
-* target-gene `Available`, `Missing` and Exact payload `ExactPayloadConflict` classification;
-* exact-conflict-only `NotReady` results and preservation of the physical distinction between missing and incompatible availability;
-* project-owned ordinary, random-choice-group, mixed-conflict and prerequisite diagnostics;
-* deterministic diagnostic grouping and ordering where presentation semantics depend on them;
-* product genepack combination search;
-* assembler-specific physical candidate search;
-* readiness state precedence;
-* prerequisite-aware assembler candidate evaluation and other assembler blocker rules;
-* deterministic candidate selection rules;
-* reference-identity semantics where physical object identity is part of the project contract;
-* potential-donor selection-participation semantics and exact transient pawn-reference results;
-* template composition candidate validity for Coverage and Exact payload modes;
-* template candidate deduplication, irredundancy, deterministic scoring and automatic-candidate selection;
-* bounded template search limits, deterministic fallback validity, retained-candidate caps and complete/incomplete result semantics;
-* semantic-composition-to-physical-pack resolution and stable representative selection;
-* shared raw and effective plan-gene biostat projections, including vanilla-style override projection, duplicate removal and independent complexity, metabolism and Archite totals;
-* candidate-level vanilla-style and per-composition raw genetic biostat calculations through the shared calculation boundary;
-* product-level readiness-notification transition semantics, including determinate baseline initialization, `Unavailable` handling, non-ready-to-ready delivery, re-arming and disabled-setting tracking;
-* source-neutral Plan Editor initial-state semantics for new plans, including defensive distinct-gene snapshots and the default Coverage / readiness-notification settings;
-* unified source-list projection semantics, including independent collapsed-group state and deterministic source ordering.
-
-A regression that can silently turn `Ready` into `NotReady`, hide a valid candidate, select a different candidate under deterministic rules, treat an unresolved requirement as satisfied, or miss a supported blocker requires automated protection.
-
-### Persistence contracts
-
-Mod-owned persistence behavior should be tested at the project's persistence boundary.
-
-This includes:
-
-* plan save-record round trips;
-* stable identity and persisted plan-owned fields;
-* degraded requirement restoration;
-* invalid record isolation;
-* per-plan readiness-notification settings and notification delivery cursor round trips;
-* backward-compatible defaults for save records created before notification fields existed;
-* deterministic duplicate-name normalization during restore;
-* supported migration behavior after migrations are introduced.
-
-Development-only empty names and earlier development save formats are not a compatibility target and do not require a legacy migration suite. Tests should instead protect the current accepted validation and the release save-compatibility baseline.
-
-Automated tests should protect Xenogerm Planner's persistence transformations and validation rules.
-
-They should not attempt to reproduce the complete RimWorld Scribe runtime when the behavior under test belongs to the game runtime rather than project-owned logic. In particular, adding the mod to an existing save, disabling it while Planner-owned `GameComponent` records are present, RimWorld's handling of missing component classes, save rewriting without the mod and preservation of vanilla `CustomXenogerm` data belong to runtime acceptance rather than the NUnit persistence suite.
-
-### Portability contracts
-
-Project-owned plan portability behavior should be tested independently from save-record persistence.
-
-This includes:
-
-* versioned clipboard transfer round trips;
-* creation of a new stable identity for every pasted plan;
-* deterministic numeric name allocation when pasted names conflict with the destination collection;
-* exclusion of the source plan ID from transfer data;
-* preservation and destination-side resolution of unresolved `GeneDef.defName` requirements;
-* deterministic normalization of duplicate gene requirements;
-* exclusion of local readiness-notification settings and notification delivery cursor state from the clipboard payload;
-* isolation of malformed payloads and explicit rejection of unsupported versions.
-
-These tests protect the transfer contract. They do not attempt to simulate the operating system clipboard or Unity input handling.
-
-### Meaningful lifecycle and state transitions
-
-Non-trivial lifecycle behavior should be tested when Xenogerm Planner owns the transition rules.
-
-Examples include:
-
-* derived inventory first-build and reuse behavior;
-* explicit invalidation;
-* active-map identity changes;
-* periodic fallback refresh;
-* readiness-notification determinate baseline initialization;
-* suppression of repeated ready and non-ready evaluations;
-* re-arming after a determinate ready-to-non-ready transition;
-* preservation of the notification delivery cursor across save/load;
-* continued cursor tracking while per-plan delivery is disabled;
-* product readiness and target analysis reuse for unchanged plan and inventory identities;
-* immediate analysis-cache rebuild after plan, inventory, map or assembler identity changes;
-* bounded donor, selectable-assembler and assembler live-state refresh;
-* complete analysis-cache invalidation on the explicit window lifecycle boundary.
-
-Trader advisory automated lifecycle coverage protects the following project-owned contracts:
-
-* 60-game-tick trader discovery/stock polling without coupling correctness to a vanilla arrival event;
-* silent first determinate baseline after component initialization, save load and active-map change, with current relevance pairs acknowledged without delivery;
-* unavailable game/map/Planner context not initializing or advancing that baseline;
-* active-map changes discarding prior transient trader-source and delivery state;
-* reference-identity reconciliation for concrete `TradeShip`, caravan trader `Pawn` and physical `Genepack` objects;
-* delivery deduplication by trader-source lifetime, exact `Genepack` reference and stable plan ID;
-* a baseline-acknowledged or successfully delivered pair remaining suppressed after temporary relevance loss and regain during the same source lifetime;
-* disappearing trader sources releasing their transient delivery state so a later concrete source starts a new lifetime;
-* one reconciliation aggregating newly deliverable pairs into at most one notification per trader;
-* `ITrader.CanTradeNow` gating delivery without changing discovery or relevance classification;
-* newly observed post-baseline pairs remaining pending while `CanTradeNow` is false, becoming deliverable when it later becomes true if still current and relevant, and being removed from pending state when no longer current/relevant;
-* plan mutation or product-inventory snapshot identity change reevaluating current known offers without requiring another trader discovery scan;
-* trader advisory state remaining non-persisted and separate from `XenogermPlan`, product inventory and readiness notification cursors;
-* trader relevance reusing the same Planner-owned Coverage/Exact-payload semantics as public API version `1` without a parallel algorithm.
-
-The test should target the project-owned transition contract rather than the existence of individual methods.
-
-### Non-trivial deterministic algorithms
-
-Search, filtering and transformation logic with project-owned rules should be tested for semantic correctness and determinism.
-
-Relevant examples include:
-
-* combination search;
-* exact-payload filtering;
-* assembler composition grouping;
-* physical source preference rules;
-* candidate ordering;
-* best blocked candidate selection;
-* bounded potential-donor extraction-sequence search;
-* template semantic composition grouping and bounded enumeration;
-* template alternative ordering, candidate-key determinism and truncated-result determinism;
-* fixed-height and variable-height visible-range calculations supplied by the external shared UI source and protected by the canonical shared test project;
-* variable-height cumulative row geometry and canonical shared layout-cache invalidation;
-* the existing consumer assembly-boundary contract proving that shared types are compiled into `XenogermPlanner.dll`;
-* consumer integration with shared generic controls without duplicating Planner-specific semantics;
-* stable filtered, sorted, grouped and formatted presentation projections;
-* identity-based gene-coverage projection-cache compatibility and explicit invalidation;
-* pack-order independence where the contract requires it.
-
-Fast deterministic stress scenarios may remain in the regular test suite when they protect algorithmic behavior that ordinary fixtures do not exercise adequately.
-
-## External integration API contracts
-
-The separately versioned read-only API version `1` is a public project boundary with direct automated protection.
-
-The implemented coverage protects:
-
-* facade discovery by the stable assembly-qualified name;
-* `ApiVersion` discovery independently from the mod version and the exact version `1` public enum values;
-* the public batch method signature, DTO constructors and read-only property surface;
-* runtime-free request validation and ordinal duplicate normalization;
-* documented handling of unknown definitions and structurally invalid requests;
-* explicit unavailable behavior without an active game, active map or usable Planner state;
-* composition-to-result correspondence, request order and item-level failure isolation;
-* deterministic match ordering by normalized display name and then stable plan ID;
-* response identity containing both `PlanId` and `DisplayName`;
-* Coverage relevance when an offered composition intersects `Missing` target genes, including additional offered genes;
-* Exact payload relevance only when the offered composition has no genes outside the target and intersects `Missing` or `ExactPayloadConflict`;
-* inclusion of exact-conflict-only `NotReady` plans;
-* exclusion of `Ready`, `EmptyTarget`, `Degraded` and `Unavailable`;
-* exclusion of prerequisite-only offers;
-* repeated equivalent queries producing equivalent public results;
-* queries not mutating plans, product inventory, notification settings or delivery cursors;
-* absence of forbidden runtime or internal Planner types from the public API surface.
-
-API tests target the documented public surface and public soft-binding sequence rather than reflection over private implementation types. Focused internal seams remain limited to deterministic orchestration and semantic integration that cannot construct the full game runtime in the test host.
-
-The Planner suite does not prove that an external consumer handles optional discovery correctly. Consumer-specific absence, unsupported-version and projection behavior belongs to that consumer's test policy and runtime acceptance.
-
-## Vanilla-facing boundaries
-
-Vanilla-facing adapters may be tested through minimal injected seams when Xenogerm Planner applies its own filtering, identity or transformation rules to data obtained from RimWorld.
-
-Examples include:
-
-* product inventory inclusion and exclusion rules;
-* assembler-visible scope projection;
-* physical reference deduplication;
-* preservation of facility power metadata;
-* spawned current-map potential-donor scope, gene-tracker filtering and exact pawn-reference deduplication;
-* `CustomXenogerm` source flattening, distinct-gene transformation and runtime-source revalidation;
-* premade `XenotypeDef` and saved `CustomXenotype` source transformation into source-neutral editor state;
-* saved `.xtp` source discovery, lazy native loading, unchanged-file cache reuse, metadata-driven reload and missing/load-failure isolation through injected vanilla-facing seams;
-* template physical re-resolution from current inventory;
-* validation of a selected template candidate against the current plan mode and target;
-* transformation of the vanilla save helper result into project-owned success or failure states.
-
-These tests answer:
-
-> Given boundary data with state X, does Xenogerm Planner transform or classify it according to project rule Y?
-
-They do not prove that RimWorld itself produces state X or implements the corresponding vanilla behavior in a particular way.
-
-Verified vanilla behavior remains grounded in the installed RimWorld implementation, source-level verification and runtime validation.
-
-A fake object or injected delegate must not be described as evidence of vanilla implementation behavior.
-
-Production architecture should not be expanded with a parallel abstraction solely to make a trivial vanilla API call unit-testable.
-
-## Presentation policy
-
-Presentation tests are appropriate when they protect non-trivial user-facing policy.
-
-Examples include:
-
-* whether diagnostics are shown for a specific readiness state;
-* which diagnostic wins when several semantic states could apply;
-* meaningful fallback behavior for unsupported values;
-* user-facing ordering when ordering is part of the presentation contract;
-* formatting logic that combines several semantic values and is easy to misrepresent;
-* donor-count applicability and deterministic donor-count or donor-name ordering where those rules affect user interpretation;
-* metabolic-efficiency sign formatting and vanilla-style hunger-rate percentage formatting;
-* template candidate summaries, complete/incomplete search-state policy, disabled reasons and save-failure presentation when they combine multiple semantic values;
-* source-list grouping and source metadata projection where collapse state, source kind or failure state changes user interpretation.
-
-Automated tests are generally not required for:
-
-* a trivial `enum → translation key` mapping;
-* a trivial `enum → color` mapping;
-* literal labels;
-* spacing or fixed layout constants;
-* the presence of a visual arrow or similar glyph;
-* direct `Widgets` calls;
-* tooltip text that only forwards one localization key.
-
-A simple presentation helper should not be extracted into a new pure abstraction only to make a trivial mapping testable.
-
-## Runtime acceptance
-
-Scenarios that require the actual RimWorld, Verse or Unity runtime should be checked through runtime acceptance or compatibility testing rather than simulated in the NUnit host.
-
-This includes:
-
-* continued successful loading and use of the connected sibling `Escarval.RimWorld.UI` source without a separate runtime UI DLL;
-* IMGUI layout and visual hierarchy;
-* actual colors;
-* clipping and scrolling;
-* tabbed Planner interaction and layout;
-* `Create` FloatMenu interaction and routing to `From scratch`, `From xenogerm template` and `From xenotype`;
-* semantic UI parity between xenogerm-template and xenotype source selection, including source list, gene preview, Cancel/Continue behavior and absence of plan settings from the source selector;
-* actual system clipboard integration;
-* potential-donor dialog layout, scrolling, full-row hover indication and camera navigation;
-* template-generation feedback dialog lifecycle and deferred search after the first rendered frame;
-* template-creation dialog layout, automatic/custom mode switching and alternative selection;
-* complete and incomplete template-search warnings and Automatic/Customize behavior;
-* template grouped preview, additional-gene summary above the scroll area, overflow marker, full-list tooltip, scrolling and dynamic candidate-card layout;
-* template icon selector, name validation and modal lifecycle;
-* candidate-level and per-`GeneSet` genetic biostat rendering with public vanilla assets;
-* live Plan Editor complexity, metabolic efficiency, hunger rate and Archite Capsule rendering in create and edit modes;
-* manual name validation, source-based creation / duplicate / paste allocation and restored duplicate-name presentation;
-* Exact payload conflict status, labels, colors and tooltips in English, Russian and Ukrainian;
-* partial biostat presentation for an unchanged degraded plan and complete recalculation after the selected target changes;
-* parity with the vanilla metabolism-to-hunger-rate conversion and percentage presentation;
-* direct vanilla template save, same-name replacement and subsequent load through vanilla UI;
-* English, Russian and Ukrainian layouts in the supported release configuration;
-* modal force-pause behavior for Planner dialogs that absorb surrounding input;
-* button interaction;
-* project-owned texture loading, icon rendering and disabled visual states;
-* `DefDatabase` initialization;
-* actual Scribe lifecycle;
-* actual connected facility graphs;
-* actual power component behavior;
-* actual game-map state;
-* actual RimWorld readiness-notification message presentation and lifecycle;
-* real Scribe save/load suppression behavior and pre-feature save defaults for notification fields;
-* readiness-mode and readiness-notification controls in the Plan Editor for new and existing plans, with those controls absent from source-selection dialogs;
-* collapsible premade/saved xenotype groups, including repeated collapse/expand and scrolling without stale visible indices or an unbalanced scroll-view mouse-position stack;
-* actual saved `.xtp` discovery and vanilla version/load behavior, including source failure recovery and transition to editable Plan Editor state;
-* confirmation that selecting a source does not create a plan before the Plan Editor is saved;
-* independent delivery for multiple plans and active-map unavailable/restore scenarios;
-* implemented vanilla integration boundaries;
-* public API availability with an active map, without an active map and across new-game/load transitions;
-* absence of additional runtime assemblies for shared UI or API DTOs;
-* dependency metadata and absence of unexpected runtime assemblies;
-* consistency between public support claims and the configurations actually accepted for support;
-* Harmony integration only when a future separately approved production or research patch exists;
-* parity with vanilla dialogs or other vanilla runtime flows;
-* unchanged open-window analysis reuse across Overview, Gene assembler and Gene effects scenarios;
-* repeated Plan Editor selected-gene removal, including the final visible rows, without `ArgumentOutOfRangeException` or an unbalanced scroll-view mouse-position stack;
-* adding Xenogerm Planner to an existing save without pre-existing Planner-owned state;
-* removing Xenogerm Planner from a save that contains persisted plans and vanilla xenogerm templates created through the Planner, including first-load missing-component logging, continued game loading, resave cleanup, a subsequent clean reload without Planner component errors, loss of Planner-owned plan state and preservation of vanilla `CustomXenogerm` template data.
-
-Trader advisory runtime acceptance covers:
-
-* orbital trader arrival, generated-stock discovery through current `Map.passingShipManager.passingShips`, departure and source cleanup;
-* visiting trader caravan arrival, trader-pawn resolution through `LordJob_TradeWithColony` / `TraderCaravanUtility.FindTrader`, departure and source cleanup;
-* trade-stock mutation after an actual trade becoming visible through a later current-state refresh;
-* save/load with an already present trader establishing a silent baseline rather than producing a retroactive notification;
-* switching away from and back to a map establishing the accepted per-active-map silent baseline;
-* a newly relevant post-baseline offer observed while `ITrader.CanTradeNow` is false remaining undelivered until the trader becomes tradeable, when still current and relevant;
-* standard localized non-historical `PositiveEvent` presentation with aggregation of new relevant pairs per trader;
-* visiting-caravan notification navigation to the exact current trader pawn through the shared target-interaction boundary;
-* orbital notifications remaining text-only rather than opening an unverified communications or trade UI path;
-* no trader offer entering the physical product inventory, changing `PlanReadinessResult`, mutating `XenogermPlan` or altering existing readiness-notification cursors;
-* failures for one trader source not preventing other trader evaluation, plan persistence, existing readiness notifications or core Planner access.
-
-Runtime acceptance should verify the visible or integration behavior that cannot be established reliably through project-owned deterministic logic alone.
-
-The completed current-build acceptance verified the migrated shared UI boundary, tint-aware icon call sites, normalized source and packaged asset paths, unique-name workflows, target-gene `ExactPayloadConflict` behavior, English/Russian/Ukrainian presentation, API version `1`, window analysis-cache lifecycle, the Plan Editor selected-gene removal regression, the unified creation flow, the trader advisory lifecycle and the documented save-removal behavior. The current Release build and complete NUnit suite passed successfully, including source transformation, source-list projection, template-source provider, xenotype-source provider, editor-initial-state, API, semantic integration, analysis-cache, projection-cache, trader stock scanner, trader lifecycle, notification tracker and trader cross-subsystem regression fixtures. Runtime validation completed without identified problems in normal continued play and covered the accepted trader advisory behavior alongside the existing creation, readiness, notification, integration and UI regression matrix.
-
-Save-removal acceptance used a save containing multiple persisted Planner plans and a vanilla xenogerm template created from a ready plan. The first load with Xenogerm Planner disabled produced the expected missing-class / abstract `GameComponent` deserialization errors for Planner-owned components in the development log, but the save loaded and continued. Saving once without the mod removed all `XenogermPlanner` component records from the rewritten save; the subsequent load produced no Planner component errors. The Planner plans were no longer present, while the vanilla `CustomXenogerm` template and its gene composition remained unchanged. This runtime behavior defines the current removal compatibility claim; it should not be replaced by a simulated NUnit assertion about RimWorld Scribe internals.
-
-Consumer integration tests prove that shared types are compiled into `XenogermPlanner.dll`, while API surface tests prove that no separate runtime DTO assembly is required. Repeated runtime profiling confirmed that the tested open-window scenarios no longer exhibit a persistent Planner-specific regression; those measurements are diagnostic evidence rather than a universal frame-rate guarantee.
-
-## Regression tests
-
-A bug does not automatically require a new automated test.
-
-Add a regression test when:
-
-* the defect belongs to deterministic Xenogerm Planner-owned logic;
-* the original failure can be reproduced through the normal contract of the affected layer;
-* the test protects a meaningful behavior from realistic recurrence.
-
-Good regression-test targets include:
-
-* an unresolved desired gene being counted as satisfied;
-* Exact payload accepting an additional gene;
-* a blocked first assembler candidate hiding a usable alternative;
-* derived inventory failing to rebuild after a relevant active-map transition;
-* duplicate display names surviving a supported mutation path;
-* an exact-incompatible source being presented as Exact payload `Available`;
-* the API returning a ready, degraded or prerequisite-only match.
-
-A test is usually not justified only to protect the test host from artificial fixture behavior, RimWorld initialization absent from NUnit, or a visual layout detail.
-
-## Guard clauses and invalid input
-
-Null and invalid-input tests should be selective.
-
-They are valuable when:
-
-* the tested method is a public or important internal boundary;
-* invalid data can realistically arrive from persistence or runtime integration;
-* safe degradation or the type of failure is part of the contract.
-
-Tests should not be added mechanically for every `ArgumentNullException` or private/helper guard clause.
-
-The presence of defensive code alone does not require one test per guard.
-
-## Stress and performance testing
-
-Fast deterministic stress tests may run as regular tests when they protect:
-
-* larger gene or genepack sets;
-* repeat determinism;
-* pack-order independence;
-* pathological exact-payload or candidate-search scenarios;
-* large template candidate spaces, bounded completion, valid fallback candidates and repeat deterministic alternative ordering;
-* large fixed-height and variable-height layout inputs without workstation-specific timing assertions;
-* large sets of API query compositions when a batch contract is selected, without workstation-specific timing assertions.
-
-Performance benchmarks are diagnostic tools and remain separate from the regular regression suite.
-
-They should:
-
-* be explicit;
-* run locally in Release configuration;
-* use the same workload and measurement boundary for direct before/after comparisons;
-* keep timing and managed-allocation measurement in separate passes so allocation instrumentation does not become part of the timing boundary;
-* report timing Median as the primary duration metric, P95 as supporting evidence and Max as diagnostic data;
-* report managed allocated bytes as the primary allocation metric;
-* use Gen 0 collection counts as supporting allocation-pressure evidence and Gen 1 / Gen 2 only as diagnostics;
-* verify semantic correctness of every measured result in addition to reporting performance data.
-
-The current shared performance helper performs warm-up before the measured passes, forces collection before each measured pass, measures repeated timing samples with `Stopwatch`, and measures current-thread managed allocation separately. GC collection counts are recorded around the complete allocation pass rather than summed per operation.
-
-Acceptance decisions for substantive performance work should use several independent process-level runs when timing stability matters. Run-level Median is the primary timing comparison. P95 helps identify tail behavior, while Max is too sensitive to isolated system outliers to serve as an acceptance metric by itself. Managed allocated bytes have proven more stable than higher-generation GC counts and should carry more weight in allocation comparisons.
-
-The current `performance.runsettings` selected matrix contains 13 scenarios across readiness, relevance, assembler candidate search, Gene Coverage projection and effective biostat calculation. Additional explicit benchmarks may exist outside that selected validation matrix.
-
-Performance comparison history must preserve workload chronology:
-
-* direct before/after comparisons should use only scenarios that exist on both measured revisions;
-* scenarios introduced later establish regression baselines from the revision where they first appear;
-* later scenarios do not need to be backported to older revisions only to produce an equal benchmark count;
-* cumulative validation should compare each workload against the appropriate historical or introduction baseline.
-
-Template candidate benchmarks should verify bounded completion and semantic validity in addition to reporting diagnostic timings. Runtime UI profiling should use representative normal and extreme data sets. The completed analysis-cache profiling used stable baseline, large-plan, small-plan and tab-specific scenarios; measurements from one machine must not be treated as a workstation-independent FPS guarantee.
-
-Performance benchmarks should not use arbitrary workstation-specific pass/fail timing thresholds without a separately justified requirement. Functional equivalence remains mandatory even when a performance result is favorable.
-
-## Test decision checklist
-
-Before adding or retaining an automated test, use the following decision sequence:
+From the repository root:
 
 ```text
-Can the regression change gameplay or readiness semantics?
-→ Yes: test it.
-
-Can the regression lose or corrupt mod-owned persisted data or produce ambiguous plan names?
-→ Yes: test it.
-
-Is this a non-trivial project-owned lifecycle or state transition?
-→ Yes: test it.
-
-Is this deterministic search, filtering or transformation with project-owned rules?
-→ Yes: test it.
-
-Is this a public integration API contract or a vanilla-facing adapter where Xenogerm Planner applies its own rule?
-→ Test the project-owned rule through the smallest practical seam.
-
-Is this only a literal mapping, color, label, spacing or direct Widgets call?
-→ Usually do not unit-test it.
-
-Does reliable verification require the actual RimWorld runtime?
-→ Use runtime acceptance or compatibility testing.
-
-Would production architecture need to change only to make a simple detail unit-testable?
-→ The test is probably not justified.
+dotnet test tests/XenogermPlanner.Tests/XenogermPlanner.Tests.csproj -c Release --settings performance.runsettings
 ```
 
-The regular automated suite should remain focused on meaningful project contracts.
+The [run settings](../performance.runsettings) select the readiness, relevance, assembler candidate, Gene Coverage projection and effective-biostat fixtures with NUnit workers disabled. Other explicit fixtures may require separate selection.
 
-Runtime acceptance and compatibility testing complement the suite; they are not substitutes for project-owned semantic tests, and the NUnit suite is not a substitute for the game runtime.
+Use Release builds, consistent workloads and several independent process runs when comparing substantive changes. Warm up before measurement. Keep timing and current-thread managed-allocation passes separate; report median duration, supporting P95, managed allocated bytes and supporting Gen 0 counts. Treat Max and higher-generation collections as diagnostics. Verify semantic correctness of measured results.
+
+Compare only identical workloads across revisions/runtime environments. Record changed game references, runtime, fixtures and hardware instead of presenting unlike runs as an algorithm-only comparison. Do not impose workstation-specific pass/fail timing limits without a defined requirement.
+
+## Adding tests
+
+Add a focused regression when supplied inputs can reproduce a wrong decision, lost requirement, invalid candidate, stale cache, incorrect delivery or broken public contract. Use runtime cases for engine-dependent behavior.
+
+Do not extract production abstractions solely to test literal labels, colors, spacing or direct API forwarding. Select invalid-input cases where invalid data can realistically cross a public, persistence or integration boundary. Update procedures when their observable contracts change.

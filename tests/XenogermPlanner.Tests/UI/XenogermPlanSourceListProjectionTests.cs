@@ -13,7 +13,7 @@ namespace XenogermPlanner.Tests.UI
             XenogermPlanSourceGroup group = CreateGroup("premade", true, "A", "B");
 
             List<XenogermPlanSourceListRow> rows = XenogermPlanSourceListProjection.Build(
-                new[] { group },
+                [group],
                 new HashSet<string>());
 
             Assert.That(rows.Count, Is.EqualTo(3));
@@ -31,7 +31,7 @@ namespace XenogermPlanner.Tests.UI
             XenogermPlanSourceGroup group = CreateGroup("saved", true, "A", "B");
 
             List<XenogermPlanSourceListRow> rows = XenogermPlanSourceListProjection.Build(
-                new[] { group },
+                [group],
                 new HashSet<string> { "saved" });
 
             Assert.That(rows.Count, Is.EqualTo(1));
@@ -46,7 +46,7 @@ namespace XenogermPlanner.Tests.UI
             XenogermPlanSourceGroup second = CreateGroup("second", true, "B");
 
             List<XenogermPlanSourceListRow> rows = XenogermPlanSourceListProjection.Build(
-                new[] { first, second },
+                [first, second],
                 new HashSet<string> { "first" });
 
             Assert.That(rows.Count, Is.EqualTo(3));
@@ -63,7 +63,7 @@ namespace XenogermPlanner.Tests.UI
             XenogermPlanSourceGroup group = CreateGroup("templates", false, "A", "B");
 
             List<XenogermPlanSourceListRow> rows = XenogermPlanSourceListProjection.Build(
-                new[] { group },
+                [group],
                 new HashSet<string>());
 
             Assert.That(rows.Count, Is.EqualTo(2));
@@ -79,7 +79,7 @@ namespace XenogermPlanner.Tests.UI
             XenogermPlanSourceGroup second = CreateGroup("second", true, "D", "C");
 
             List<XenogermPlanSourceListRow> rows = XenogermPlanSourceListProjection.Build(
-                new[] { first, second },
+                [first, second],
                 new HashSet<string>());
 
             Assert.That(rows[1].Source.DisplayName, Is.EqualTo("B"));

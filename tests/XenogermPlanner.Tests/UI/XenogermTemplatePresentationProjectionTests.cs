@@ -19,18 +19,16 @@ namespace XenogermPlanner.Tests.UI
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, target);
             PlanXenogermTemplateCandidate automatic = PlanXenogermTemplateTestData.CreateCandidate(
                 plan,
-                new[] { target, extra });
-            PlanXenogermTemplateCandidate alternative = PlanXenogermTemplateTestData.CreateCandidate(
-                plan,
-                new[] { target });
+                [target, extra]);
+            PlanXenogermTemplateCandidate alternative = PlanXenogermTemplateTestData.CreateCandidate(plan, [target]);
             var searchResult = new PlanXenogermTemplateCandidateSearchResult(
-                new[] { automatic, alternative },
+                [automatic, alternative],
                 plan.DesiredGenes,
                 plan.ReadinessMode);
 
             var projection = XenogermTemplatePresentationProjection.Build(
                 searchResult,
-                (candidate, index) => "label:" + index,
+                (_, index) => "label:" + index,
                 candidate => "summary:" + candidate.CandidateKey,
                 SortGenesDescending);
 
@@ -50,11 +48,9 @@ namespace XenogermPlanner.Tests.UI
             GeneDef alpha = PlanXenogermTemplateTestData.CreateGene("Alpha");
             GeneDef zulu = PlanXenogermTemplateTestData.CreateGene("Zulu");
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, alpha);
-            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(
-                plan,
-                new[] { alpha, zulu });
+            PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(plan, [alpha, zulu]);
             var searchResult = new PlanXenogermTemplateCandidateSearchResult(
-                new[] { candidate },
+                [candidate],
                 plan.DesiredGenes,
                 plan.ReadinessMode);
 
@@ -67,10 +63,10 @@ namespace XenogermPlanner.Tests.UI
             XenogermTemplateCandidatePresentation candidatePresentation = projection.Candidates[0];
             XenogermTemplateCompositionPresentation compositionPresentation = candidatePresentation.Compositions[0];
 
-            Assert.That(compositionPresentation.SortedGenes, Is.EqualTo(new[] { zulu, alpha }));
+            Assert.That(compositionPresentation.SortedGenes, Is.EqualTo([zulu, alpha]));
             Assert.That(compositionPresentation.IsAdditional(zulu), Is.True);
             Assert.That(compositionPresentation.IsAdditional(alpha), Is.False);
-            Assert.That(candidatePresentation.SortedAdditionalGenes, Is.EqualTo(new[] { zulu }));
+            Assert.That(candidatePresentation.SortedAdditionalGenes, Is.EqualTo([zulu]));
         }
 
         [Test]
@@ -81,10 +77,10 @@ namespace XenogermPlanner.Tests.UI
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.Coverage, alpha, beta);
             PlanXenogermTemplateCandidate candidate = PlanXenogermTemplateTestData.CreateCandidate(
                 plan,
-                new[] { beta },
-                new[] { alpha });
+                [beta],
+                [alpha]);
             var searchResult = new PlanXenogermTemplateCandidateSearchResult(
-                new[] { candidate },
+                [candidate],
                 plan.DesiredGenes,
                 plan.ReadinessMode);
 
@@ -92,7 +88,7 @@ namespace XenogermPlanner.Tests.UI
                 searchResult,
                 (_, index) => index.ToString(),
                 _ => "summary",
-                genes => new List<GeneDef>(genes));
+                genes => [..genes]);
 
             Assert.That(projection.Candidates[0].Compositions, Has.Count.EqualTo(2));
             Assert.That(projection.Candidates[0].Compositions[0].Composition, Is.SameAs(candidate.Compositions[0]));

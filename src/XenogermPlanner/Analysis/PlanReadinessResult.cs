@@ -8,16 +8,8 @@ namespace XenogermPlanner.Analysis
     public sealed class PlanReadinessResult
     {
         private readonly ReadOnlyCollection<GeneDef> _coveredGenes;
-        private readonly ReadOnlyCollection<GeneDef> _missingGenes;
         private readonly ReadOnlyCollection<PlanGeneCoverageDiagnostic> _geneCoverageDiagnostics;
-
-        public PlanReadinessStatus Status { get; }
-        public PlanReadinessUnavailableReason UnavailableReason { get; }
-        public IReadOnlyCollection<GeneDef> CoveredGenes => _coveredGenes;
-        public IReadOnlyCollection<GeneDef> MissingGenes => _missingGenes;
-        public IReadOnlyList<PlanGeneCoverageDiagnostic> GeneCoverageDiagnostics => _geneCoverageDiagnostics;
-        public bool HasExactPayloadConflict { get; }
-        public bool IsReady => Status == PlanReadinessStatus.Ready;
+        private readonly ReadOnlyCollection<GeneDef> _missingGenes;
 
         private PlanReadinessResult(
             PlanReadinessStatus status,
@@ -52,6 +44,14 @@ namespace XenogermPlanner.Analysis
             _geneCoverageDiagnostics = copiedGeneCoverageDiagnostics.AsReadOnly();
             HasExactPayloadConflict = hasExactPayloadConflict;
         }
+
+        public PlanReadinessStatus Status { get; }
+        public PlanReadinessUnavailableReason UnavailableReason { get; }
+        public IReadOnlyCollection<GeneDef> CoveredGenes => _coveredGenes;
+        public IReadOnlyCollection<GeneDef> MissingGenes => _missingGenes;
+        public IReadOnlyList<PlanGeneCoverageDiagnostic> GeneCoverageDiagnostics => _geneCoverageDiagnostics;
+        public bool HasExactPayloadConflict { get; }
+        public bool IsReady => Status == PlanReadinessStatus.Ready;
 
         internal static PlanReadinessResult CreateReady(IEnumerable<GeneDef> coveredGenes)
         {
@@ -198,8 +198,10 @@ namespace XenogermPlanner.Analysis
 
         private static void ValidateStatus(PlanReadinessStatus status)
         {
-            if (status != PlanReadinessStatus.Ready && status != PlanReadinessStatus.NotReady &&
-                status != PlanReadinessStatus.EmptyTarget && status != PlanReadinessStatus.Degraded &&
+            if (status != PlanReadinessStatus.Ready &&
+                status != PlanReadinessStatus.NotReady &&
+                status != PlanReadinessStatus.EmptyTarget &&
+                status != PlanReadinessStatus.Degraded &&
                 status != PlanReadinessStatus.Unavailable)
             {
                 throw new ArgumentOutOfRangeException(nameof(status), status, "Unsupported plan readiness status.");

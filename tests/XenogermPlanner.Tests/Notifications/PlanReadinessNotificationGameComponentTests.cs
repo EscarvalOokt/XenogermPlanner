@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using RimWorld;
-using Verse;
 using XenogermPlanner.Analysis;
 using XenogermPlanner.Genes;
 using XenogermPlanner.Notifications;
@@ -23,7 +21,7 @@ namespace XenogermPlanner.Tests.Notifications
             var analyzedPlans = new List<XenogermPlan>();
             var announcements = new List<XenogermPlan>();
             PlanReadinessNotificationGameComponent component = CreateComponent(
-                () => new[] { firstPlan, secondPlan },
+                () => [firstPlan, secondPlan],
                 () =>
                 {
                     snapshotReads++;
@@ -40,7 +38,7 @@ namespace XenogermPlanner.Tests.Notifications
             component.GameComponentTick();
 
             Assert.That(snapshotReads, Is.EqualTo(1));
-            Assert.That(analyzedPlans, Is.EqualTo(new[] { firstPlan, secondPlan }));
+            Assert.That(analyzedPlans, Is.EqualTo([firstPlan, secondPlan]));
             Assert.That(announcements, Is.Empty);
             Assert.That(firstPlan.HasReadinessNotificationBaseline, Is.True);
             Assert.That(secondPlan.HasReadinessNotificationBaseline, Is.True);
@@ -53,9 +51,9 @@ namespace XenogermPlanner.Tests.Notifications
             PlanGenepackInventorySnapshot snapshot = CreateSnapshot();
             var analysisCount = 0;
             PlanReadinessNotificationGameComponent component = CreateComponent(
-                () => new[] { plan },
+                () => [plan],
                 () => snapshot,
-                (_, __) =>
+                (_, _) =>
                 {
                     analysisCount++;
                     return CreateNotReady();
@@ -77,9 +75,9 @@ namespace XenogermPlanner.Tests.Notifications
             var announcements = new List<XenogermPlan>();
 
             PlanReadinessNotificationGameComponent component = CreateComponent(
-                () => new[] { plan },
+                () => [plan],
                 () => state.Snapshot,
-                (_, __) => state.Result,
+                (_, _) => state.Result,
                 announcements.Add);
 
             component.GameComponentTick();
@@ -99,7 +97,7 @@ namespace XenogermPlanner.Tests.Notifications
             state.Snapshot = CreateSnapshot();
             component.GameComponentTick();
 
-            Assert.That(announcements, Is.EqualTo(new[] { plan, plan }));
+            Assert.That(announcements, Is.EqualTo([plan, plan]));
         }
 
         [Test]
@@ -109,9 +107,9 @@ namespace XenogermPlanner.Tests.Notifications
             PlanGenepackInventorySnapshot snapshot = CreateSnapshot();
             var analysisCount = 0;
             PlanReadinessNotificationGameComponent component = CreateComponent(
-                () => new[] { plan },
+                () => [plan],
                 () => snapshot,
-                (_, __) =>
+                (_, _) =>
                 {
                     analysisCount++;
                     return CreateNotReady();
@@ -127,17 +125,13 @@ namespace XenogermPlanner.Tests.Notifications
         [Test]
         public void DisabledPlanUpdatesStateWithoutAnnouncement()
         {
-            var plan = new XenogermPlan(
-                "Plan",
-                Array.Empty<GeneDef>(),
-                PlanReadinessMode.Coverage,
-                readinessNotificationsEnabled: false);
+            var plan = new XenogermPlan("Plan", [], PlanReadinessMode.Coverage, readinessNotificationsEnabled: false);
             plan.UpdateReadinessNotificationState(false);
             var announcements = new List<XenogermPlan>();
             PlanReadinessNotificationGameComponent component = CreateComponent(
-                () => new[] { plan },
+                () => [plan],
                 CreateSnapshot,
-                (_, __) => CreateReady(),
+                (_, _) => CreateReady(),
                 announcements.Add);
 
             component.GameComponentTick();
@@ -155,8 +149,10 @@ namespace XenogermPlanner.Tests.Notifications
             var announcements = new List<XenogermPlan>();
             var errors = new List<string>();
             PlanReadinessNotificationGameComponent component = CreateComponent(
-                () => new[] { failingPlan, readyPlan },
+                () => [failingPlan, readyPlan],
                 CreateSnapshot,
+                // Only the selected plan fails so the test can verify exception isolation.
+                // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
                 (plan, _) =>
                 {
                     if (ReferenceEquals(plan, failingPlan))
@@ -169,7 +165,7 @@ namespace XenogermPlanner.Tests.Notifications
 
             component.GameComponentTick();
 
-            Assert.That(announcements, Is.EqualTo(new[] { readyPlan }));
+            Assert.That(announcements, Is.EqualTo([readyPlan]));
             Assert.That(errors, Has.Count.EqualTo(1));
             Assert.That(errors[0], Does.Contain(failingPlan.Id));
         }
@@ -181,7 +177,7 @@ namespace XenogermPlanner.Tests.Notifications
             PlanReadinessNotificationGameComponent noPlansComponent = CreateComponent(
                 () => null,
                 CreateSnapshot,
-                (_, __) =>
+                (_, _) =>
                 {
                     analysisCount++;
                     return CreateReady();
@@ -189,7 +185,7 @@ namespace XenogermPlanner.Tests.Notifications
             PlanReadinessNotificationGameComponent noSnapshotComponent = CreateComponent(
                 Array.Empty<XenogermPlan>,
                 () => null,
-                (_, __) =>
+                (_, _) =>
                 {
                     analysisCount++;
                     return CreateReady();
@@ -207,9 +203,9 @@ namespace XenogermPlanner.Tests.Notifications
             XenogermPlan plan = CreatePlan("Plan");
             plan.UpdateReadinessNotificationState(false);
             PlanReadinessNotificationGameComponent component = CreateComponent(
-                () => new[] { plan },
+                () => [plan],
                 () => PlanGenepackInventorySnapshot.Unavailable,
-                (_, __) => PlanReadinessResult.CreateUnavailable(PlanReadinessUnavailableReason.NoActiveMap));
+                (_, _) => PlanReadinessResult.CreateUnavailable(PlanReadinessUnavailableReason.NoActiveMap));
 
             component.GameComponentTick();
 
@@ -234,38 +230,29 @@ namespace XenogermPlanner.Tests.Notifications
 
         private static XenogermPlan CreatePlan(string name)
         {
-            return new XenogermPlan(name, Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            return new XenogermPlan(name, [], PlanReadinessMode.Coverage);
         }
 
         private static PlanGenepackInventorySnapshot CreateSnapshot()
         {
-            return PlanGenepackInventorySnapshot.CreateAvailable(Array.Empty<Genepack>());
+            return PlanGenepackInventorySnapshot.CreateAvailable([]);
         }
 
         private static PlanReadinessResult CreateReady()
         {
-            return PlanReadinessResult.CreateReady(Array.Empty<GeneDef>());
+            return PlanReadinessResult.CreateReady([]);
         }
 
         private static PlanReadinessResult CreateNotReady()
         {
-            return PlanReadinessResult.CreateNotReady(
-                Array.Empty<GeneDef>(),
-                Array.Empty<GeneDef>(),
-                hasExactPayloadConflict: false);
+            return PlanReadinessResult.CreateNotReady([], [], hasExactPayloadConflict: false);
         }
 
-        private sealed class ReadinessTestState
+        private sealed class ReadinessTestState(PlanGenepackInventorySnapshot snapshot, PlanReadinessResult result)
         {
-            public ReadinessTestState(PlanGenepackInventorySnapshot snapshot, PlanReadinessResult result)
-            {
-                Snapshot = snapshot;
-                Result = result;
-            }
+            public PlanGenepackInventorySnapshot Snapshot { get; set; } = snapshot;
 
-            public PlanGenepackInventorySnapshot Snapshot { get; set; }
-
-            public PlanReadinessResult Result { get; set; }
+            public PlanReadinessResult Result { get; set; } = result;
         }
     }
 }

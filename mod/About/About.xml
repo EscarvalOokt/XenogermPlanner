@@ -3,7 +3,7 @@
     <name>Xenogerm Planner</name>
     <author>Escarval</author>
     <packageId>escarval.xenogermplanner</packageId>
-    <modVersion>1.1.1</modVersion>
+    <modVersion>1.2.0</modVersion>
     <modDependencies>
         <li>
             <packageId>Ludeon.RimWorld.Biotech</packageId>
@@ -12,6 +12,7 @@
     </modDependencies>
     <supportedVersions>
         <li>1.6</li>
+        <li>1.7</li>
     </supportedVersions>
     <description>Xenogerm Planner is a planning and tracking mod for RimWorld's Biotech genetics system. It lets you create xenogerm plans before you own every genepack and track your progress as your colony collects the genes you need.
 

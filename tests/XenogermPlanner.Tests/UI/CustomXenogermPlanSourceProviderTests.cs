@@ -84,7 +84,7 @@ namespace XenogermPlanner.Tests.UI
 
             Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Selection.Name, Is.EqualTo("Template"));
-            Assert.That(result.Selection.DesiredGenes, Is.EquivalentTo(new[] { geneA }));
+            Assert.That(result.Selection.DesiredGenes, Is.EquivalentTo([geneA]));
         }
 
         private static XenogermPlanSourceResolveResult Resolve(

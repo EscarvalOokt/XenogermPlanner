@@ -18,10 +18,10 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef loser = PlanTestData.CreateGene("B");
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { loser, winner },
-                (left, right) => true,
-                (left, right) => ReferenceEquals(left, winner),
-                gene => false);
+                [loser, winner],
+                (_, _) => true,
+                (left, _) => ReferenceEquals(left, winner),
+                _ => false);
 
             Assert.That(result.Conflicts, Has.Count.EqualTo(1));
             Assert.That(result.RandomChoiceGroups, Is.Empty);
@@ -37,14 +37,14 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef second = PlanTestData.CreateGene("B");
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { first, second },
-                (left, right) => true,
-                (left, right) => ReferenceEquals(left, first),
-                gene => true);
+                [first, second],
+                (_, _) => true,
+                (left, _) => ReferenceEquals(left, first),
+                _ => true);
 
             Assert.That(result.Conflicts, Is.Empty);
             Assert.That(result.RandomChoiceGroups, Has.Count.EqualTo(1));
-            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo(new[] { first, second }));
+            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo([first, second]));
         }
 
         [Test]
@@ -55,14 +55,14 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef third = PlanTestData.CreateGene("C");
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { third, first, second },
+                [third, first, second],
                 (left, right) => !ReferenceEquals(left, right),
-                (left, right) => false,
-                gene => true);
+                (_, _) => false,
+                _ => true);
 
             Assert.That(result.Conflicts, Is.Empty);
             Assert.That(result.RandomChoiceGroups, Has.Count.EqualTo(1));
-            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo(new[] { first, second, third }));
+            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo([first, second, third]));
         }
 
         [Test]
@@ -81,13 +81,13 @@ namespace XenogermPlanner.Tests.Analysis
             }
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { third, first, second },
+                [third, first, second],
                 Conflicts,
-                (left, right) => false,
-                gene => true);
+                (_, _) => false,
+                _ => true);
 
             Assert.That(result.RandomChoiceGroups, Has.Count.EqualTo(1));
-            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo(new[] { first, second, third }));
+            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo([first, second, third]));
         }
 
         [Test]
@@ -104,14 +104,14 @@ namespace XenogermPlanner.Tests.Analysis
             }
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { fourth, second, third, first },
+                [fourth, second, third, first],
                 Conflicts,
-                (left, right) => false,
-                gene => true);
+                (_, _) => false,
+                _ => true);
 
             Assert.That(result.RandomChoiceGroups, Has.Count.EqualTo(2));
-            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo(new[] { first, second }));
-            Assert.That(result.RandomChoiceGroups[1].Genes, Is.EqualTo(new[] { third, fourth }));
+            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo([first, second]));
+            Assert.That(result.RandomChoiceGroups[1].Genes, Is.EqualTo([third, fourth]));
         }
 
         [Test]
@@ -127,9 +127,9 @@ namespace XenogermPlanner.Tests.Analysis
             }
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { randomSecond, ordinary, randomFirst },
+                [randomSecond, ordinary, randomFirst],
                 Conflicts,
-                (left, right) => false,
+                (_, _) => false,
                 gene => !ReferenceEquals(gene, ordinary));
 
             Assert.That(result.Conflicts, Has.Count.EqualTo(1));
@@ -137,7 +137,7 @@ namespace XenogermPlanner.Tests.Analysis
             Assert.That(result.Conflicts[0].FirstGene, Is.SameAs(ordinary));
             Assert.That(result.Conflicts[0].SecondGene, Is.SameAs(randomFirst));
             Assert.That(result.RandomChoiceGroups, Has.Count.EqualTo(1));
-            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo(new[] { randomFirst, randomSecond }));
+            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo([randomFirst, randomSecond]));
         }
 
         [Test]
@@ -147,9 +147,9 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef random = PlanTestData.CreateGene("B");
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { ordinary, random },
-                (left, right) => true,
-                (left, right) => ReferenceEquals(left, ordinary),
+                [ordinary, random],
+                (_, _) => true,
+                (left, _) => ReferenceEquals(left, ordinary),
                 gene => ReferenceEquals(gene, random));
 
             Assert.That(result.Conflicts[0].Kind, Is.EqualTo(PlanGeneConflictKind.Mixed));
@@ -163,10 +163,10 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef second = PlanTestData.CreateGene("B");
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { second, first },
+                [second, first],
                 (left, right) => ReferenceEquals(left, second) && ReferenceEquals(right, first),
-                (left, right) => false,
-                gene => false);
+                (_, _) => false,
+                _ => false);
 
             Assert.That(result.Conflicts, Has.Count.EqualTo(1));
             Assert.That(result.Conflicts[0].FirstGene, Is.SameAs(first));
@@ -181,10 +181,10 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef second = PlanTestData.CreateGene("B");
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { first, second },
-                (left, right) => true,
-                (left, right) => bothOverride,
-                gene => false);
+                [first, second],
+                (_, _) => true,
+                (_, _) => bothOverride,
+                _ => false);
 
             Assert.That(result.Conflicts[0].HasPredictedWinner, Is.False);
         }
@@ -196,10 +196,10 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef dependent = PlanTestData.CreateGene("Dependent");
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { dependent },
-                (left, right) => false,
-                (left, right) => false,
-                gene => false,
+                [dependent],
+                (_, _) => false,
+                (_, _) => false,
+                _ => false,
                 gene => ReferenceEquals(gene, dependent) ? prerequisite : null);
 
             Assert.That(result.MissingPrerequisites, Has.Count.EqualTo(1));
@@ -214,10 +214,10 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef dependent = PlanTestData.CreateGene("Dependent");
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { dependent, prerequisite },
-                (left, right) => false,
-                (left, right) => false,
-                gene => false,
+                [dependent, prerequisite],
+                (_, _) => false,
+                (_, _) => false,
+                _ => false,
                 gene => ReferenceEquals(gene, dependent) ? prerequisite : null);
 
             Assert.That(result.MissingPrerequisites, Is.Empty);
@@ -230,15 +230,11 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef second = PlanTestData.CreateGene("B");
             var input = new List<GeneDef> { second, first, first };
 
-            PlanGeneTargetAnalysisResult result = Analyze(
-                input,
-                (left, right) => true,
-                (left, right) => false,
-                gene => true);
+            PlanGeneTargetAnalysisResult result = Analyze(input, (_, _) => true, (_, _) => false, _ => true);
 
             Assert.That(result.RandomChoiceGroups, Has.Count.EqualTo(1));
-            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo(new[] { first, second }));
-            Assert.That(input, Is.EqualTo(new[] { second, first, first }));
+            Assert.That(result.RandomChoiceGroups[0].Genes, Is.EqualTo([first, second]));
+            Assert.That(input, Is.EqualTo([second, first, first]));
         }
 
         [Test]
@@ -257,10 +253,10 @@ namespace XenogermPlanner.Tests.Analysis
             }
 
             PlanGeneTargetAnalysisResult result = Analyze(
-                new[] { geneD, geneC, geneB, geneA },
+                [geneD, geneC, geneB, geneA],
                 Conflicts,
-                (left, right) => false,
-                gene => true,
+                (_, _) => false,
+                _ => true,
                 gene => ReferenceEquals(gene, geneA) ? prerequisiteA :
                     ReferenceEquals(gene, geneC) ? prerequisiteC : null);
 
@@ -268,10 +264,10 @@ namespace XenogermPlanner.Tests.Analysis
                 result.RandomChoiceGroups.Select(group => string.Join(
                     string.Empty,
                     group.Genes.Select(gene => gene.defName))),
-                Is.EqualTo(new[] { "AB", "CD" }));
+                Is.EqualTo(["AB", "CD"]));
             Assert.That(
                 result.MissingPrerequisites.Select(diagnostic => diagnostic.DependentGene.defName),
-                Is.EqualTo(new[] { "A", "C" }));
+                Is.EqualTo(["A", "C"]));
         }
 
         [Test]
@@ -282,15 +278,15 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef third = PlanTestData.CreateGene("C");
 
             PlanGeneTargetAnalysisResult firstResult = Analyze(
-                new[] { first, second, third },
+                [first, second, third],
                 (left, right) => !ReferenceEquals(left, right),
-                (left, right) => false,
-                gene => true);
+                (_, _) => false,
+                _ => true);
             PlanGeneTargetAnalysisResult secondResult = Analyze(
-                new[] { third, first, second },
+                [third, first, second],
                 (left, right) => !ReferenceEquals(left, right),
-                (left, right) => false,
-                gene => true);
+                (_, _) => false,
+                _ => true);
 
             Assert.That(firstResult.RandomChoiceGroups, Has.Count.EqualTo(1));
             Assert.That(secondResult.RandomChoiceGroups, Has.Count.EqualTo(1));
@@ -305,9 +301,9 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef third = PlanTestData.CreateGene("C");
             GeneDef fourth = PlanTestData.CreateGene("D");
             var conflict = new PlanGeneConflictDiagnostic(first, second, PlanGeneConflictKind.Ordinary, first, second);
-            var group = new PlanGeneRandomChoiceGroupDiagnostic(new[] { second, third });
+            var group = new PlanGeneRandomChoiceGroupDiagnostic([second, third]);
             var prerequisite = new PlanGenePrerequisiteDiagnostic(fourth, first);
-            var result = new PlanGeneTargetAnalysisResult(new[] { conflict }, new[] { group }, new[] { prerequisite });
+            var result = new PlanGeneTargetAnalysisResult([conflict], [group], [prerequisite]);
 
             Assert.That(result.DiagnosticCount, Is.EqualTo(3));
             Assert.That(result.HasConflicts, Is.True);
@@ -320,7 +316,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef gene = PlanTestData.CreateGene("A");
 
             Assert.That(
-                (Action)(() => new PlanGeneRandomChoiceGroupDiagnostic(new[] { gene, gene })),
+                (Action)(() => _ = new PlanGeneRandomChoiceGroupDiagnostic([gene, gene])),
                 Throws.ArgumentException);
         }
 
@@ -330,7 +326,7 @@ namespace XenogermPlanner.Tests.Analysis
             GeneDef gene = PlanTestData.CreateGene("A");
 
             Assert.That(
-                (Action)(() => new PlanGeneRandomChoiceGroupDiagnostic(new[] { gene, null })),
+                (Action)(() => _ = new PlanGeneRandomChoiceGroupDiagnostic([gene, null])),
                 Throws.ArgumentException);
         }
 
@@ -344,7 +340,7 @@ namespace XenogermPlanner.Tests.Analysis
 
             input.Clear();
 
-            Assert.That(diagnostic.Genes, Is.EqualTo(new[] { first, second }));
+            Assert.That(diagnostic.Genes, Is.EqualTo([first, second]));
         }
 
         [Test]
@@ -352,21 +348,18 @@ namespace XenogermPlanner.Tests.Analysis
         {
             GeneDef first = PlanTestData.CreateGene("A");
             GeneDef second = PlanTestData.CreateGene("B");
-            var firstGroup = new PlanGeneRandomChoiceGroupDiagnostic(new[] { first, second });
-            var duplicateGroup = new PlanGeneRandomChoiceGroupDiagnostic(new[] { second, first });
+            var firstGroup = new PlanGeneRandomChoiceGroupDiagnostic([first, second]);
+            var duplicateGroup = new PlanGeneRandomChoiceGroupDiagnostic([second, first]);
 
             Assert.That(
-                (Action)(() => new PlanGeneTargetAnalysisResult(
-                    Array.Empty<PlanGeneConflictDiagnostic>(),
-                    new[] { firstGroup, duplicateGroup },
-                    Array.Empty<PlanGenePrerequisiteDiagnostic>())),
+                (Action)(() => _ = new PlanGeneTargetAnalysisResult([], [firstGroup, duplicateGroup], [])),
                 Throws.ArgumentException);
         }
 
         [Test]
         public void Analyze_NullGeneFailsAtAnalysisBoundary()
         {
-            void Action() => PlanGeneTargetAnalyzer.Analyze(new GeneDef[] { null });
+            void Action() => PlanGeneTargetAnalyzer.Analyze([null]);
 
             Assert.That((Action)Action, Throws.ArgumentException);
         }
@@ -389,7 +382,7 @@ namespace XenogermPlanner.Tests.Analysis
                 conflictsWith,
                 overrides,
                 isRandomChosen,
-                getPrerequisite ?? (gene => null));
+                getPrerequisite ?? (_ => null));
         }
     }
 }

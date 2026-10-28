@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using NUnit.Framework;
 using RimWorld;
 using Verse;
 using XenogermPlanner.Genes;
 using XenogermPlanner.Plans;
 using XenogermPlanner.Trade;
+
+// Providers intentionally read state changed between component calls.
+// ReSharper disable AccessToModifiedClosure
 
 namespace XenogermPlanner.Tests.Trade
 {
@@ -140,11 +143,11 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
-                getPlans: () => new[] { plan },
-                createEvaluator: (_, __) =>
+                getPlans: () => [plan],
+                createEvaluator: (_, _) =>
                 {
                     evaluatorFactoryCalls++;
-                    return composition => new[] { plan };
+                    return _ => [plan];
                 });
 
             component.GameComponentTick();
@@ -223,10 +226,10 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(currentGenepack, gene))),
-                createEvaluator: (_, __) => composition =>
+                createEvaluator: (_, _) => _ =>
                 {
                     evaluatorCalls++;
-                    return Array.Empty<XenogermPlan>();
+                    return [];
                 });
 
             component.GameComponentTick();
@@ -254,10 +257,10 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, currentGene))),
-                createEvaluator: (_, __) => composition =>
+                createEvaluator: (_, _) => _ =>
                 {
                     evaluatorCalls++;
-                    return Array.Empty<XenogermPlan>();
+                    return [];
                 });
 
             component.GameComponentTick();
@@ -267,7 +270,7 @@ namespace XenogermPlanner.Tests.Trade
             component.GameComponentTick();
 
             Assert.That(evaluatorCalls, Is.EqualTo(2));
-            Assert.That(component.Sources[0].Snapshot.Offers[0].Genes, Is.EquivalentTo(new[] { secondGene }));
+            Assert.That(component.Sources[0].Snapshot.Offers[0].Genes, Is.EquivalentTo([secondGene]));
         }
 
         [Test]
@@ -287,10 +290,10 @@ namespace XenogermPlanner.Tests.Trade
                     scanCount++;
                     return Stock(Source(trader, Offer(gene)));
                 },
-                createEvaluator: (_, __) =>
+                createEvaluator: (_, _) =>
                 {
                     evaluatorFactoryCalls++;
-                    return composition => Array.Empty<XenogermPlan>();
+                    return _ => [];
                 });
 
             component.GameComponentTick();
@@ -321,10 +324,10 @@ namespace XenogermPlanner.Tests.Trade
                     return Stock(Source(trader, Offer(gene)));
                 },
                 getInventory: () => inventory,
-                createEvaluator: (_, __) =>
+                createEvaluator: (_, _) =>
                 {
                     evaluatorFactoryCalls++;
-                    return composition => Array.Empty<XenogermPlan>();
+                    return _ => [];
                 });
 
             component.GameComponentTick();
@@ -352,10 +355,10 @@ namespace XenogermPlanner.Tests.Trade
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
                 getInventory: () => inventory,
-                createEvaluator: (_, __) =>
+                createEvaluator: (_, _) =>
                 {
                     evaluatorFactoryCalls++;
-                    return composition => Array.Empty<XenogermPlan>();
+                    return _ => [];
                 });
 
             component.GameComponentTick();
@@ -381,14 +384,14 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => 0,
                 _ => Stock(Source(trader, Offer(gene))),
-                getPlans: () => new[] { firstPlan, secondPlan },
-                createEvaluator: (plans, inventory) => composition => new[] { firstPlan, secondPlan });
+                getPlans: () => [firstPlan, secondPlan],
+                createEvaluator: (_, _) => _ => [firstPlan, secondPlan]);
 
             component.GameComponentTick();
 
             PlanTraderAdvisoryOfferAnalysis analysis = component.Sources[0].OfferAnalyses[0];
             Assert.That(analysis.IsRelevant, Is.True);
-            Assert.That(analysis.MatchingPlans, Is.EqualTo(new[] { firstPlan, secondPlan }));
+            Assert.That(analysis.MatchingPlans, Is.EqualTo([firstPlan, secondPlan]));
         }
 
         [Test]
@@ -476,10 +479,10 @@ namespace XenogermPlanner.Tests.Trade
                 () => tick,
                 _ => EmptyStock(),
                 getInventory: () => currentInventory,
-                createEvaluator: (_, __) =>
+                createEvaluator: (_, _) =>
                 {
                     evaluatorFactoryCalls++;
-                    return composition => Array.Empty<XenogermPlan>();
+                    return _ => [];
                 });
 
             component.GameComponentTick();
@@ -532,12 +535,12 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => 0,
                 _ => Stock(Source(trader, Offer(failingGene), Offer(healthyGene))),
-                createEvaluator: (_, __) => composition =>
+                createEvaluator: (_, _) => composition =>
                 {
                     if (ContainsReference(composition, failingGene))
                         throw new InvalidOperationException("Expected offer failure.");
 
-                    return new[] { plan };
+                    return [plan];
                 },
                 reportError: errors.Add);
 
@@ -545,7 +548,7 @@ namespace XenogermPlanner.Tests.Trade
 
             Assert.That(component.Sources[0].Snapshot.Offers, Has.Count.EqualTo(2));
             Assert.That(component.Sources[0].OfferAnalyses, Has.Count.EqualTo(1));
-            Assert.That(component.Sources[0].OfferAnalyses[0].MatchingPlans, Is.EqualTo(new[] { plan }));
+            Assert.That(component.Sources[0].OfferAnalyses[0].MatchingPlans, Is.EqualTo([plan]));
             Assert.That(errors, Has.Count.EqualTo(1));
             Assert.That(component.HasDeterminateBaseline, Is.True);
         }
@@ -563,14 +566,14 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(gene))),
-                createEvaluator: (_, __) =>
+                createEvaluator: (_, _) =>
                 {
                     factoryCalls++;
 
                     if (failFactory)
                         throw new InvalidOperationException("Expected factory failure.");
 
-                    return composition => Array.Empty<XenogermPlan>();
+                    return _ => [];
                 });
 
             component.GameComponentTick();
@@ -630,7 +633,7 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => 0,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
-                createEvaluator: (plans, inventory) => composition => new[] { plan },
+                createEvaluator: (_, _) => _ => [plan],
                 canTradeNow: _ => canTradeNow,
                 announce: notifications.Add);
 
@@ -659,7 +662,7 @@ namespace XenogermPlanner.Tests.Trade
                 _ => tick < PlanTraderAdvisoryGameComponent.StockRefreshIntervalTicks
                     ? Stock(Source(trader, Offer(baselinePack, gene)))
                     : Stock(Source(trader, Offer(baselinePack, gene), Offer(newPack, gene))),
-                createEvaluator: (plans, inventory) => composition => new[] { plan },
+                createEvaluator: (_, _) => _ => [plan],
                 announce: notifications.Add);
 
             component.GameComponentTick();
@@ -691,7 +694,7 @@ namespace XenogermPlanner.Tests.Trade
                 _ => tick < PlanTraderAdvisoryGameComponent.StockRefreshIntervalTicks
                     ? EmptyStock()
                     : Stock(Source(trader, Offer(firstPack, gene), Offer(secondPack, gene))),
-                createEvaluator: (plans, inventory) => composition => new[] { firstPlan, secondPlan },
+                createEvaluator: (_, _) => _ => [firstPlan, secondPlan],
                 announce: notifications.Add);
 
             component.GameComponentTick();
@@ -713,7 +716,7 @@ namespace XenogermPlanner.Tests.Trade
             GeneDef gene = CreateGene("GeneA");
             XenogermPlan firstPlan = CreatePlan("First", gene);
             XenogermPlan secondPlan = CreatePlan("Second", gene);
-            IReadOnlyList<XenogermPlan> currentPlans = new[] { firstPlan };
+            IReadOnlyList<XenogermPlan> currentPlans = [firstPlan];
             var tick = 0;
             var notifications = new List<PlanTraderAdvisoryNotification>();
             PlanTraderAdvisoryGameComponent component = CreateComponent(
@@ -721,18 +724,18 @@ namespace XenogermPlanner.Tests.Trade
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
                 getPlans: () => currentPlans,
-                createEvaluator: (plans, inventory) => composition => plans,
+                createEvaluator: (plans, _) => _ => plans,
                 announce: notifications.Add);
 
             component.GameComponentTick();
 
-            currentPlans = new[] { firstPlan, secondPlan };
+            currentPlans = [firstPlan, secondPlan];
             tick = 1;
             component.Invalidate();
             component.GameComponentTick();
 
             Assert.That(notifications, Has.Count.EqualTo(1));
-            Assert.That(notifications[0].Offers[0].MatchingPlans, Is.EqualTo(new[] { secondPlan }));
+            Assert.That(notifications[0].Offers[0].MatchingPlans, Is.EqualTo([secondPlan]));
             Assert.That(component.Sources[0].IsAcknowledged(genepack, firstPlan.Id), Is.True);
             Assert.That(component.Sources[0].IsAcknowledged(genepack, secondPlan.Id), Is.True);
         }
@@ -751,7 +754,7 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
-                createEvaluator: (plans, inventory) => composition => new[] { plan },
+                createEvaluator: (_, _) => _ => [plan],
                 announce: notifications.Add);
 
             component.GameComponentTick();
@@ -782,10 +785,10 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
-                createEvaluator: (_, __) =>
+                createEvaluator: (_, _) =>
                 {
                     evaluatorFactoryCalls++;
-                    return composition => relevant ? new[] { plan } : Array.Empty<XenogermPlan>();
+                    return _ => relevant ? new[] { plan } : Array.Empty<XenogermPlan>();
                 },
                 canTradeNow: _ => tradeable,
                 announce: notifications.Add);
@@ -827,8 +830,7 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
-                createEvaluator: (plans, inventory) => composition =>
-                    relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
+                createEvaluator: (_, _) => _ => relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
                 canTradeNow: _ => tradeable,
                 announce: notifications.Add);
 
@@ -867,9 +869,8 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
-                createEvaluator: (plans, inventory) => composition =>
-                    relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
-                announce: notification =>
+                createEvaluator: (_, _) => _ => relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
+                announce: _ =>
                 {
                     deliveryAttempts++;
 
@@ -914,8 +915,7 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
-                createEvaluator: (plans, inventory) => composition =>
-                    relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
+                createEvaluator: (_, _) => _ => relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
                 canTradeNow: _ =>
                 {
                     if (failCanTradeNow)
@@ -965,8 +965,9 @@ namespace XenogermPlanner.Tests.Trade
                 _ => Stock(
                     Source(failingTrader, Offer(failingPack, gene)),
                     Source(healthyTrader, Offer(healthyPack, gene))),
-                createEvaluator: (plans, inventory) => composition =>
-                    relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
+                createEvaluator: (_, _) => _ => relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
+                // Simulate a delivery failure only for the selected trader.
+                // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
                 announce: notification =>
                 {
                     if (ReferenceEquals(notification.Source.Source, failingTrader))
@@ -1009,8 +1010,7 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
-                createEvaluator: (plans, inventory) => composition =>
-                    relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
+                createEvaluator: (_, _) => _ => relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
                 canTradeNow: _ => tradeable,
                 announce: notifications.Add);
 
@@ -1055,7 +1055,7 @@ namespace XenogermPlanner.Tests.Trade
                 map => ReferenceEquals(map, firstMap)
                     ? Stock(Source(firstTrader, Offer(firstPack, gene)))
                     : Stock(Source(secondTrader, Offer(secondPack, gene))),
-                createEvaluator: (plans, inventory) => composition => new[] { plan },
+                createEvaluator: (_, _) => _ => [plan],
                 announce: notifications.Add);
 
             component.GameComponentTick();
@@ -1088,7 +1088,7 @@ namespace XenogermPlanner.Tests.Trade
                 _ => tick < PlanTraderAdvisoryGameComponent.StockRefreshIntervalTicks
                     ? EmptyStock()
                     : Stock(Source(trader, Offer(genepack, gene))),
-                createEvaluator: (plans, inventory) => composition => new[] { plan },
+                createEvaluator: (_, _) => _ => [plan],
                 announce: notifications.Add);
 
             component.GameComponentTick();
@@ -1125,7 +1125,7 @@ namespace XenogermPlanner.Tests.Trade
 
                     return Stock(Source(secondTrader, Offer(genepack, gene)));
                 },
-                createEvaluator: (plans, inventory) => composition => new[] { plan },
+                createEvaluator: (_, _) => _ => [plan],
                 announce: notifications.Add);
 
             component.GameComponentTick();
@@ -1156,7 +1156,7 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => offerPresent ? Stock(Source(trader, Offer(genepack, gene))) : EmptyStock(),
-                createEvaluator: (plans, inventory) => composition => new[] { plan },
+                createEvaluator: (_, _) => _ => [plan],
                 announce: firstNotifications.Add);
 
             firstComponent.GameComponentTick();
@@ -1173,7 +1173,7 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
-                createEvaluator: (plans, inventory) => composition => new[] { plan },
+                createEvaluator: (_, _) => _ => [plan],
                 announce: reloadedNotifications.Add);
 
             recreatedComponent.GameComponentTick();
@@ -1200,8 +1200,7 @@ namespace XenogermPlanner.Tests.Trade
                 () => map,
                 () => tick,
                 _ => Stock(Source(trader, Offer(genepack, gene))),
-                createEvaluator: (plans, inventory) => composition =>
-                    relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
+                createEvaluator: (_, _) => _ => relevant ? new[] { plan } : Array.Empty<XenogermPlan>(),
                 announce: notifications.Add);
 
             component.GameComponentTick();
@@ -1246,7 +1245,7 @@ namespace XenogermPlanner.Tests.Trade
                     ? EmptyStock()
                     : Stock(
                         Source(traderPawn, PlanTraderAdvisorySourceKind.Caravan, traderPawn, Offer(genepack, gene))),
-                createEvaluator: (plans, inventory) => composition => new[] { plan },
+                createEvaluator: (_, _) => _ => [plan],
                 announce: notifications.Add);
 
             component.GameComponentTick();
@@ -1270,8 +1269,8 @@ namespace XenogermPlanner.Tests.Trade
             var plan = new XenogermPlan(
                 "plan-id",
                 "Plan Name",
-                new[] { gene },
-                Array.Empty<string>(),
+                [gene],
+                [],
                 PlanReadinessMode.Coverage,
                 readinessNotificationsEnabled: false,
                 hasReadinessNotificationBaseline: true,
@@ -1284,8 +1283,8 @@ namespace XenogermPlanner.Tests.Trade
                 _ => tick < PlanTraderAdvisoryGameComponent.StockRefreshIntervalTicks
                     ? EmptyStock()
                     : Stock(Source(trader, Offer(genepack, gene))),
-                getPlans: () => new[] { plan },
-                createEvaluator: (plans, inventory) => composition => new[] { plan },
+                getPlans: () => [plan],
+                createEvaluator: (_, _) => _ => [plan],
                 announce: notifications.Add);
 
             component.GameComponentTick();
@@ -1300,7 +1299,7 @@ namespace XenogermPlanner.Tests.Trade
             Assert.That(plan.ReadinessNotificationsEnabled, Is.False);
             Assert.That(plan.HasReadinessNotificationBaseline, Is.True);
             Assert.That(plan.LastReadinessNotificationStateWasReady, Is.True);
-            Assert.That(plan.DesiredGenes, Is.EquivalentTo(new[] { gene }));
+            Assert.That(plan.DesiredGenes, Is.EquivalentTo([gene]));
         }
 
         private static PlanTraderAdvisoryGameComponent CreateComponent(
@@ -1323,7 +1322,7 @@ namespace XenogermPlanner.Tests.Trade
                 scanStock,
                 getPlans ?? (Array.Empty<XenogermPlan>),
                 getInventory ?? (() => defaultInventory),
-                createEvaluator ?? ((plans, inventory) => composition => Array.Empty<XenogermPlan>()),
+                createEvaluator ?? ((_, _) => _ => []),
                 canTradeNow ?? (_ => true),
                 announce ?? (_ => { }),
                 reportError ?? (_ => { }));
@@ -1331,12 +1330,12 @@ namespace XenogermPlanner.Tests.Trade
 
         private static PlanGenepackInventorySnapshot EmptyInventory()
         {
-            return PlanGenepackInventorySnapshot.CreateAvailable(Array.Empty<Genepack>());
+            return PlanGenepackInventorySnapshot.CreateAvailable([]);
         }
 
         private static PlanTraderAdvisoryStockSnapshot EmptyStock()
         {
-            return PlanTraderAdvisoryStockSnapshot.CreateAvailable(Array.Empty<PlanTraderAdvisorySourceSnapshot>());
+            return PlanTraderAdvisoryStockSnapshot.CreateAvailable([]);
         }
 
         private static PlanTraderAdvisoryStockSnapshot Stock(params PlanTraderAdvisorySourceSnapshot[] sources)
@@ -1407,7 +1406,7 @@ namespace XenogermPlanner.Tests.Trade
 
         private static T CreateUninitialized<T>() where T : class
         {
-            return (T)FormatterServices.GetUninitializedObject(typeof(T));
+            return (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
         }
     }
 }

@@ -18,9 +18,6 @@ namespace XenogermPlanner.UI
     {
         private readonly ReadOnlyCollection<GeneDef> _desiredGenes;
 
-        internal string Name { get; }
-        internal IReadOnlyCollection<GeneDef> DesiredGenes => _desiredGenes;
-
         internal XenogermPlanSourceSelection(string name, IEnumerable<GeneDef> desiredGenes)
         {
             if (name == null)
@@ -49,6 +46,9 @@ namespace XenogermPlanner.UI
             Name = name;
             _desiredGenes = new List<GeneDef>(distinctGenes).AsReadOnly();
         }
+
+        internal string Name { get; }
+        internal IReadOnlyCollection<GeneDef> DesiredGenes => _desiredGenes;
     }
 
     internal sealed class XenogermPlanSourceResolveResult
@@ -64,8 +64,7 @@ namespace XenogermPlanner.UI
         internal XenogermPlanSourceSelection Selection { get; }
         internal XenogermPlanSourceFailure Failure { get; }
 
-        internal bool IsSuccess =>
-            Failure == XenogermPlanSourceFailure.None && Selection != null;
+        internal bool IsSuccess => Failure == XenogermPlanSourceFailure.None && Selection != null;
 
         internal static XenogermPlanSourceResolveResult Success(XenogermPlanSourceSelection selection)
         {
@@ -110,8 +109,7 @@ namespace XenogermPlanner.UI
         internal object SourceToken { get; }
         internal XenogermPlanSourceResolveResult InitialResult { get; }
 
-        internal bool IsKnownInvalid =>
-            InitialResult != null && !InitialResult.IsSuccess;
+        internal bool IsKnownInvalid => InitialResult is { IsSuccess: false };
     }
 
     internal sealed class XenogermPlanSourceGroup

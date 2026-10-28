@@ -23,17 +23,6 @@ namespace XenogermPlanner.Tests.Analysis
         private readonly Func<IReadOnlyCollection<GeneDef>, PlanReadinessMode, IReadOnlyList<Genepack>,
             PlanGenepackCombinationSearchResult> _searchCombinations;
 
-        internal XenogermPlan Plan { get; }
-        internal PlanReadinessTestData.PackFixture[] Packs { get; }
-        internal PlanGenepackInventorySnapshot Inventory { get; }
-        internal PlanReadinessStatus ExpectedStatus { get; }
-        internal int ExpectedDesiredGeneCount { get; }
-        internal int ExpectedPhysicalPackCount { get; }
-        internal int ExpectedCoveredGeneCount { get; }
-        internal int ExpectedMissingGeneCount { get; }
-        internal int ExpectedExactPayloadConflictGeneCount { get; }
-        internal bool ExpectedExactPayloadConflict { get; }
-
         private PlanReadinessStressScenario(
             XenogermPlan plan,
             IEnumerable<PlanReadinessTestData.PackFixture> packs,
@@ -72,6 +61,17 @@ namespace XenogermPlanner.Tests.Analysis
             Validate();
         }
 
+        internal XenogermPlan Plan { get; }
+        internal PlanReadinessTestData.PackFixture[] Packs { get; }
+        internal PlanGenepackInventorySnapshot Inventory { get; }
+        internal PlanReadinessStatus ExpectedStatus { get; }
+        internal int ExpectedDesiredGeneCount { get; }
+        internal int ExpectedPhysicalPackCount { get; }
+        internal int ExpectedCoveredGeneCount { get; }
+        internal int ExpectedMissingGeneCount { get; }
+        internal int ExpectedExactPayloadConflictGeneCount { get; }
+        internal bool ExpectedExactPayloadConflict { get; }
+
         internal static PlanReadinessStressScenario CreateCoverageReady()
         {
             GeneDef[] targetGenes = PlanReadinessTestData.CreateGenes("TargetGene", LargePlannedGeneCount);
@@ -86,40 +86,36 @@ namespace XenogermPlanner.Tests.Analysis
                 {
                     case 0:
                         baseCompositions.Add(
-                            new[]
-                            {
-                                targetGenes[index]
-                            });
+                        [
+                            targetGenes[index]
+                        ]);
                         break;
 
                     case 1:
                         baseCompositions.Add(
-                            new[]
-                            {
-                                targetGenes[index],
-                                extraGenes[index]
-                            });
+                        [
+                            targetGenes[index],
+                            extraGenes[index]
+                        ]);
                         break;
 
                     case 2:
                         baseCompositions.Add(
-                            new[]
-                            {
-                                targetGenes[index],
-                                targetGenes[(index + 1) % LargePlannedGeneCount],
-                                extraGenes[index]
-                            });
+                        [
+                            targetGenes[index],
+                            targetGenes[(index + 1) % LargePlannedGeneCount],
+                            extraGenes[index]
+                        ]);
                         break;
 
                     default:
                         baseCompositions.Add(
-                            new[]
-                            {
-                                targetGenes[index],
-                                extraGenes[index],
-                                extraGenes[(index + 1) % ExtraGeneCount],
-                                extraGenes[(index + 2) % ExtraGeneCount]
-                            });
+                        [
+                            targetGenes[index],
+                            extraGenes[index],
+                            extraGenes[(index + 1) % ExtraGeneCount],
+                            extraGenes[(index + 2) % ExtraGeneCount]
+                        ]);
                         break;
                 }
             }
@@ -155,12 +151,12 @@ namespace XenogermPlanner.Tests.Analysis
             {
                 int geneIndex = groupIndex * 4;
                 GeneDef[] composition =
-                {
+                [
                     targetGenes[geneIndex],
                     targetGenes[geneIndex + 1],
                     targetGenes[geneIndex + 2],
                     targetGenes[geneIndex + 3]
-                };
+                ];
 
                 AddCompositionCopies(packs, composition, 4);
             }
@@ -169,11 +165,11 @@ namespace XenogermPlanner.Tests.Analysis
             {
                 int geneIndex = groupIndex * 4;
                 GeneDef[] composition =
-                {
+                [
                     targetGenes[geneIndex],
                     targetGenes[geneIndex + 1],
                     extraGenes[groupIndex]
-                };
+                ];
 
                 AddCompositionCopies(packs, composition, 4);
             }
@@ -203,19 +199,17 @@ namespace XenogermPlanner.Tests.Analysis
                 if (index < 384)
                 {
                     baseCompositions.Add(
-                        new[]
-                        {
-                            targetGenes[index]
-                        });
+                    [
+                        targetGenes[index]
+                    ]);
                 }
                 else
                 {
                     baseCompositions.Add(
-                        new[]
-                        {
-                            targetGenes[index],
-                            extraGenes[index - 384]
-                        });
+                    [
+                        targetGenes[index],
+                        extraGenes[index - 384]
+                    ]);
                 }
             }
 

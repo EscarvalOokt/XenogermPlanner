@@ -13,15 +13,6 @@ namespace XenogermPlanner.Templates
         private readonly ReadOnlyCollection<PlanXenogermTemplateCandidate> _candidates;
         private readonly ReadOnlyCollection<GeneDef> _targetGenes;
 
-        internal IReadOnlyList<PlanXenogermTemplateCandidate> Candidates => _candidates;
-        internal IReadOnlyList<GeneDef> TargetGenes => _targetGenes;
-        internal bool IsComplete { get; }
-
-        internal PlanXenogermTemplateCandidate AutomaticCandidate =>
-            _candidates.Count == 0 ? null : _candidates[0];
-
-        internal bool HasCandidate => AutomaticCandidate != null;
-
         internal PlanXenogermTemplateCandidateSearchResult(
             IEnumerable<PlanXenogermTemplateCandidate> candidates,
             IEnumerable<GeneDef> targetGenes,
@@ -55,9 +46,18 @@ namespace XenogermPlanner.Templates
 
             _candidates = copiedCandidates.AsReadOnly();
             _targetGenes = copiedTargetGenes.OrderBy(gene => gene.defName ?? string.Empty, StringComparer.Ordinal)
-                .ToList().AsReadOnly();
+                .ToList()
+                .AsReadOnly();
             IsComplete = isComplete;
         }
+
+        internal IReadOnlyList<PlanXenogermTemplateCandidate> Candidates => _candidates;
+        internal IReadOnlyList<GeneDef> TargetGenes => _targetGenes;
+        internal bool IsComplete { get; }
+
+        internal PlanXenogermTemplateCandidate AutomaticCandidate => _candidates.Count == 0 ? null : _candidates[0];
+
+        internal bool HasCandidate => AutomaticCandidate != null;
 
         private static void ValidateReadinessMode(PlanReadinessMode readinessMode)
         {

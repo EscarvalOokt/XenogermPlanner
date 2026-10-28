@@ -4,10 +4,6 @@ namespace XenogermPlanner.Templates
 {
     internal sealed class PlanXenogermTemplateSaveResult
     {
-        internal bool Succeeded => Failure == PlanXenogermTemplateSaveFailure.None;
-        internal PlanXenogermTemplateSaveFailure Failure { get; }
-        internal string VanillaRejectionReason { get; }
-
         private PlanXenogermTemplateSaveResult(PlanXenogermTemplateSaveFailure failure, string vanillaRejectionReason)
         {
             if (failure == PlanXenogermTemplateSaveFailure.None && !string.IsNullOrEmpty(vanillaRejectionReason))
@@ -28,6 +24,10 @@ namespace XenogermPlanner.Templates
             Failure = failure;
             VanillaRejectionReason = vanillaRejectionReason;
         }
+
+        internal bool Succeeded => Failure == PlanXenogermTemplateSaveFailure.None;
+        internal PlanXenogermTemplateSaveFailure Failure { get; }
+        internal string VanillaRejectionReason { get; }
 
         internal static PlanXenogermTemplateSaveResult Success()
         {

@@ -111,8 +111,7 @@ namespace XenogermPlanner.Analysis
 
             foreach (GeneDef desiredGene in desiredGenes)
             {
-                if (!compositionsByDesiredGene.ContainsKey(desiredGene))
-                    compositionsByDesiredGene.Add(desiredGene, null);
+                compositionsByDesiredGene.TryAdd(desiredGene, null);
             }
 
             for (var index = 0; index < availableGenepackCompositions.Count; index++)

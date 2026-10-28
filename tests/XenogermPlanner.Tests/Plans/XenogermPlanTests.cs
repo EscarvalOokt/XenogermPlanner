@@ -13,7 +13,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void Constructor_AllowsEmptyDesiredGeneSet()
         {
-            var plan = new XenogermPlan("Empty", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("Empty", [], PlanReadinessMode.Coverage);
 
             Assert.That(plan.Id, Is.Not.Null.And.Not.Empty);
             Assert.That(plan.Name, Is.EqualTo("Empty"));
@@ -26,7 +26,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void Constructor_TrimsOuterWhitespaceFromName()
         {
-            var plan = new XenogermPlan("  Plan  ", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("  Plan  ", [], PlanReadinessMode.Coverage);
 
             Assert.That(plan.Name, Is.EqualTo("Plan"));
         }
@@ -39,10 +39,7 @@ namespace XenogermPlanner.Tests.Plans
             XenogermPlan createdPlan = null;
 
             Assert.That(
-                (Action)(() =>
-                {
-                    createdPlan = new XenogermPlan(name, Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
-                }),
+                (Action)(() => { createdPlan = new XenogermPlan(name, [], PlanReadinessMode.Coverage); }),
                 Throws.InstanceOf<ArgumentException>());
 
             Assert.That(createdPlan, Is.Null);
@@ -51,7 +48,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void Rename_TrimsNameAndPreservesStableId()
         {
-            var plan = new XenogermPlan("Original", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("Original", [], PlanReadinessMode.Coverage);
             string originalId = plan.Id;
 
             plan.Rename("  Renamed  ");
@@ -65,7 +62,7 @@ namespace XenogermPlanner.Tests.Plans
         [TestCase("   ")]
         public void Rename_InvalidName_DoesNotMutatePlan(string name)
         {
-            var plan = new XenogermPlan("Original", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("Original", [], PlanReadinessMode.Coverage);
             string originalId = plan.Id;
 
             Assert.That((Action)(() => plan.Rename(name)), Throws.InstanceOf<ArgumentException>());
@@ -80,9 +77,9 @@ namespace XenogermPlanner.Tests.Plans
             GeneDef geneA = PlanTestData.CreateGene("GeneA");
             GeneDef geneB = PlanTestData.CreateGene("GeneB");
 
-            var plan = new XenogermPlan("Plan", new[] { geneA, geneA, geneB }, PlanReadinessMode.ExactPayload);
+            var plan = new XenogermPlan("Plan", [geneA, geneA, geneB], PlanReadinessMode.ExactPayload);
 
-            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(new[] { "GeneA", "GeneB" }));
+            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(["GeneA", "GeneB"]));
             Assert.That(plan.DesiredGenes.Count, Is.EqualTo(2));
             Assert.That(plan.ReadinessMode, Is.EqualTo(PlanReadinessMode.ExactPayload));
         }
@@ -92,12 +89,12 @@ namespace XenogermPlanner.Tests.Plans
         {
             GeneDef first = PlanTestData.CreateGene("First");
             GeneDef second = PlanTestData.CreateGene("Second");
-            first.exclusionTags = new List<string> { "Conflict" };
-            second.exclusionTags = new List<string> { "Conflict" };
+            first.exclusionTags = ["Conflict"];
+            second.exclusionTags = ["Conflict"];
 
-            var plan = new XenogermPlan("Plan", new[] { first, second }, PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("Plan", [first, second], PlanReadinessMode.Coverage);
 
-            Assert.That(plan.DesiredGenes, Is.EquivalentTo(new[] { first, second }));
+            Assert.That(plan.DesiredGenes, Is.EquivalentTo([first, second]));
         }
 
         [Test]
@@ -115,15 +112,15 @@ namespace XenogermPlanner.Tests.Plans
             selection.Clear();
             selection.Add(geneB);
 
-            Assert.That(selection.Select(gene => gene.defName), Is.EquivalentTo(new[] { "GeneB" }));
-            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(new[] { "GeneA" }));
+            Assert.That(selection.Select(gene => gene.defName), Is.EquivalentTo(["GeneB"]));
+            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(["GeneA"]));
         }
 
         [Test]
         public void Constructor_CreatesDistinctIdsForNewPlans()
         {
-            var firstPlan = new XenogermPlan("Plan", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
-            var secondPlan = new XenogermPlan("Plan", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var firstPlan = new XenogermPlan("Plan", [], PlanReadinessMode.Coverage);
+            var secondPlan = new XenogermPlan("Plan", [], PlanReadinessMode.Coverage);
 
             Assert.That(firstPlan.Id, Is.Not.EqualTo(secondPlan.Id));
             Assert.That(firstPlan.Name, Is.EqualTo(secondPlan.Name));
@@ -135,7 +132,7 @@ namespace XenogermPlanner.Tests.Plans
             GeneDef geneA = PlanTestData.CreateGene("GeneA");
             GeneDef geneB = PlanTestData.CreateGene("GeneB");
 
-            var source = new XenogermPlan("Plan", new[] { geneA, geneB }, PlanReadinessMode.ExactPayload);
+            var source = new XenogermPlan("Plan", [geneA, geneB], PlanReadinessMode.ExactPayload);
 
             XenogermPlan duplicate = source.CreateDuplicate();
 
@@ -150,7 +147,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void CreateDuplicate_CopiesEmptyPlan()
         {
-            var source = new XenogermPlan("Empty", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var source = new XenogermPlan("Empty", [], PlanReadinessMode.Coverage);
 
             XenogermPlan duplicate = source.CreateDuplicate();
 
@@ -170,8 +167,8 @@ namespace XenogermPlanner.Tests.Plans
             var source = new XenogermPlan(
                 "stable-id",
                 "Degraded",
-                new[] { geneA },
-                new[] { "MissingGeneA", "MissingGeneB" },
+                [geneA],
+                ["MissingGeneA", "MissingGeneB"],
                 PlanReadinessMode.ExactPayload);
 
             XenogermPlan duplicate = source.CreateDuplicate();
@@ -192,31 +189,31 @@ namespace XenogermPlanner.Tests.Plans
             GeneDef geneC = PlanTestData.CreateGene("GeneC");
             GeneDef geneD = PlanTestData.CreateGene("GeneD");
 
-            var source = new XenogermPlan("Plan", new[] { geneA }, PlanReadinessMode.Coverage);
+            var source = new XenogermPlan("Plan", [geneA], PlanReadinessMode.Coverage);
 
             XenogermPlan duplicate = source.CreateDuplicate();
 
             source.Rename("Source renamed");
-            source.ReplaceDesiredGenes(new[] { geneB });
+            source.ReplaceDesiredGenes([geneB]);
             source.ChangeReadinessMode(PlanReadinessMode.ExactPayload);
 
             Assert.That(duplicate.Name, Is.EqualTo("Plan"));
-            Assert.That(duplicate.DesiredGenes, Is.EquivalentTo(new[] { geneA }));
+            Assert.That(duplicate.DesiredGenes, Is.EquivalentTo([geneA]));
             Assert.That(duplicate.ReadinessMode, Is.EqualTo(PlanReadinessMode.Coverage));
 
             duplicate.Rename("Duplicate renamed");
-            duplicate.ReplaceDesiredGenes(new[] { geneC });
+            duplicate.ReplaceDesiredGenes([geneC]);
             duplicate.ChangeReadinessMode(PlanReadinessMode.ExactPayload);
 
             source.Rename("Source final");
-            source.ReplaceDesiredGenes(new[] { geneD });
+            source.ReplaceDesiredGenes([geneD]);
             source.ChangeReadinessMode(PlanReadinessMode.Coverage);
 
             Assert.That(source.Name, Is.EqualTo("Source final"));
-            Assert.That(source.DesiredGenes, Is.EquivalentTo(new[] { geneD }));
+            Assert.That(source.DesiredGenes, Is.EquivalentTo([geneD]));
             Assert.That(source.ReadinessMode, Is.EqualTo(PlanReadinessMode.Coverage));
             Assert.That(duplicate.Name, Is.EqualTo("Duplicate renamed"));
-            Assert.That(duplicate.DesiredGenes, Is.EquivalentTo(new[] { geneC }));
+            Assert.That(duplicate.DesiredGenes, Is.EquivalentTo([geneC]));
             Assert.That(duplicate.ReadinessMode, Is.EqualTo(PlanReadinessMode.ExactPayload));
         }
 
@@ -226,16 +223,16 @@ namespace XenogermPlanner.Tests.Plans
             GeneDef geneA = PlanTestData.CreateGene("GeneA");
             GeneDef geneB = PlanTestData.CreateGene("GeneB");
 
-            var plan = new XenogermPlan("Original", new[] { geneA }, PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("Original", [geneA], PlanReadinessMode.Coverage);
             string originalId = plan.Id;
 
             plan.Rename("Renamed");
-            plan.ReplaceDesiredGenes(new[] { geneB });
+            plan.ReplaceDesiredGenes([geneB]);
             plan.ChangeReadinessMode(PlanReadinessMode.ExactPayload);
 
             Assert.That(plan.Id, Is.EqualTo(originalId));
             Assert.That(plan.Name, Is.EqualTo("Renamed"));
-            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(new[] { "GeneB" }));
+            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(["GeneB"]));
             Assert.That(plan.ReadinessMode, Is.EqualTo(PlanReadinessMode.ExactPayload));
         }
 
@@ -247,12 +244,12 @@ namespace XenogermPlanner.Tests.Plans
             var plan = new XenogermPlan(
                 "stable-id",
                 "Plan",
-                new[] { geneA },
-                new[] { "GeneA", "MissingGene", "MissingGene" },
+                [geneA],
+                ["GeneA", "MissingGene", "MissingGene"],
                 PlanReadinessMode.Coverage);
 
-            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(new[] { "GeneA" }));
-            Assert.That(plan.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(new[] { "MissingGene" }));
+            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(["GeneA"]));
+            Assert.That(plan.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(["MissingGene"]));
             Assert.That(plan.IsDegraded, Is.True);
         }
 
@@ -262,16 +259,11 @@ namespace XenogermPlanner.Tests.Plans
             GeneDef geneA = PlanTestData.CreateGene("GeneA");
             GeneDef geneB = PlanTestData.CreateGene("GeneB");
 
-            var plan = new XenogermPlan(
-                "stable-id",
-                "Plan",
-                new[] { geneA },
-                new[] { "MissingGene" },
-                PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("stable-id", "Plan", [geneA], ["MissingGene"], PlanReadinessMode.Coverage);
 
-            plan.ReplaceDesiredGenes(new[] { geneB });
+            plan.ReplaceDesiredGenes([geneB]);
 
-            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(new[] { "GeneB" }));
+            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(["GeneB"]));
             Assert.That(plan.UnresolvedDesiredGeneDefNames, Is.Empty);
             Assert.That(plan.IsDegraded, Is.False);
         }
@@ -281,13 +273,13 @@ namespace XenogermPlanner.Tests.Plans
         {
             GeneDef first = PlanTestData.CreateGene("First");
             GeneDef second = PlanTestData.CreateGene("Second");
-            first.exclusionTags = new List<string> { "Conflict" };
-            second.exclusionTags = new List<string> { "Conflict" };
-            var plan = new XenogermPlan("Plan", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            first.exclusionTags = ["Conflict"];
+            second.exclusionTags = ["Conflict"];
+            var plan = new XenogermPlan("Plan", [], PlanReadinessMode.Coverage);
 
-            plan.ReplaceDesiredGenes(new[] { first, second, first });
+            plan.ReplaceDesiredGenes([first, second, first]);
 
-            Assert.That(plan.DesiredGenes, Is.EquivalentTo(new[] { first, second }));
+            Assert.That(plan.DesiredGenes, Is.EquivalentTo([first, second]));
         }
 
         [Test]
@@ -295,14 +287,14 @@ namespace XenogermPlanner.Tests.Plans
         {
             GeneDef first = PlanTestData.CreateGene("First");
             GeneDef second = PlanTestData.CreateGene("Second");
-            first.exclusionTags = new List<string> { "Conflict" };
-            second.exclusionTags = new List<string> { "Conflict" };
-            var plan = new XenogermPlan("Plan", new[] { first }, PlanReadinessMode.Coverage);
+            first.exclusionTags = ["Conflict"];
+            second.exclusionTags = ["Conflict"];
+            var plan = new XenogermPlan("Plan", [first], PlanReadinessMode.Coverage);
 
             bool added = plan.AddDesiredGene(second);
 
             Assert.That(added, Is.True);
-            Assert.That(plan.DesiredGenes, Is.EquivalentTo(new[] { first, second }));
+            Assert.That(plan.DesiredGenes, Is.EquivalentTo([first, second]));
         }
 
         [Test]
@@ -314,17 +306,15 @@ namespace XenogermPlanner.Tests.Plans
             var plan = new XenogermPlan(
                 "stable-id",
                 "Plan",
-                Array.Empty<GeneDef>(),
-                new[] { "MissingGene", "OtherMissingGene" },
+                [],
+                ["MissingGene", "OtherMissingGene"],
                 PlanReadinessMode.Coverage);
 
             plan.AddDesiredGene(geneA);
             plan.AddDesiredGene(missingGene);
 
-            Assert.That(
-                plan.DesiredGenes.Select(gene => gene.defName),
-                Is.EquivalentTo(new[] { "GeneA", "MissingGene" }));
-            Assert.That(plan.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(new[] { "OtherMissingGene" }));
+            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(["GeneA", "MissingGene"]));
+            Assert.That(plan.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(["OtherMissingGene"]));
             Assert.That(plan.IsDegraded, Is.True);
         }
 
@@ -332,7 +322,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void Constructor_EnablesReadinessNotificationsByDefaultWithoutBaseline()
         {
-            var plan = new XenogermPlan("Plan", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("Plan", [], PlanReadinessMode.Coverage);
 
             Assert.That(plan.ReadinessNotificationsEnabled, Is.True);
             Assert.That(plan.HasReadinessNotificationBaseline, Is.False);
@@ -342,11 +332,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void Constructor_AllowsReadinessNotificationsToBeDisabled()
         {
-            var plan = new XenogermPlan(
-                "Plan",
-                Array.Empty<GeneDef>(),
-                PlanReadinessMode.Coverage,
-                readinessNotificationsEnabled: false);
+            var plan = new XenogermPlan("Plan", [], PlanReadinessMode.Coverage, readinessNotificationsEnabled: false);
 
             Assert.That(plan.ReadinessNotificationsEnabled, Is.False);
             Assert.That(plan.HasReadinessNotificationBaseline, Is.False);
@@ -356,25 +342,21 @@ namespace XenogermPlanner.Tests.Plans
         public void ChangeReadinessNotificationsEnabled_PreservesPlanIdentityAndTarget()
         {
             GeneDef gene = PlanTestData.CreateGene("GeneA");
-            var plan = new XenogermPlan("Plan", new[] { gene }, PlanReadinessMode.ExactPayload);
+            var plan = new XenogermPlan("Plan", [gene], PlanReadinessMode.ExactPayload);
             string id = plan.Id;
 
             plan.ChangeReadinessNotificationsEnabled(false);
 
             Assert.That(plan.Id, Is.EqualTo(id));
             Assert.That(plan.ReadinessNotificationsEnabled, Is.False);
-            Assert.That(plan.DesiredGenes, Is.EquivalentTo(new[] { gene }));
+            Assert.That(plan.DesiredGenes, Is.EquivalentTo([gene]));
             Assert.That(plan.ReadinessMode, Is.EqualTo(PlanReadinessMode.ExactPayload));
         }
 
         [Test]
         public void CreateDuplicate_CopiesNotificationSettingButStartsWithoutTransitionBaseline()
         {
-            var source = new XenogermPlan(
-                "Plan",
-                Array.Empty<GeneDef>(),
-                PlanReadinessMode.Coverage,
-                readinessNotificationsEnabled: false);
+            var source = new XenogermPlan("Plan", [], PlanReadinessMode.Coverage, readinessNotificationsEnabled: false);
             source.UpdateReadinessNotificationState(true);
 
             XenogermPlan duplicate = source.CreateDuplicate();
@@ -390,7 +372,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void DuplicateAndSourceNotificationSettingsRemainIndependent()
         {
-            var source = new XenogermPlan("Plan", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var source = new XenogermPlan("Plan", [], PlanReadinessMode.Coverage);
             XenogermPlan duplicate = source.CreateDuplicate();
 
             source.ChangeReadinessNotificationsEnabled(false);

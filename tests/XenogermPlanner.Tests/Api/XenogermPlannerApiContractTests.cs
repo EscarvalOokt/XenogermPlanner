@@ -39,7 +39,7 @@ namespace XenogermPlanner.Tests.Api
                 nameof(XenogermPlannerApi.QueryGenepackRelevance),
                 BindingFlags.Public | BindingFlags.Static,
                 binder: null,
-                types: new[] { typeof(IReadOnlyList<GenepackRelevanceRequest>) },
+                types: [typeof(IReadOnlyList<GenepackRelevanceRequest>)],
                 modifiers: null);
 
             Assert.That(method, Is.Not.Null);
@@ -50,10 +50,14 @@ namespace XenogermPlanner.Tests.Api
         public void PublicRequestAndMatchTypes_HaveStableConstructors()
         {
             ConstructorInfo requestConstructor = typeof(GenepackRelevanceRequest).GetConstructor(
-                new[] { typeof(IEnumerable<string>) });
+            [
+                typeof(IEnumerable<string>)
+            ]);
 
             ConstructorInfo matchConstructor = typeof(GenepackRelevancePlanMatch).GetConstructor(
-                new[] { typeof(string), typeof(string) });
+            [
+                typeof(string), typeof(string)
+            ]);
 
             Assert.That(requestConstructor, Is.Not.Null);
             Assert.That(matchConstructor, Is.Not.Null);
@@ -108,18 +112,18 @@ namespace XenogermPlanner.Tests.Api
         {
             AssertEnumContract(
                 typeof(GenepackRelevanceBatchStatus),
-                new[] { "Success", "InvalidRequest", "Unavailable", "Failed" },
-                new[] { 0, 1, 2, 3 });
+                ["Success", "InvalidRequest", "Unavailable", "Failed"],
+                [0, 1, 2, 3]);
 
             AssertEnumContract(
                 typeof(GenepackRelevanceItemStatus),
-                new[] { "Success", "InvalidInput", "UnknownGeneDef", "Failed" },
-                new[] { 0, 1, 2, 3 });
+                ["Success", "InvalidInput", "UnknownGeneDef", "Failed"],
+                [0, 1, 2, 3]);
 
             AssertEnumContract(
                 typeof(GenepackRelevanceUnavailableReason),
-                new[] { "None", "NoGame", "NoActiveMap", "PlannerStateUnavailable" },
-                new[] { 0, 1, 2, 3 });
+                ["None", "NoGame", "NoActiveMap", "PlannerStateUnavailable"],
+                [0, 1, 2, 3]);
         }
 
         [Test]
@@ -139,12 +143,12 @@ namespace XenogermPlanner.Tests.Api
                 nameof(XenogermPlannerApi.QueryGenepackRelevance),
                 BindingFlags.Public | BindingFlags.Static,
                 binder: null,
-                types: new[] { typeof(IReadOnlyList<GenepackRelevanceRequest>) },
+                types: [typeof(IReadOnlyList<GenepackRelevanceRequest>)],
                 modifiers: null);
 
             Assert.That(queryMethod, Is.Not.Null);
 
-            var result = (GenepackRelevanceBatchResult)queryMethod.Invoke(null, new object[] { null });
+            var result = (GenepackRelevanceBatchResult)queryMethod.Invoke(null, [null]);
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Status, Is.EqualTo(GenepackRelevanceBatchStatus.InvalidRequest));
@@ -155,8 +159,7 @@ namespace XenogermPlanner.Tests.Api
         [Test]
         public void Facade_EmptyBatch_ReturnsSuccessfulEmptyResultWithoutRuntimeContext()
         {
-            GenepackRelevanceBatchResult result = XenogermPlannerApi.QueryGenepackRelevance(
-                Array.Empty<GenepackRelevanceRequest>());
+            GenepackRelevanceBatchResult result = XenogermPlannerApi.QueryGenepackRelevance([]);
 
             Assert.That(result.Status, Is.EqualTo(GenepackRelevanceBatchStatus.Success));
             Assert.That(result.UnavailableReason, Is.EqualTo(GenepackRelevanceUnavailableReason.None));
@@ -167,7 +170,8 @@ namespace XenogermPlanner.Tests.Api
         public void PublicApiSurface_DoesNotExposeRuntimeOrPlannerImplementationTypes()
         {
             Type[] publicApiTypes = typeof(XenogermPlannerApi).Assembly.GetExportedTypes()
-                .Where(type => type.Namespace == "XenogermPlanner.Api").ToArray();
+                .Where(type => type.Namespace == "XenogermPlanner.Api")
+                .ToArray();
 
             Assert.That(publicApiTypes, Is.Not.Empty);
 
@@ -275,8 +279,10 @@ namespace XenogermPlanner.Tests.Api
                                                       StringComparison.Ordinal) &&
                                                   typeNamespace != "XenogermPlanner.Api";
 
-            return typeNamespace == "Verse" || typeNamespace.StartsWith("Verse.", StringComparison.Ordinal) ||
-                   typeNamespace == "RimWorld" || typeNamespace.StartsWith("RimWorld.", StringComparison.Ordinal) ||
+            return typeNamespace == "Verse" ||
+                   typeNamespace.StartsWith("Verse.", StringComparison.Ordinal) ||
+                   typeNamespace == "RimWorld" ||
+                   typeNamespace.StartsWith("RimWorld.", StringComparison.Ordinal) ||
                    belongsToPlannerImplementation;
         }
     }

@@ -9,13 +9,6 @@ namespace XenogermPlanner.Analysis
     {
         private readonly ReadOnlyCollection<PlanGenepackCompositionDiagnostic> _sourceGenepackCompositions;
 
-        public GeneDef Gene { get; }
-        public PlanGeneCoverageState State { get; }
-        public bool IsCovered => State != PlanGeneCoverageState.Missing;
-
-        public IReadOnlyList<PlanGenepackCompositionDiagnostic> SourceGenepackCompositions =>
-            _sourceGenepackCompositions;
-
         internal PlanGeneCoverageDiagnostic(
             GeneDef gene,
             PlanGeneCoverageState state,
@@ -55,6 +48,13 @@ namespace XenogermPlanner.Analysis
             State = state;
             _sourceGenepackCompositions = copiedCompositions.AsReadOnly();
         }
+
+        public GeneDef Gene { get; }
+        public PlanGeneCoverageState State { get; }
+        public bool IsCovered => State != PlanGeneCoverageState.Missing;
+
+        public IReadOnlyList<PlanGenepackCompositionDiagnostic> SourceGenepackCompositions =>
+            _sourceGenepackCompositions;
 
         private static void ValidateState(
             PlanGeneCoverageState state,

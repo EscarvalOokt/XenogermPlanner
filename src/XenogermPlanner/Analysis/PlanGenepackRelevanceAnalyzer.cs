@@ -9,8 +9,8 @@ namespace XenogermPlanner.Analysis
     internal sealed class PlanGenepackRelevanceAnalyzer
     {
         private readonly List<PlanCandidate> _candidates;
-        private bool _hasEvaluated;
         private bool _candidatesSorted;
+        private bool _hasEvaluated;
 
         internal PlanGenepackRelevanceAnalyzer(
             IReadOnlyList<XenogermPlan> plans,
@@ -158,8 +158,8 @@ namespace XenogermPlanner.Analysis
 
         private sealed class PlanCandidate
         {
-            private readonly HashSet<GeneDef> _targetGenes;
             private readonly HashSet<GeneDef> _neededGenes;
+            private readonly HashSet<GeneDef> _targetGenes;
 
             internal PlanCandidate(XenogermPlan plan, HashSet<GeneDef> targetGenes, HashSet<GeneDef> neededGenes)
             {

@@ -4,12 +4,6 @@ namespace XenogermPlanner.Assemblers
 {
     internal sealed class PlanAssemblerLiveState
     {
-        internal PlanAssemblerScopeSnapshot Scope { get; }
-        internal bool IsAssemblerPowered { get; }
-        internal int MaxComplexity { get; }
-        internal int AvailableArchiteCapsules { get; }
-        internal bool IsArchogeneticsFinished { get; }
-
         internal PlanAssemblerLiveState(
             PlanAssemblerScopeSnapshot scope,
             bool isAssemblerPowered,
@@ -40,5 +34,11 @@ namespace XenogermPlanner.Assemblers
             AvailableArchiteCapsules = availableArchiteCapsules;
             IsArchogeneticsFinished = isArchogeneticsFinished;
         }
+
+        internal PlanAssemblerScopeSnapshot Scope { get; }
+        internal bool IsAssemblerPowered { get; }
+        internal int MaxComplexity { get; }
+        internal int AvailableArchiteCapsules { get; }
+        internal bool IsArchogeneticsFinished { get; }
     }
 }

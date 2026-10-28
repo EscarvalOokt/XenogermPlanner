@@ -8,9 +8,6 @@ namespace XenogermPlanner.Api
     {
         private readonly ReadOnlyCollection<GenepackRelevancePlanMatch> _matches;
 
-        public GenepackRelevanceItemStatus Status { get; }
-        public IReadOnlyList<GenepackRelevancePlanMatch> Matches => _matches;
-
         private GenepackRelevanceItemResult(
             GenepackRelevanceItemStatus status,
             IEnumerable<GenepackRelevancePlanMatch> matches)
@@ -29,6 +26,9 @@ namespace XenogermPlanner.Api
             Status = status;
             _matches = copiedMatches.AsReadOnly();
         }
+
+        public GenepackRelevanceItemStatus Status { get; }
+        public IReadOnlyList<GenepackRelevancePlanMatch> Matches => _matches;
 
         internal static GenepackRelevanceItemResult CreateSuccess(IEnumerable<GenepackRelevancePlanMatch> matches)
         {
@@ -78,8 +78,10 @@ namespace XenogermPlanner.Api
 
         private static void ValidateStatus(GenepackRelevanceItemStatus status)
         {
-            if (status != GenepackRelevanceItemStatus.Success && status != GenepackRelevanceItemStatus.InvalidInput &&
-                status != GenepackRelevanceItemStatus.UnknownGeneDef && status != GenepackRelevanceItemStatus.Failed)
+            if (status != GenepackRelevanceItemStatus.Success &&
+                status != GenepackRelevanceItemStatus.InvalidInput &&
+                status != GenepackRelevanceItemStatus.UnknownGeneDef &&
+                status != GenepackRelevanceItemStatus.Failed)
             {
                 throw new ArgumentOutOfRangeException(nameof(status), status, "Unsupported relevance item status.");
             }

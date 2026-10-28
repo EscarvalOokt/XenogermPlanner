@@ -69,9 +69,8 @@ namespace XenogermPlanner.Genes
 
             return string.Join(
                 "\u001f",
-                distinctGenes.Select(gene => gene.defName ?? string.Empty).OrderBy(
-                    defName => defName,
-                    StringComparer.Ordinal));
+                distinctGenes.Select(gene => gene.defName ?? string.Empty)
+                    .OrderBy(defName => defName, StringComparer.Ordinal));
         }
 
         internal static bool CompositionsMatch(IEnumerable<GeneDef> leftGenes, IEnumerable<GeneDef> rightGenes)
@@ -85,7 +84,8 @@ namespace XenogermPlanner.Genes
         internal static bool TryCompositionsMatch(IEnumerable<GeneDef> leftGenes, IEnumerable<GeneDef> rightGenes)
         {
             return TryCopyDistinctGenes(leftGenes, out HashSet<GeneDef> left) &&
-                   TryCopyDistinctGenes(rightGenes, out HashSet<GeneDef> right) && left.SetEquals(right);
+                   TryCopyDistinctGenes(rightGenes, out HashSet<GeneDef> right) &&
+                   left.SetEquals(right);
         }
 
         internal static string GetStablePhysicalKey(Genepack genepack)

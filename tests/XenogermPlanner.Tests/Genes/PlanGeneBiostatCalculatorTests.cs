@@ -11,7 +11,7 @@ namespace XenogermPlanner.Tests.Genes
         [Test]
         public void CalculateRaw_EmptyCollectionReturnsZeroValues()
         {
-            PlanGeneBiostats result = PlanGeneBiostatCalculator.CalculateRaw(Array.Empty<GeneDef>());
+            PlanGeneBiostats result = PlanGeneBiostatCalculator.CalculateRaw([]);
 
             Assert.That(result.Complexity, Is.Zero);
             Assert.That(result.Metabolism, Is.Zero);
@@ -24,7 +24,7 @@ namespace XenogermPlanner.Tests.Genes
             GeneDef firstGene = CreateGene("First", complexity: 3, metabolism: -2, archites: 1);
             GeneDef secondGene = CreateGene("Second", complexity: 5, metabolism: 4, archites: 2);
 
-            PlanGeneBiostats result = PlanGeneBiostatCalculator.CalculateRaw(new[] { firstGene, secondGene });
+            PlanGeneBiostats result = PlanGeneBiostatCalculator.CalculateRaw([firstGene, secondGene]);
 
             Assert.That(result.Complexity, Is.EqualTo(8));
             Assert.That(result.Metabolism, Is.EqualTo(2));
@@ -38,8 +38,8 @@ namespace XenogermPlanner.Tests.Genes
             GeneDef removedGene = CreateGene("Removed", complexity: 9, metabolism: -5, archites: 3);
 
             PlanGeneBiostats result = PlanGeneBiostatCalculator.CalculateEffective(
-                new[] { retainedGene, removedGene },
-                _ => new[] { retainedGene });
+                [retainedGene, removedGene],
+                _ => [retainedGene]);
 
             Assert.That(result.Complexity, Is.EqualTo(4));
             Assert.That(result.Metabolism, Is.EqualTo(2));
@@ -53,8 +53,8 @@ namespace XenogermPlanner.Tests.Genes
             GeneDef secondGene = CreateGene("Second", complexity: 5, metabolism: 4, archites: 2);
 
             PlanGeneBiostats result = PlanGeneBiostatCalculator.CalculateEffective(
-                new[] { firstGene, secondGene },
-                _ => new[] { firstGene, firstGene, secondGene });
+                [firstGene, secondGene],
+                _ => [firstGene, firstGene, secondGene]);
 
             Assert.That(result.Complexity, Is.EqualTo(8));
             Assert.That(result.Metabolism, Is.EqualTo(2));
@@ -66,9 +66,7 @@ namespace XenogermPlanner.Tests.Genes
         {
             GeneDef gene = CreateGene("Gene", complexity: 3, metabolism: -2, archites: 1);
 
-            PlanGeneBiostats result = PlanGeneBiostatCalculator.CalculateEffective(
-                new[] { gene, gene },
-                genes => genes);
+            PlanGeneBiostats result = PlanGeneBiostatCalculator.CalculateEffective([gene, gene], genes => genes);
 
             Assert.That(result.Complexity, Is.EqualTo(3));
             Assert.That(result.Metabolism, Is.EqualTo(-2));
@@ -86,7 +84,7 @@ namespace XenogermPlanner.Tests.Genes
         [Test]
         public void CalculateRaw_RejectsNullGene()
         {
-            void Action() => PlanGeneBiostatCalculator.CalculateRaw(new GeneDef[] { null });
+            void Action() => PlanGeneBiostatCalculator.CalculateRaw([null]);
 
             Assert.Throws<ArgumentException>((Action)Action);
         }
@@ -96,7 +94,7 @@ namespace XenogermPlanner.Tests.Genes
         {
             GeneDef gene = CreateGene("Gene", complexity: 1, metabolism: 0, archites: 0);
 
-            void Action() => PlanGeneBiostatCalculator.CalculateEffective(new[] { gene }, null);
+            void Action() => PlanGeneBiostatCalculator.CalculateEffective([gene], null);
 
             Assert.Throws<ArgumentNullException>((Action)Action);
         }
@@ -106,7 +104,7 @@ namespace XenogermPlanner.Tests.Genes
         {
             GeneDef gene = CreateGene("Gene", complexity: 1, metabolism: 0, archites: 0);
 
-            void Action() => PlanGeneBiostatCalculator.CalculateEffective(new[] { gene }, _ => null);
+            void Action() => PlanGeneBiostatCalculator.CalculateEffective([gene], _ => null);
 
             Assert.Throws<InvalidOperationException>((Action)Action);
         }
@@ -116,7 +114,7 @@ namespace XenogermPlanner.Tests.Genes
         {
             GeneDef gene = CreateGene("Gene", complexity: 1, metabolism: 0, archites: 0);
 
-            void Action() => PlanGeneBiostatCalculator.CalculateEffective(new[] { gene }, _ => new GeneDef[] { null });
+            void Action() => PlanGeneBiostatCalculator.CalculateEffective([gene], _ => [null]);
 
             Assert.Throws<InvalidOperationException>((Action)Action);
         }

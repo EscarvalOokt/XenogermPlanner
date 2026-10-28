@@ -17,8 +17,8 @@ namespace XenogermPlanner.Tests.Genes
             GeneDef geneA = PlanTestData.CreateGene("A");
             GeneDef geneB = PlanTestData.CreateGene("B");
 
-            string first = GenepackCompositionUtility.CreateCompositionKey(new[] { geneB, geneA, geneA });
-            string second = GenepackCompositionUtility.CreateCompositionKey(new[] { geneA, geneB });
+            string first = GenepackCompositionUtility.CreateCompositionKey([geneB, geneA, geneA]);
+            string second = GenepackCompositionUtility.CreateCompositionKey([geneA, geneB]);
 
             Assert.That(first, Is.EqualTo(second));
         }
@@ -29,7 +29,7 @@ namespace XenogermPlanner.Tests.Genes
             GeneDef lower = PlanTestData.CreateGene("a");
             GeneDef upper = PlanTestData.CreateGene("B");
 
-            string key = GenepackCompositionUtility.CreateCompositionKey(new[] { lower, upper });
+            string key = GenepackCompositionUtility.CreateCompositionKey([lower, upper]);
 
             Assert.That(key, Is.EqualTo("B\u001fa"));
         }
@@ -40,9 +40,7 @@ namespace XenogermPlanner.Tests.Genes
             GeneDef geneA = PlanTestData.CreateGene("A");
             GeneDef geneB = PlanTestData.CreateGene("B");
 
-            bool matches = GenepackCompositionUtility.CompositionsMatch(
-                new[] { geneA, geneB, geneA },
-                new[] { geneB, geneA });
+            bool matches = GenepackCompositionUtility.CompositionsMatch([geneA, geneB, geneA], [geneB, geneA]);
 
             Assert.That(matches, Is.True);
         }
@@ -53,9 +51,7 @@ namespace XenogermPlanner.Tests.Genes
             GeneDef geneA = PlanTestData.CreateGene("A");
             GeneDef geneB = PlanTestData.CreateGene("B");
 
-            Assert.That(
-                GenepackCompositionUtility.CompositionsMatch(new[] { geneA }, new[] { geneA, geneB }),
-                Is.False);
+            Assert.That(GenepackCompositionUtility.CompositionsMatch([geneA], [geneA, geneB]), Is.False);
         }
 
         [Test]
@@ -74,9 +70,7 @@ namespace XenogermPlanner.Tests.Genes
         {
             GeneDef gene = PlanTestData.CreateGene("A");
 
-            Assert.That(
-                GenepackCompositionUtility.TryCompositionsMatch(new[] { gene }, new[] { gene, null }),
-                Is.False);
+            Assert.That(GenepackCompositionUtility.TryCompositionsMatch([gene], [gene, null]), Is.False);
         }
 
         [Test]

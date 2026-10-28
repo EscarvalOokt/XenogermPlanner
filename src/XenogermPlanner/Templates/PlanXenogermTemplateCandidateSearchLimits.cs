@@ -7,12 +7,6 @@ namespace XenogermPlanner.Templates
         private const int DefaultMaxVisitedNodes = 10000;
         private const int DefaultMaxRetainedCandidates = 64;
 
-        internal static PlanXenogermTemplateCandidateSearchLimits Default { get; } =
-            new PlanXenogermTemplateCandidateSearchLimits(DefaultMaxVisitedNodes, DefaultMaxRetainedCandidates);
-
-        internal int MaxVisitedNodes { get; }
-        internal int MaxRetainedCandidates { get; }
-
         internal PlanXenogermTemplateCandidateSearchLimits(int maxVisitedNodes, int maxRetainedCandidates)
         {
             if (maxVisitedNodes <= 0)
@@ -34,5 +28,11 @@ namespace XenogermPlanner.Templates
             MaxVisitedNodes = maxVisitedNodes;
             MaxRetainedCandidates = maxRetainedCandidates;
         }
+
+        internal static PlanXenogermTemplateCandidateSearchLimits Default { get; } =
+            new PlanXenogermTemplateCandidateSearchLimits(DefaultMaxVisitedNodes, DefaultMaxRetainedCandidates);
+
+        internal int MaxVisitedNodes { get; }
+        internal int MaxRetainedCandidates { get; }
     }
 }

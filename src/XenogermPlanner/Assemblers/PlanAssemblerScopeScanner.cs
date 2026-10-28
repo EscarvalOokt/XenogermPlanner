@@ -103,7 +103,7 @@ namespace XenogermPlanner.Assemblers
             Func<Building_GeneAssembler, IEnumerable<Thing>> getConnectedFacilities,
             Func<Thing, IEnumerable<Genepack>> getContainedGenepacks)
         {
-            return Scan(assembler, getConnectedFacilities, getContainedGenepacks, facility => true).VisibleGenepacks;
+            return Scan(assembler, getConnectedFacilities, getContainedGenepacks, _ => true).VisibleGenepacks;
         }
 
         private static IEnumerable<Genepack> GetContainedGenepacks(Thing facility)

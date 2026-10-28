@@ -4,9 +4,6 @@ namespace XenogermPlanner.Api
 {
     public sealed class GenepackRelevancePlanMatch
     {
-        public string PlanId { get; }
-        public string DisplayName { get; }
-
         public GenepackRelevancePlanMatch(string planId, string displayName)
         {
             if (string.IsNullOrWhiteSpace(planId))
@@ -22,5 +19,8 @@ namespace XenogermPlanner.Api
             PlanId = planId;
             DisplayName = displayName;
         }
+
+        public string PlanId { get; }
+        public string DisplayName { get; }
     }
 }

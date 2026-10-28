@@ -5,6 +5,9 @@ using RimWorld;
 using Verse;
 using XenogermPlanner.Genes;
 
+// Providers intentionally read state changed between component calls.
+// ReSharper disable AccessToModifiedClosure
+
 namespace XenogermPlanner.Tests.Genes
 {
     [TestFixture]
@@ -42,10 +45,10 @@ namespace XenogermPlanner.Tests.Genes
             PlanGenepackInventoryGameComponent component = CreateComponent(
                 () => map,
                 () => currentTick,
-                currentMap =>
+                _ =>
                 {
                     scanCount++;
-                    return PlanGenepackInventorySnapshot.CreateAvailable(Array.Empty<Genepack>());
+                    return PlanGenepackInventorySnapshot.CreateAvailable([]);
                 });
 
             _ = component.Snapshot;
@@ -63,8 +66,7 @@ namespace XenogermPlanner.Tests.Genes
             PlanGenepackInventoryGameComponent component = CreateCountingComponent(
                 () => map,
                 () => 0,
-                () => scanCount++,
-                out _);
+                () => scanCount++);
 
             _ = component.Snapshot;
 
@@ -85,8 +87,7 @@ namespace XenogermPlanner.Tests.Genes
             PlanGenepackInventoryGameComponent component = CreateCountingComponent(
                 () => map,
                 () => 0,
-                () => scanCount++,
-                out _);
+                () => scanCount++);
 
             _ = component.Snapshot;
             component.Invalidate();
@@ -105,8 +106,7 @@ namespace XenogermPlanner.Tests.Genes
             PlanGenepackInventoryGameComponent component = CreateCountingComponent(
                 () => map,
                 () => currentTick,
-                () => scanCount++,
-                out _);
+                () => scanCount++);
 
             _ = component.Snapshot;
             currentTick = PlanGenepackInventoryGameComponent.FallbackRefreshIntervalTicks - 1;
@@ -125,8 +125,7 @@ namespace XenogermPlanner.Tests.Genes
             PlanGenepackInventoryGameComponent component = CreateCountingComponent(
                 () => map,
                 () => currentTick,
-                () => scanCount++,
-                out _);
+                () => scanCount++);
 
             _ = component.Snapshot;
             currentTick = PlanGenepackInventoryGameComponent.FallbackRefreshIntervalTicks;
@@ -145,8 +144,7 @@ namespace XenogermPlanner.Tests.Genes
             PlanGenepackInventoryGameComponent component = CreateCountingComponent(
                 () => map,
                 () => currentTick,
-                () => scanCount++,
-                out _);
+                () => scanCount++);
 
             _ = component.Snapshot;
 
@@ -173,8 +171,7 @@ namespace XenogermPlanner.Tests.Genes
             PlanGenepackInventoryGameComponent component = CreateCountingComponent(
                 () => map,
                 () => currentTick,
-                () => scanCount++,
-                out _);
+                () => scanCount++);
 
             _ = component.Snapshot;
             currentTick = PlanGenepackInventoryGameComponent.FallbackRefreshIntervalTicks;
@@ -202,10 +199,10 @@ namespace XenogermPlanner.Tests.Genes
 
                     if (ReferenceEquals(map, firstMap))
                     {
-                        return PlanGenepackInventorySnapshot.CreateAvailable(new[] { firstGenepack });
+                        return PlanGenepackInventorySnapshot.CreateAvailable([firstGenepack]);
                     }
 
-                    return PlanGenepackInventorySnapshot.CreateAvailable(new[] { secondGenepack });
+                    return PlanGenepackInventorySnapshot.CreateAvailable([secondGenepack]);
                 });
 
             PlanGenepackInventorySnapshot firstSnapshot = component.Snapshot;
@@ -272,7 +269,7 @@ namespace XenogermPlanner.Tests.Genes
             PlanGenepackInventoryGameComponent component = CreateComponent(
                 () => map,
                 () => 0,
-                currentMap => PlanGenepackInventorySnapshot.CreateAvailable(new[] { currentGenepack }));
+                _ => PlanGenepackInventorySnapshot.CreateAvailable([currentGenepack]));
 
             PlanGenepackInventorySnapshot firstSnapshot = component.Snapshot;
 
@@ -295,11 +292,11 @@ namespace XenogermPlanner.Tests.Genes
             Map map = GenepackInventoryTestData.CreateMap();
             var scanCount = 0;
 
-            PlanGenepackInventorySnapshot ScanMap(Map currentMap)
+            PlanGenepackInventorySnapshot ScanMap(Map _)
             {
                 scanCount++;
 
-                return PlanGenepackInventorySnapshot.CreateAvailable(Array.Empty<Genepack>());
+                return PlanGenepackInventorySnapshot.CreateAvailable([]);
             }
 
             PlanGenepackInventoryGameComponent firstComponent = CreateComponent(() => map, () => 0, ScanMap);
@@ -322,23 +319,18 @@ namespace XenogermPlanner.Tests.Genes
         private static PlanGenepackInventoryGameComponent CreateCountingComponent(
             Func<Map> getCurrentMap,
             Func<int> getCurrentTick,
-            Action onScan,
-            out List<Map> scannedMaps)
+            Action onScan)
         {
-            scannedMaps = new List<Map>();
-            List<Map> capturedScannedMaps = scannedMaps;
-
             return CreateComponent(
                 getCurrentMap,
                 getCurrentTick,
                 map =>
                 {
                     onScan();
-                    capturedScannedMaps.Add(map);
 
                     return map == null
                         ? PlanGenepackInventorySnapshot.Unavailable
-                        : PlanGenepackInventorySnapshot.CreateAvailable(Array.Empty<Genepack>());
+                        : PlanGenepackInventorySnapshot.CreateAvailable([]);
                 });
         }
 
@@ -352,7 +344,7 @@ namespace XenogermPlanner.Tests.Genes
                 return PlanGenepackInventorySnapshot.Unavailable;
             }
 
-            return PlanGenepackInventorySnapshot.CreateAvailable(new[] { genepack });
+            return PlanGenepackInventorySnapshot.CreateAvailable([genepack]);
         }
 
         private static bool ContainsReference(IReadOnlyList<Genepack> genepacks, Genepack expectedGenepack)

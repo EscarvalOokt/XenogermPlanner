@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Globalization;
 using NUnit.Framework;
-using Verse;
 using XenogermPlanner.Plans;
 
 namespace XenogermPlanner.Tests.Plans
@@ -13,7 +12,7 @@ namespace XenogermPlanner.Tests.Plans
         public void TryValidate_TrimsOuterWhitespaceAndPreservesCasing()
         {
             bool valid = XenogermPlanNameAllocator.TryValidate(
-                Array.Empty<XenogermPlan>(),
+                [],
                 "  My Plan  ",
                 null,
                 out string normalizedName,
@@ -28,7 +27,7 @@ namespace XenogermPlanner.Tests.Plans
         public void TryValidate_PreservesInternalWhitespaceAndUnicode()
         {
             bool valid = XenogermPlanNameAllocator.TryValidate(
-                Array.Empty<XenogermPlan>(),
+                [],
                 "  План  Ω  ",
                 null,
                 out string normalizedName,
@@ -45,7 +44,7 @@ namespace XenogermPlanner.Tests.Plans
         public void TryValidate_InvalidName_ReturnsInvalidName(string requestedName)
         {
             bool valid = XenogermPlanNameAllocator.TryValidate(
-                Array.Empty<XenogermPlan>(),
+                [],
                 requestedName,
                 null,
                 out string normalizedName,
@@ -59,7 +58,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void TryValidate_ExistingNameIgnoringCase_ReturnsConflict()
         {
-            XenogermPlan[] plans = { CreatePlan("plan-a", "Alpha") };
+            XenogermPlan[] plans = [CreatePlan("plan-a", "Alpha")];
 
             bool valid = XenogermPlanNameAllocator.TryValidate(
                 plans,
@@ -76,7 +75,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void TryValidate_TrimsExistingNamesBeforeComparison()
         {
-            XenogermPlan[] plans = { CreatePlan("plan-a", "  Alpha  ") };
+            XenogermPlan[] plans = [CreatePlan("plan-a", "  Alpha  ")];
 
             bool valid = XenogermPlanNameAllocator.TryValidate(
                 plans,
@@ -92,7 +91,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void TryValidate_DifferentInternalWhitespace_RemainsAvailable()
         {
-            XenogermPlan[] plans = { CreatePlan("plan-a", "Plan A") };
+            XenogermPlan[] plans = [CreatePlan("plan-a", "Plan A")];
 
             bool valid = XenogermPlanNameAllocator.TryValidate(
                 plans,
@@ -114,7 +113,7 @@ namespace XenogermPlanner.Tests.Plans
             try
             {
                 CultureInfo.CurrentCulture = new CultureInfo("tr-TR");
-                XenogermPlan[] plans = { CreatePlan("plan-a", "I") };
+                XenogermPlan[] plans = [CreatePlan("plan-a", "I")];
 
                 bool valid = XenogermPlanNameAllocator.TryValidate(
                     plans,
@@ -138,7 +137,7 @@ namespace XenogermPlanner.Tests.Plans
             XenogermPlan plan = CreatePlan("plan-a", "Alpha");
 
             bool valid = XenogermPlanNameAllocator.TryValidate(
-                new[] { plan },
+                [plan],
                 "alpha",
                 plan.Id,
                 out string normalizedName,
@@ -156,7 +155,7 @@ namespace XenogermPlanner.Tests.Plans
             XenogermPlan secondPlan = CreatePlan("plan-b", "alpha");
 
             bool valid = XenogermPlanNameAllocator.TryValidate(
-                new[] { firstPlan, secondPlan },
+                [firstPlan, secondPlan],
                 "Alpha",
                 firstPlan.Id,
                 out _,
@@ -177,7 +176,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void Allocate_FreeName_ReturnsTrimmedPreferredName()
         {
-            string allocated = XenogermPlanNameAllocator.Allocate(Array.Empty<XenogermPlan>(), "  My Plan  ");
+            string allocated = XenogermPlanNameAllocator.Allocate([], "  My Plan  ");
 
             Assert.That(allocated, Is.EqualTo("My Plan"));
         }
@@ -185,7 +184,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void Allocate_OccupiedBaseName_UsesSuffixTwo()
         {
-            XenogermPlan[] plans = { CreatePlan("plan-a", "Plan") };
+            XenogermPlan[] plans = [CreatePlan("plan-a", "Plan")];
 
             string allocated = XenogermPlanNameAllocator.Allocate(plans, "Plan");
 
@@ -196,11 +195,11 @@ namespace XenogermPlanner.Tests.Plans
         public void Allocate_OccupiedSequence_UsesFirstAvailableSuffix()
         {
             XenogermPlan[] plans =
-            {
+            [
                 CreatePlan("plan-a", "Plan"),
                 CreatePlan("plan-b", "Plan 2"),
                 CreatePlan("plan-c", "Plan 3")
-            };
+            ];
 
             string allocated = XenogermPlanNameAllocator.Allocate(plans, "Plan");
 
@@ -211,11 +210,11 @@ namespace XenogermPlanner.Tests.Plans
         public void Allocate_CaseInsensitiveSequence_PreservesPreferredCasing()
         {
             XenogermPlan[] plans =
-            {
+            [
                 CreatePlan("plan-a", "plan"),
                 CreatePlan("plan-b", "PLAN 2"),
                 CreatePlan("plan-c", "pLaN 3")
-            };
+            ];
 
             string allocated = XenogermPlanNameAllocator.Allocate(plans, "Plan");
 
@@ -226,10 +225,10 @@ namespace XenogermPlanner.Tests.Plans
         public void Allocate_PreferredNameWithNumericSuffix_ContinuesSequence()
         {
             XenogermPlan[] plans =
-            {
+            [
                 CreatePlan("plan-a", "Plan 2"),
                 CreatePlan("plan-b", "Plan 3")
-            };
+            ];
 
             string allocated = XenogermPlanNameAllocator.Allocate(plans, "Plan 2");
 
@@ -240,10 +239,10 @@ namespace XenogermPlanner.Tests.Plans
         public void Allocate_PreferredCopyNameWithNumericSuffix_ContinuesSequence()
         {
             XenogermPlan[] plans =
-            {
+            [
                 CreatePlan("plan-a", "Plan copy 2"),
                 CreatePlan("plan-b", "Plan copy 3")
-            };
+            ];
 
             string allocated = XenogermPlanNameAllocator.Allocate(plans, "Plan copy 2");
 
@@ -253,7 +252,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void Allocate_InternalWhitespaceAndUnicodeBase_ArePreserved()
         {
-            XenogermPlan[] plans = { CreatePlan("plan-a", "План  Ω") };
+            XenogermPlan[] plans = [CreatePlan("plan-a", "План  Ω")];
 
             string allocated = XenogermPlanNameAllocator.Allocate(plans, "  План  Ω  ");
 
@@ -265,7 +264,7 @@ namespace XenogermPlanner.Tests.Plans
         {
             XenogermPlan plan = CreatePlan("plan-a", "Plan");
 
-            string allocated = XenogermPlanNameAllocator.Allocate(new[] { plan }, " Plan ", plan.Id);
+            string allocated = XenogermPlanNameAllocator.Allocate([plan], " Plan ", plan.Id);
 
             Assert.That(allocated, Is.EqualTo("Plan"));
         }
@@ -274,10 +273,10 @@ namespace XenogermPlanner.Tests.Plans
         public void Allocate_SameInputs_ReturnSameResult()
         {
             XenogermPlan[] plans =
-            {
+            [
                 CreatePlan("plan-a", "Plan"),
                 CreatePlan("plan-b", "Plan 2")
-            };
+            ];
 
             string first = XenogermPlanNameAllocator.Allocate(plans, "Plan");
             string second = XenogermPlanNameAllocator.Allocate(plans, "Plan");
@@ -292,7 +291,7 @@ namespace XenogermPlanner.Tests.Plans
         public void Allocate_InvalidPreferredName_Throws(string preferredName)
         {
             ArgumentException exception = Assert.Throws<ArgumentException>(
-                (Action)(() => XenogermPlanNameAllocator.Allocate(Array.Empty<XenogermPlan>(), preferredName)));
+                (Action)(() => XenogermPlanNameAllocator.Allocate([], preferredName)));
 
             Assert.That(exception, Is.Not.Null);
             Assert.That(exception.ParamName, Is.EqualTo("preferredName"));
@@ -308,12 +307,7 @@ namespace XenogermPlanner.Tests.Plans
 
         private static XenogermPlan CreatePlan(string id, string name)
         {
-            return new XenogermPlan(
-                id,
-                name,
-                Array.Empty<GeneDef>(),
-                Array.Empty<string>(),
-                PlanReadinessMode.Coverage);
+            return new XenogermPlan(id, name, [], [], PlanReadinessMode.Coverage);
         }
     }
 }

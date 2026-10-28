@@ -12,22 +12,6 @@ namespace XenogermPlanner.Analysis
         private static readonly IEqualityComparer<HashSet<GeneDef>> _geneSetComparer =
             HashSet<GeneDef>.CreateSetComparer();
 
-        private sealed class CompositionGroup
-        {
-            internal HashSet<GeneDef> Genes { get; }
-            internal HashSet<GeneDef> AdditionalGenes { get; }
-            internal bool IsExactPayloadEligible { get; }
-            internal int PhysicalPackCount { get; set; }
-
-            internal CompositionGroup(HashSet<GeneDef> ownedGenes, HashSet<GeneDef> ownedAdditionalGenes)
-            {
-                Genes = ownedGenes ?? throw new ArgumentNullException(nameof(ownedGenes));
-                AdditionalGenes = ownedAdditionalGenes ?? throw new ArgumentNullException(nameof(ownedAdditionalGenes));
-                IsExactPayloadEligible = AdditionalGenes.Count == 0;
-                PhysicalPackCount = 1;
-            }
-        }
-
         internal static PlanGenepackCombinationSearchResult Search(
             IReadOnlyCollection<GeneDef> desiredGenes,
             PlanReadinessMode readinessMode,
@@ -64,9 +48,10 @@ namespace XenogermPlanner.Analysis
 
             foreach (Genepack t in genepacks)
             {
-                Genepack genepack = t ?? throw new ArgumentException(
-                    "Genepack collection cannot contain null values.",
-                    nameof(genepacks));
+                Genepack genepack = t ??
+                                    throw new ArgumentException(
+                                        "Genepack collection cannot contain null values.",
+                                        nameof(genepacks));
 
                 IEnumerable<GeneDef> genepackGenes = getGenepackGenes(genepack) ??
                                                      throw new InvalidOperationException(
@@ -161,6 +146,22 @@ namespace XenogermPlanner.Analysis
                     readinessMode,
                     "Unsupported plan readiness mode.");
             }
+        }
+
+        private sealed class CompositionGroup
+        {
+            internal CompositionGroup(HashSet<GeneDef> ownedGenes, HashSet<GeneDef> ownedAdditionalGenes)
+            {
+                Genes = ownedGenes ?? throw new ArgumentNullException(nameof(ownedGenes));
+                AdditionalGenes = ownedAdditionalGenes ?? throw new ArgumentNullException(nameof(ownedAdditionalGenes));
+                IsExactPayloadEligible = AdditionalGenes.Count == 0;
+                PhysicalPackCount = 1;
+            }
+
+            internal HashSet<GeneDef> Genes { get; }
+            internal HashSet<GeneDef> AdditionalGenes { get; }
+            internal bool IsExactPayloadEligible { get; }
+            internal int PhysicalPackCount { get; set; }
         }
     }
 }

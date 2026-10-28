@@ -46,18 +46,18 @@ namespace XenogermPlanner.Tests.Api
             source.Clear();
 
             Assert.That(result.Status, Is.EqualTo(GenepackRelevanceItemStatus.Success));
-            Assert.That(result.Matches, Is.EqualTo(new[] { first, second }));
+            Assert.That(result.Matches, Is.EqualTo([first, second]));
         }
 
         [Test]
         public void ItemErrorFactories_ReturnEmptyMatches()
         {
             GenepackRelevanceItemResult[] results =
-            {
+            [
                 GenepackRelevanceItemResult.CreateInvalidInput(),
                 GenepackRelevanceItemResult.CreateUnknownGeneDef(),
                 GenepackRelevanceItemResult.CreateFailed()
-            };
+            ];
 
             Assert.That(results[0].Status, Is.EqualTo(GenepackRelevanceItemStatus.InvalidInput));
             Assert.That(results[1].Status, Is.EqualTo(GenepackRelevanceItemStatus.UnknownGeneDef));
@@ -70,7 +70,7 @@ namespace XenogermPlanner.Tests.Api
         [Test]
         public void BatchSuccess_CopiesResultsAndPreservesOrder()
         {
-            var first = GenepackRelevanceItemResult.CreateSuccess(Array.Empty<GenepackRelevancePlanMatch>());
+            var first = GenepackRelevanceItemResult.CreateSuccess([]);
             var second = GenepackRelevanceItemResult.CreateInvalidInput();
             var source = new List<GenepackRelevanceItemResult> { first, second };
 
@@ -79,7 +79,7 @@ namespace XenogermPlanner.Tests.Api
 
             Assert.That(result.Status, Is.EqualTo(GenepackRelevanceBatchStatus.Success));
             Assert.That(result.UnavailableReason, Is.EqualTo(GenepackRelevanceUnavailableReason.None));
-            Assert.That(result.Results, Is.EqualTo(new[] { first, second }));
+            Assert.That(result.Results, Is.EqualTo([first, second]));
         }
 
         [Test]

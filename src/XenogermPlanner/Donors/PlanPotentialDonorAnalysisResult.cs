@@ -7,15 +7,8 @@ namespace XenogermPlanner.Donors
 {
     public sealed class PlanPotentialDonorAnalysisResult
     {
-        private readonly ReadOnlyCollection<PlanPotentialDonorGeneDiagnostic> _geneDiagnostics;
         private readonly Dictionary<GeneDef, PlanPotentialDonorGeneDiagnostic> _diagnosticsByGene;
-
-        public bool IsAvailable { get; }
-        public IReadOnlyList<PlanPotentialDonorGeneDiagnostic> GeneDiagnostics => _geneDiagnostics;
-
-        internal static PlanPotentialDonorAnalysisResult Unavailable { get; } = new PlanPotentialDonorAnalysisResult(
-            false,
-            Array.Empty<PlanPotentialDonorGeneDiagnostic>());
+        private readonly ReadOnlyCollection<PlanPotentialDonorGeneDiagnostic> _geneDiagnostics;
 
         private PlanPotentialDonorAnalysisResult(
             bool isAvailable,
@@ -36,14 +29,13 @@ namespace XenogermPlanner.Donors
                         nameof(geneDiagnostics));
                 }
 
-                if (_diagnosticsByGene.ContainsKey(diagnostic.Gene))
+                if (!_diagnosticsByGene.TryAdd(diagnostic.Gene, diagnostic))
                 {
                     throw new ArgumentException(
                         "Potential donor diagnostic collection cannot contain duplicate genes.",
                         nameof(geneDiagnostics));
                 }
 
-                _diagnosticsByGene.Add(diagnostic.Gene, diagnostic);
                 copiedDiagnostics.Add(diagnostic);
             }
 
@@ -59,6 +51,13 @@ namespace XenogermPlanner.Donors
             IsAvailable = isAvailable;
             _geneDiagnostics = copiedDiagnostics.AsReadOnly();
         }
+
+        public bool IsAvailable { get; }
+        public IReadOnlyList<PlanPotentialDonorGeneDiagnostic> GeneDiagnostics => _geneDiagnostics;
+
+        internal static PlanPotentialDonorAnalysisResult Unavailable { get; } = new PlanPotentialDonorAnalysisResult(
+            false,
+            Array.Empty<PlanPotentialDonorGeneDiagnostic>());
 
         internal static PlanPotentialDonorAnalysisResult CreateAvailable(
             IEnumerable<PlanPotentialDonorGeneDiagnostic> geneDiagnostics)

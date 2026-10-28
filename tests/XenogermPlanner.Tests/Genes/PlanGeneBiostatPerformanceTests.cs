@@ -41,17 +41,10 @@ namespace XenogermPlanner.Tests.Genes
             private const int GeneCount = 512;
             private const int ProjectionCopiesPerGene = 2;
             private const int OperationsPerSample = 100;
+            private readonly Func<IEnumerable<GeneDef>, IEnumerable<GeneDef>> _getNonOverriddenGenes;
 
             private readonly IReadOnlyList<GeneDef> _inputGenes;
             private readonly IReadOnlyList<GeneDef> _projectedGenes;
-            private readonly Func<IEnumerable<GeneDef>, IEnumerable<GeneDef>> _getNonOverriddenGenes;
-
-            internal int UniqueGeneCount => _inputGenes.Count;
-            internal int ProjectedGeneCount => _projectedGenes.Count;
-            internal int CalculationsPerSample => OperationsPerSample;
-            internal int ExpectedComplexity { get; }
-            internal int ExpectedMetabolism { get; }
-            internal int ExpectedArchiteCapsules { get; }
 
             private GeneBiostatPerformanceScenario(
                 IReadOnlyList<GeneDef> inputGenes,
@@ -67,6 +60,13 @@ namespace XenogermPlanner.Tests.Genes
                 ExpectedArchiteCapsules = expectedArchiteCapsules;
                 _getNonOverriddenGenes = GetProjectedGenes;
             }
+
+            internal int UniqueGeneCount => _inputGenes.Count;
+            internal int ProjectedGeneCount => _projectedGenes.Count;
+            internal int CalculationsPerSample => OperationsPerSample;
+            internal int ExpectedComplexity { get; }
+            internal int ExpectedMetabolism { get; }
+            internal int ExpectedArchiteCapsules { get; }
 
             internal static GeneBiostatPerformanceScenario Create()
             {

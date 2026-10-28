@@ -50,40 +50,34 @@ namespace XenogermPlanner.UI
         private static readonly ReloadableTexture2D _clearSelectedGenesIcon =
             new ReloadableTexture2D("UI/Buttons/Delete");
 
-        private readonly XenogermPlanGameComponent _component;
-        private readonly XenogermPlan _existingPlan;
-        private readonly Action<XenogermPlan> _onSaved;
-        private readonly HashSet<GeneDef> _selectedGenes;
         private readonly List<GeneDef> _catalogGenes;
         private readonly Dictionary<GeneCategoryDef, bool> _collapsedCategories;
 
-        private List<GeneDef> _filteredGenes;
-        private List<GeneCatalogRow> _catalogRows;
-        private List<GeneDef> _sortedSelectedGenes;
-        private string _planName;
-        private PlanReadinessMode _readinessMode;
-        private bool _readinessNotificationsEnabled;
-        private string _searchText;
-        private Vector2 _catalogScrollPosition;
-        private Vector2 _selectedGenesScrollPosition;
-        private Vector2 _geneDiagnosticsScrollPosition;
+        private readonly XenogermPlanGameComponent _component;
+        private readonly XenogermPlan _existingPlan;
 
         private readonly VariableHeightScrollListLayoutCache _geneDiagnosticsLayoutCache =
             new VariableHeightScrollListLayoutCache();
 
-        private PlanGeneTargetAnalysisResult _targetAnalysis;
+        private readonly Action<XenogermPlan> _onSaved;
+        private readonly HashSet<GeneDef> _selectedGenes;
+        private List<GeneCatalogRow> _catalogRows;
+        private Vector2 _catalogScrollPosition;
+
+        private List<GeneDef> _filteredGenes;
+        private Vector2 _geneDiagnosticsScrollPosition;
+        private string _planName;
+        private object _presentationLanguageKey;
+        private PlanReadinessMode _readinessMode;
+        private bool _readinessNotificationsEnabled;
+        private string _searchText;
         private PlanGeneBiostats _selectedGeneBiostats;
         private bool _selectedGeneBiostatsPartial;
+        private Vector2 _selectedGenesScrollPosition;
+        private List<GeneDef> _sortedSelectedGenes;
+
+        private PlanGeneTargetAnalysisResult _targetAnalysis;
         private GeneTargetDiagnosticsProjection _targetDiagnosticsProjection;
-        private object _presentationLanguageKey;
-
-        private bool IsEditMode => _existingPlan != null;
-
-        private bool IsSearchActive =>
-            !string.IsNullOrWhiteSpace(_searchText);
-
-        public override Vector2 InitialSize =>
-            new Vector2(DialogWidth, DialogHeight);
 
         public XenogermPlanEditorDialog(XenogermPlanGameComponent component, Action<XenogermPlan> onSaved) : this(
             component,
@@ -132,8 +126,8 @@ namespace XenogermPlanner.UI
             _searchText = string.Empty;
 
             _selectedGenes = existingPlan != null
-                ? new HashSet<GeneDef>(existingPlan.DesiredGenes)
-                : new HashSet<GeneDef>(initialState?.DesiredGenes ?? Array.Empty<GeneDef>());
+                ? [..existingPlan.DesiredGenes]
+                : [..initialState?.DesiredGenes ?? []];
 
             _catalogGenes =
                 XenogermPlannerPresentation.GetGenesInCatalogOrder(DefDatabase<GeneDef>.AllDefsListForReading);
@@ -151,6 +145,12 @@ namespace XenogermPlanner.UI
             closeOnClickedOutside = false;
             forcePause = true;
         }
+
+        private bool IsEditMode => _existingPlan != null;
+
+        private bool IsSearchActive => !string.IsNullOrWhiteSpace(_searchText);
+
+        public override Vector2 InitialSize => new Vector2(DialogWidth, DialogHeight);
 
         public override void DoWindowContents(Rect inRect)
         {
@@ -869,7 +869,8 @@ namespace XenogermPlanner.UI
             _sortedSelectedGenes = XenogermPlannerPresentation.GetSortedGenes(_selectedGenes);
             _targetAnalysis = PlanGeneTargetAnalyzer.Analyze(_selectedGenes);
             _selectedGeneBiostats = PlanGeneBiostatCalculator.CalculateEffective(_selectedGenes);
-            _selectedGeneBiostatsPartial = IsEditMode && _existingPlan.IsDegraded &&
+            _selectedGeneBiostatsPartial = IsEditMode &&
+                                           _existingPlan.IsDegraded &&
                                            _selectedGenes.SetEquals(_existingPlan.DesiredGenes);
             _presentationLanguageKey = LanguageDatabase.activeLanguage;
             RefreshDiagnosticsProjection();
@@ -902,8 +903,7 @@ namespace XenogermPlanner.UI
             {
                 GeneCategoryDef category = gene.displayCategory;
 
-                if (!_collapsedCategories.ContainsKey(category))
-                    _collapsedCategories.Add(category, false);
+                _collapsedCategories.TryAdd(category, false);
             }
         }
 

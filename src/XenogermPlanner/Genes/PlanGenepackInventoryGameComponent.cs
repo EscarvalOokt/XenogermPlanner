@@ -10,21 +10,13 @@ namespace XenogermPlanner.Genes
         private readonly Func<Map> _getCurrentMap;
         private readonly Func<int> _getCurrentTick;
         private readonly Func<Map, PlanGenepackInventorySnapshot> _scanMap;
-
-        private PlanGenepackInventorySnapshot _snapshot;
-        private Map _snapshotMap;
         private bool _invalidated;
         private int _nextFallbackRefreshTick;
 
-        public PlanGenepackInventorySnapshot Snapshot
-        {
-            get
-            {
-                EnsureFreshSnapshot();
-                return _snapshot;
-            }
-        }
+        private PlanGenepackInventorySnapshot _snapshot;
+        private Map _snapshotMap;
 
+        // ReSharper disable once UnusedParameter.Local
         public PlanGenepackInventoryGameComponent(Game _) : this(
             () => Find.CurrentMap,
             GetCurrentGameTick,
@@ -45,6 +37,15 @@ namespace XenogermPlanner.Genes
             _snapshotMap = null;
             _invalidated = true;
             _nextFallbackRefreshTick = 0;
+        }
+
+        public PlanGenepackInventorySnapshot Snapshot
+        {
+            get
+            {
+                EnsureFreshSnapshot();
+                return _snapshot;
+            }
         }
 
         public void Invalidate()

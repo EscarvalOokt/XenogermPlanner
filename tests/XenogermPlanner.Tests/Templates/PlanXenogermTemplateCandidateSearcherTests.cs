@@ -41,7 +41,7 @@ namespace XenogermPlanner.Tests.Templates
                 PlanXenogermTemplateTestData.CreatePack("exact", target));
 
             Assert.That(result.Candidates, Has.Count.EqualTo(1));
-            Assert.That(result.AutomaticCandidate.UnionGenes, Is.EquivalentTo(new[] { target }));
+            Assert.That(result.AutomaticCandidate.UnionGenes, Is.EquivalentTo([target]));
         }
 
         [Test]
@@ -102,7 +102,7 @@ namespace XenogermPlanner.Tests.Templates
                 PlanXenogermTemplateTestData.CreatePack("ax", geneA, extraX),
                 PlanXenogermTemplateTestData.CreatePack("b", geneB));
 
-            Assert.That(result.AutomaticCandidate.AdditionalGenes, Is.EquivalentTo(new[] { extraX }));
+            Assert.That(result.AutomaticCandidate.AdditionalGenes, Is.EquivalentTo([extraX]));
             Assert.That(result.AutomaticCandidate.GeneSetCount, Is.EqualTo(2));
         }
 
@@ -120,7 +120,7 @@ namespace XenogermPlanner.Tests.Templates
                 PlanXenogermTemplateTestData.CreatePack("ax", geneA, extra),
                 PlanXenogermTemplateTestData.CreatePack("b", geneB));
 
-            Assert.That(result.AutomaticCandidate.AdditionalGenes, Is.EquivalentTo(new[] { extra }));
+            Assert.That(result.AutomaticCandidate.AdditionalGenes, Is.EquivalentTo([extra]));
             Assert.That(result.AutomaticCandidate.GeneSetCount, Is.EqualTo(1));
         }
 
@@ -144,7 +144,8 @@ namespace XenogermPlanner.Tests.Templates
                 PlanXenogermTemplateTestData.CreatePack("c", geneC));
 
             string minimumKey = result.Candidates.Select(candidate => candidate.CandidateKey)
-                .OrderBy(key => key, StringComparer.Ordinal).First();
+                .OrderBy(key => key, StringComparer.Ordinal)
+                .First();
 
             Assert.That(result.AutomaticCandidate.CandidateKey, Is.EqualTo(minimumKey));
         }
@@ -177,7 +178,7 @@ namespace XenogermPlanner.Tests.Templates
                 PlanXenogermTemplateTestData.CreatePack("target", target));
 
             Assert.That(result.Candidates, Has.Count.EqualTo(1));
-            Assert.That(result.AutomaticCandidate.UnionGenes, Is.EquivalentTo(new[] { target }));
+            Assert.That(result.AutomaticCandidate.UnionGenes, Is.EquivalentTo([target]));
         }
 
         [Test]
@@ -274,12 +275,7 @@ namespace XenogermPlanner.Tests.Templates
         public void Search_ReturnsNoCandidatesForDegradedPlan()
         {
             GeneDef target = PlanXenogermTemplateTestData.CreateGene("Target");
-            var plan = new XenogermPlan(
-                "stable-id",
-                "Plan",
-                new[] { target },
-                new[] { "MissingGene" },
-                PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("stable-id", "Plan", [target], ["MissingGene"], PlanReadinessMode.Coverage);
 
             PlanXenogermTemplateCandidateSearchResult result = PlanXenogermTemplateTestData.Search(
                 plan,
@@ -305,7 +301,7 @@ namespace XenogermPlanner.Tests.Templates
                 false,
                 PlanReadinessStatus.Ready,
                 true,
-                new[] { invalid.Genepack, valid.Genepack },
+                [invalid.Genepack, valid.Genepack],
                 genepack => ReferenceEquals(genepack, invalid.Genepack) ? new[] { target, null } : new[] { target });
 
             Assert.That(result.Candidates, Has.Count.EqualTo(1));
@@ -317,8 +313,8 @@ namespace XenogermPlanner.Tests.Templates
         {
             GeneDef geneA = PlanXenogermTemplateTestData.CreateGene("A");
             GeneDef geneB = PlanXenogermTemplateTestData.CreateGene("B");
-            GeneDef[] targetGenes = new[] { geneA, geneB };
-            GeneDef[] packGenes = new[] { geneB, geneA };
+            GeneDef[] targetGenes = [geneA, geneB];
+            GeneDef[] packGenes = [geneB, geneA];
             PlanXenogermTemplateTestData.PackFixture pack = PlanXenogermTemplateTestData.CreatePack("pack", packGenes);
 
             PlanXenogermTemplateCandidateSearcher.Search(
@@ -327,11 +323,11 @@ namespace XenogermPlanner.Tests.Templates
                 false,
                 PlanReadinessStatus.Ready,
                 true,
-                new[] { pack.Genepack },
+                [pack.Genepack],
                 _ => packGenes);
 
-            Assert.That(targetGenes, Is.EqualTo(new[] { geneA, geneB }));
-            Assert.That(packGenes, Is.EqualTo(new[] { geneB, geneA }));
+            Assert.That(targetGenes, Is.EqualTo([geneA, geneB]));
+            Assert.That(packGenes, Is.EqualTo([geneB, geneA]));
         }
 
         [Test]
@@ -374,7 +370,7 @@ namespace XenogermPlanner.Tests.Templates
             GeneDef geneA = PlanXenogermTemplateTestData.CreateGene("A");
             GeneDef geneB = PlanXenogermTemplateTestData.CreateGene("B");
             GeneDef geneC = PlanXenogermTemplateTestData.CreateGene("C");
-            GeneDef[] targetGenes = new[] { geneA, geneB, geneC };
+            GeneDef[] targetGenes = [geneA, geneB, geneC];
             XenogermPlan plan = PlanXenogermTemplateTestData.CreatePlan(PlanReadinessMode.ExactPayload, targetGenes);
             var limits = new PlanXenogermTemplateCandidateSearchLimits(1, 4);
 

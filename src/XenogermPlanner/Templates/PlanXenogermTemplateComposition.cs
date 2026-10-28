@@ -8,13 +8,8 @@ namespace XenogermPlanner.Templates
 {
     internal sealed class PlanXenogermTemplateComposition
     {
-        private readonly ReadOnlyCollection<GeneDef> _genes;
         private readonly ReadOnlyCollection<GeneDef> _additionalGenes;
-
-        internal IReadOnlyList<GeneDef> Genes => _genes;
-        internal IReadOnlyList<GeneDef> AdditionalGenes => _additionalGenes;
-        internal string CompositionKey { get; }
-        internal int PhysicalPackCount { get; }
+        private readonly ReadOnlyCollection<GeneDef> _genes;
 
         internal PlanXenogermTemplateComposition(
             IEnumerable<GeneDef> genes,
@@ -54,6 +49,11 @@ namespace XenogermPlanner.Templates
             CompositionKey = GenepackCompositionUtility.CreateCompositionKey(orderedGenes);
             PhysicalPackCount = physicalPackCount;
         }
+
+        internal IReadOnlyList<GeneDef> Genes => _genes;
+        internal IReadOnlyList<GeneDef> AdditionalGenes => _additionalGenes;
+        internal string CompositionKey { get; }
+        internal int PhysicalPackCount { get; }
 
         private static int CompareGenes(GeneDef left, GeneDef right)
         {

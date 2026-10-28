@@ -17,13 +17,6 @@ namespace XenogermPlanner.UI
     [StaticConstructorOnStartup]
     public sealed class XenogermPlannerWindow : MainTabWindow
     {
-        private enum PlanDetailsTab
-        {
-            Overview,
-            Assembler,
-            GeneEffects
-        }
-
         private const float WindowWidth = 980f;
         private const float WindowHeight = 660f;
         private const float ColumnGap = RimWorldUiStyle.Metrics.SectionGap;
@@ -78,50 +71,50 @@ namespace XenogermPlanner.UI
 
         private static readonly ReloadableTexture2D _deletePlanIcon = new ReloadableTexture2D("UI/Buttons/Delete");
 
-        private string _selectedPlanId;
-        private string _planSearchText = string.Empty;
-        private Building_GeneAssembler _selectedAssembler;
-        private Map _selectedAssemblerMap;
-        private bool _assemblerDetailsExpanded;
-        private PlanDetailsTab _selectedDetailsTab = PlanDetailsTab.Overview;
-        private Vector2 _planListScrollPosition;
-        private Vector2 _productGeneCoverageScrollPosition;
-        private Vector2 _assemblerGeneCoverageScrollPosition;
-        private Vector2 _geneDiagnosticsScrollPosition;
-        private GeneCoverageSortState _productGeneCoverageSortState = GeneCoverageSortState.Default;
-        private GeneCoverageSortState _assemblerGeneCoverageSortState = GeneCoverageSortState.Default;
-
-        private readonly GeneCoverageTableProjectionCache _productGeneCoverageProjectionCache =
-            new GeneCoverageTableProjectionCache();
-
-        private readonly GeneCoverageTableProjectionCache _assemblerGeneCoverageProjectionCache =
-            new GeneCoverageTableProjectionCache();
-
         private readonly XenogermPlannerWindowAnalysisCache _analysisCache = new XenogermPlannerWindowAnalysisCache();
-
-        private readonly VariableHeightScrollListLayoutCache _productGeneCoverageLayoutCache =
-            new VariableHeightScrollListLayoutCache();
 
         private readonly VariableHeightScrollListLayoutCache _assemblerGeneCoverageLayoutCache =
             new VariableHeightScrollListLayoutCache();
 
+        private readonly GeneCoverageTableProjectionCache _assemblerGeneCoverageProjectionCache =
+            new GeneCoverageTableProjectionCache();
+
         private readonly VariableHeightScrollListLayoutCache _geneDiagnosticsLayoutCache =
             new VariableHeightScrollListLayoutCache();
 
-        private IReadOnlyList<XenogermPlan> _filteredPlanSource;
-        private string _filteredPlanQuery;
+        private readonly VariableHeightScrollListLayoutCache _productGeneCoverageLayoutCache =
+            new VariableHeightScrollListLayoutCache();
+
+        private readonly GeneCoverageTableProjectionCache _productGeneCoverageProjectionCache =
+            new GeneCoverageTableProjectionCache();
+
+        private bool _assemblerDetailsExpanded;
+        private Vector2 _assemblerGeneCoverageScrollPosition;
+        private GeneCoverageSortState _assemblerGeneCoverageSortState = GeneCoverageSortState.Default;
         private object _filteredPlanLanguageKey;
         private List<XenogermPlan> _filteredPlanProjection;
+        private string _filteredPlanQuery;
+
+        private IReadOnlyList<XenogermPlan> _filteredPlanSource;
+        private object _geneDiagnosticsDesiredGenesKey;
+        private object _geneDiagnosticsLanguageKey;
 
         private XenogermPlan _geneDiagnosticsPlan;
-        private object _geneDiagnosticsDesiredGenesKey;
-        private object _geneDiagnosticsUnresolvedGenesKey;
-        private PlanReadinessMode _geneDiagnosticsReadinessMode;
-        private object _geneDiagnosticsLanguageKey;
         private GeneTargetDiagnosticsProjection _geneDiagnosticsProjection;
+        private PlanReadinessMode _geneDiagnosticsReadinessMode;
+        private Vector2 _geneDiagnosticsScrollPosition;
+        private object _geneDiagnosticsUnresolvedGenesKey;
+        private Vector2 _planListScrollPosition;
+        private string _planSearchText = string.Empty;
+        private Vector2 _productGeneCoverageScrollPosition;
+        private GeneCoverageSortState _productGeneCoverageSortState = GeneCoverageSortState.Default;
+        private Building_GeneAssembler _selectedAssembler;
+        private Map _selectedAssemblerMap;
+        private PlanDetailsTab _selectedDetailsTab = PlanDetailsTab.Overview;
 
-        public override Vector2 RequestedTabSize =>
-            new Vector2(WindowWidth, WindowHeight);
+        private string _selectedPlanId;
+
+        public override Vector2 RequestedTabSize => new Vector2(WindowWidth, WindowHeight);
 
         public override void PreOpen()
         {
@@ -359,7 +352,8 @@ namespace XenogermPlanner.UI
                 TooltipHandler.TipRegion(
                     countRect,
                     "XenogermPlanner.Planner.DesiredGeneCount".Translate(
-                        XenogermPlannerPresentation.GetDesiredGeneCount(plan)).ToString());
+                            XenogermPlannerPresentation.GetDesiredGeneCount(plan))
+                        .ToString());
 
                 if (plan.IsDegraded)
                 {
@@ -448,7 +442,7 @@ namespace XenogermPlanner.UI
                     Building_GeneAssembler currentAssembler = ResolveSelectedAssembler(activeMap, selectableAssemblers);
                     XenogermPlannerWindowAssemblerAnalysis assemblerAnalysis = currentAssembler == null
                         ? null
-                        : _analysisCache.GetAssemblerAnalysis(selectedPlan, currentAssembler);
+                        : _analysisCache.GetAssemblerAnalysis(selectedPlan, currentAssembler, activeMap);
 
                     DrawAssemblerTab(
                         tabContentRect,
@@ -480,18 +474,18 @@ namespace XenogermPlanner.UI
                 return;
 
             string[] labels =
-            {
+            [
                 "XenogermPlanner.Planner.Tab.Overview".Translate().ToString(),
                 "XenogermPlanner.Planner.Tab.Assembler".Translate().ToString(),
                 XenogermPlannerPresentation.GetGeneEffectsTabLabel(targetAnalysis.DiagnosticCount)
-            };
+            ];
 
             PlanDetailsTab[] tabs =
-            {
+            [
                 PlanDetailsTab.Overview,
                 PlanDetailsTab.Assembler,
                 PlanDetailsTab.GeneEffects
-            };
+            ];
 
             float x = rect.x;
 
@@ -835,8 +829,9 @@ namespace XenogermPlanner.UI
                     XenogermPlannerPresentation.GetAssemblerReadinessStatusLabel(readinessResult.Status);
 
                 var coloredStatusText = "XenogermPlanner.Planner.AssemblerReadiness".Translate(
-                    statusLabel.Colorize(
-                        XenogermPlannerWidgets.GetAssemblerReadinessStatusColor(readinessResult.Status))).ToString();
+                        statusLabel.Colorize(
+                            XenogermPlannerWidgets.GetAssemblerReadinessStatusColor(readinessResult.Status)))
+                    .ToString();
 
                 Widgets.Label(statusColumnRect, coloredStatusText);
             }
@@ -863,11 +858,21 @@ namespace XenogermPlanner.UI
 
             PlanReadinessResult scopeResult = readinessResult.GeneScopeResult;
 
-            bool hasPrimaryDiagnostics =
-                scopeResult.HasExactPayloadConflict || readinessResult.BlockerReasons.Count > 0;
+            bool hasPrimaryDiagnostics = scopeResult.HasExactPayloadConflict ||
+                                         readinessResult.BlockerReasons.Count > 0 ||
+                                         readinessResult.Status == PlanAssemblerReadinessStatus.SearchIncomplete;
 
             if (hasPrimaryDiagnostics)
                 y += ContentGap * 0.5f;
+
+            if (readinessResult.Status == PlanAssemblerReadinessStatus.SearchIncomplete)
+            {
+                y = DrawAssemblerScopeMessage(
+                    rect,
+                    y,
+                    "XenogermPlanner.Planner.AssemblerSearchIncomplete".Translate().ToString(),
+                    RimWorldUiStyle.Colors.Warning);
+            }
 
             if (scopeResult.HasExactPayloadConflict)
             {
@@ -899,6 +904,11 @@ namespace XenogermPlanner.UI
                         blockerIcon = GeneUtility.ARCTex.Texture;
                         blockerIconColor = GeneUtility.ARCColor;
                         break;
+
+                    case PlanAssemblerBlockerReason.MetabolismTooLow:
+                        blockerIcon = GeneUtility.METTex.Texture;
+                        blockerIconColor = GeneUtility.METColor;
+                        break;
                 }
 
                 if (blockerIcon == null)
@@ -927,7 +937,8 @@ namespace XenogermPlanner.UI
             var detailsLabel =
                 (_assemblerDetailsExpanded
                     ? "XenogermPlanner.Planner.AssemblerDetailsHide"
-                    : "XenogermPlanner.Planner.AssemblerDetailsShow").Translate().ToString();
+                    : "XenogermPlanner.Planner.AssemblerDetailsShow").Translate()
+                .ToString();
 
             float detailsButtonWidth = Text.CalcSize(detailsLabel).x + AssemblerDetailsHorizontalPadding * 2f;
 
@@ -1079,7 +1090,8 @@ namespace XenogermPlanner.UI
                 rect.height);
 
             var detailsTitle = "XenogermPlanner.Planner.DetailsTitle".Translate(
-                XenogermPlannerPresentation.GetPlanDisplayName(selectedPlan)).ToString();
+                    XenogermPlannerPresentation.GetPlanDisplayName(selectedPlan))
+                .ToString();
 
             RimWorldUiWidgets.DrawTruncatedLabelWithTooltip(
                 titleRect,
@@ -1097,6 +1109,7 @@ namespace XenogermPlanner.UI
                     "XenogermPlanner.Planner.RefreshDescription".Translate().ToString()))
             {
                 inventoryComponent.Invalidate();
+                _analysisCache.InvalidateAssemblerAnalysis();
                 _productGeneCoverageLayoutCache.Invalidate();
                 _assemblerGeneCoverageLayoutCache.Invalidate();
                 _ = inventoryComponent.Snapshot;
@@ -1224,14 +1237,16 @@ namespace XenogermPlanner.UI
 
             string genesSummary = plan.IsDegraded
                 ? "XenogermPlanner.Planner.SummaryGenesDegraded".Translate(
-                    XenogermPlannerPresentation.GetDesiredGeneCount(plan),
-                    coveredCount,
-                    missingCount,
-                    plan.UnresolvedDesiredGeneDefNames.Count).ToString()
+                        XenogermPlannerPresentation.GetDesiredGeneCount(plan),
+                        coveredCount,
+                        missingCount,
+                        plan.UnresolvedDesiredGeneDefNames.Count)
+                    .ToString()
                 : "XenogermPlanner.Planner.SummaryGenes".Translate(
-                    XenogermPlannerPresentation.GetDesiredGeneCount(plan),
-                    coveredCount,
-                    missingCount).ToString();
+                        XenogermPlannerPresentation.GetDesiredGeneCount(plan),
+                        coveredCount,
+                        missingCount)
+                    .ToString();
 
             Widgets.Label(new Rect(rect.x, y, rect.width, MetadataLineHeight), genesSummary);
 
@@ -1337,7 +1352,8 @@ namespace XenogermPlanner.UI
                 sortChanged = true;
             }
 
-            if (showPotentialDonors && RimWorldUiWidgets.DrawSortableTableHeader(
+            if (showPotentialDonors &&
+                RimWorldUiWidgets.DrawSortableTableHeader(
                     potentialDonorsHeaderRect,
                     "XenogermPlanner.Planner.PotentialDonorsColumn".Translate().ToString(),
                     sortState.Column == GeneCoverageSortColumn.PotentialDonorCount,
@@ -1410,7 +1426,7 @@ namespace XenogermPlanner.UI
                 return layout;
 
             VariableHeightScrollListRowMeasurement[] measurements = projection.Rows.Count == 0
-                ? new[] { new VariableHeightScrollListRowMeasurement(GeneRowHeight) }
+                ? [new VariableHeightScrollListRowMeasurement(GeneRowHeight)]
                 : new VariableHeightScrollListRowMeasurement[projection.Rows.Count];
 
             for (var index = 0; index < projection.Rows.Count; index++)
@@ -1584,8 +1600,9 @@ namespace XenogermPlanner.UI
             }
 
             var tooltip = "XenogermPlanner.Planner.PotentialDonorCountTooltip".Translate(
-                donorDiagnostic.DonorCount,
-                XenogermPlannerPresentation.GetGeneDisplayName(donorDiagnostic.Gene)).ToString();
+                    donorDiagnostic.DonorCount,
+                    XenogermPlannerPresentation.GetGeneDisplayName(donorDiagnostic.Gene))
+                .ToString();
 
             TooltipHandler.TipRegion(rect, tooltip);
 
@@ -1876,7 +1893,8 @@ namespace XenogermPlanner.UI
             string displayName = XenogermPlannerPresentation.GetPlanDisplayName(plan);
 
             string message = "XenogermPlanner.Planner.DeletePlanConfirmation".Translate(displayName).ToString() +
-                             "\n\n" + "XenogermPlanner.Planner.DeletePlanWarning".Translate().ToString();
+                             "\n\n" +
+                             "XenogermPlanner.Planner.DeletePlanWarning".Translate().ToString();
 
             string planId = plan.Id;
 
@@ -2001,7 +2019,8 @@ namespace XenogermPlanner.UI
             string normalizedQuery = (_planSearchText ?? string.Empty).Trim();
             object languageKey = LanguageDatabase.activeLanguage;
 
-            if (_filteredPlanProjection != null && ReferenceEquals(_filteredPlanSource, plans) &&
+            if (_filteredPlanProjection != null &&
+                ReferenceEquals(_filteredPlanSource, plans) &&
                 string.Equals(_filteredPlanQuery, normalizedQuery, StringComparison.Ordinal) &&
                 Equals(_filteredPlanLanguageKey, languageKey))
             {
@@ -2027,10 +2046,12 @@ namespace XenogermPlanner.UI
 
             object languageKey = LanguageDatabase.activeLanguage;
 
-            if (_geneDiagnosticsProjection != null && ReferenceEquals(_geneDiagnosticsPlan, plan) &&
+            if (_geneDiagnosticsProjection != null &&
+                ReferenceEquals(_geneDiagnosticsPlan, plan) &&
                 ReferenceEquals(_geneDiagnosticsDesiredGenesKey, plan.DesiredGenes) &&
                 ReferenceEquals(_geneDiagnosticsUnresolvedGenesKey, plan.UnresolvedDesiredGeneDefNames) &&
-                _geneDiagnosticsReadinessMode == plan.ReadinessMode && Equals(_geneDiagnosticsLanguageKey, languageKey))
+                _geneDiagnosticsReadinessMode == plan.ReadinessMode &&
+                Equals(_geneDiagnosticsLanguageKey, languageKey))
             {
                 return _geneDiagnosticsProjection;
             }
@@ -2143,6 +2164,13 @@ namespace XenogermPlanner.UI
                 Text.Font = font;
                 return Text.CalcHeight(text, width);
             }
+        }
+
+        private enum PlanDetailsTab
+        {
+            Overview,
+            Assembler,
+            GeneEffects
         }
     }
 }

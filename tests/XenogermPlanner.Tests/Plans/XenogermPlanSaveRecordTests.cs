@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using NUnit.Framework;
 using Verse;
@@ -12,7 +11,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void RoundTrip_PreservesEmptyPlan()
         {
-            var sourcePlan = new XenogermPlan("Empty", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var sourcePlan = new XenogermPlan("Empty", [], PlanReadinessMode.Coverage);
             var saveRecord = XenogermPlanSaveRecord.FromPlan(sourcePlan);
 
             bool restored = saveRecord.TryCreatePlan(
@@ -36,7 +35,7 @@ namespace XenogermPlanner.Tests.Plans
         {
             GeneDef geneA = PlanTestData.CreateGene("GeneA");
             GeneDef geneB = PlanTestData.CreateGene("GeneB");
-            var sourcePlan = new XenogermPlan("Plan", new[] { geneA, geneB }, readinessMode);
+            var sourcePlan = new XenogermPlan("Plan", [geneA, geneB], readinessMode);
             var saveRecord = XenogermPlanSaveRecord.FromPlan(sourcePlan);
 
             bool restored = saveRecord.TryCreatePlan(
@@ -47,9 +46,7 @@ namespace XenogermPlanner.Tests.Plans
             Assert.That(restored, Is.True, failureReason);
             Assert.That(restoredPlan.Id, Is.EqualTo(sourcePlan.Id));
             Assert.That(restoredPlan.Name, Is.EqualTo(sourcePlan.Name));
-            Assert.That(
-                restoredPlan.DesiredGenes.Select(gene => gene.defName),
-                Is.EquivalentTo(new[] { "GeneA", "GeneB" }));
+            Assert.That(restoredPlan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(["GeneA", "GeneB"]));
             Assert.That(restoredPlan.IsDegraded, Is.False);
             Assert.That(restoredPlan.ReadinessMode, Is.EqualTo(readinessMode));
         }
@@ -62,7 +59,7 @@ namespace XenogermPlanner.Tests.Plans
             var saveRecord = new XenogermPlanSaveRecord(
                 "stable-id",
                 "Plan",
-                new[] { "GeneA", "GeneA", "GeneB" },
+                ["GeneA", "GeneA", "GeneB"],
                 (int)PlanReadinessMode.Coverage);
 
             bool restored = saveRecord.TryCreatePlan(
@@ -71,7 +68,7 @@ namespace XenogermPlanner.Tests.Plans
                 out string failureReason);
 
             Assert.That(restored, Is.True, failureReason);
-            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(new[] { "GeneA", "GeneB" }));
+            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(["GeneA", "GeneB"]));
             Assert.That(plan.DesiredGenes.Count, Is.EqualTo(2));
         }
 
@@ -82,7 +79,7 @@ namespace XenogermPlanner.Tests.Plans
             var saveRecord = new XenogermPlanSaveRecord(
                 "stable-id",
                 "Plan",
-                new[] { "GeneA", "MissingGene" },
+                ["GeneA", "MissingGene"],
                 (int)PlanReadinessMode.Coverage);
 
             bool restored = saveRecord.TryCreatePlan(
@@ -91,8 +88,8 @@ namespace XenogermPlanner.Tests.Plans
                 out string failureReason);
 
             Assert.That(restored, Is.True, failureReason);
-            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(new[] { "GeneA" }));
-            Assert.That(plan.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(new[] { "MissingGene" }));
+            Assert.That(plan.DesiredGenes.Select(gene => gene.defName), Is.EquivalentTo(["GeneA"]));
+            Assert.That(plan.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(["MissingGene"]));
             Assert.That(plan.IsDegraded, Is.True);
         }
 
@@ -103,7 +100,7 @@ namespace XenogermPlanner.Tests.Plans
             var sourceRecord = new XenogermPlanSaveRecord(
                 "stable-id",
                 "Plan",
-                new[] { "GeneA", "MissingGene" },
+                ["GeneA", "MissingGene"],
                 (int)PlanReadinessMode.Coverage);
 
             bool firstRestore = sourceRecord.TryCreatePlan(
@@ -119,7 +116,7 @@ namespace XenogermPlanner.Tests.Plans
             Assert.That(firstRestore, Is.True, firstFailureReason);
             Assert.That(secondRestore, Is.True, secondFailureReason);
             Assert.That(restoredDegradedPlan.IsDegraded, Is.True);
-            Assert.That(restoredDegradedPlan.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(new[] { "MissingGene" }));
+            Assert.That(restoredDegradedPlan.UnresolvedDesiredGeneDefNames, Is.EquivalentTo(["MissingGene"]));
         }
 
         [Test]
@@ -130,7 +127,7 @@ namespace XenogermPlanner.Tests.Plans
             var sourceRecord = new XenogermPlanSaveRecord(
                 "stable-id",
                 "Plan",
-                new[] { "GeneA", "MissingGene" },
+                ["GeneA", "MissingGene"],
                 (int)PlanReadinessMode.ExactPayload);
 
             bool degradedRestore = sourceRecord.TryCreatePlan(
@@ -147,7 +144,7 @@ namespace XenogermPlanner.Tests.Plans
             Assert.That(restored, Is.True, failureReason);
             Assert.That(
                 restoredPlan.DesiredGenes.Select(gene => gene.defName),
-                Is.EquivalentTo(new[] { "GeneA", "MissingGene" }));
+                Is.EquivalentTo(["GeneA", "MissingGene"]));
             Assert.That(restoredPlan.UnresolvedDesiredGeneDefNames, Is.Empty);
             Assert.That(restoredPlan.IsDegraded, Is.False);
             Assert.That(restoredPlan.ReadinessMode, Is.EqualTo(PlanReadinessMode.ExactPayload));
@@ -200,7 +197,7 @@ namespace XenogermPlanner.Tests.Plans
         [TestCase(" ")]
         public void TryCreatePlan_RejectsInvalidDesiredGeneName(string geneDefName)
         {
-            XenogermPlanSaveRecord saveRecord = CreateValidRecord(desiredGeneDefNames: new[] { geneDefName });
+            XenogermPlanSaveRecord saveRecord = CreateValidRecord(desiredGeneDefNames: [geneDefName]);
 
             AssertInvalidRecord(saveRecord);
         }
@@ -219,7 +216,7 @@ namespace XenogermPlanner.Tests.Plans
             string[] desiredGeneDefNames = null,
             int readinessMode = (int)PlanReadinessMode.Coverage)
         {
-            return new XenogermPlanSaveRecord(id, name, desiredGeneDefNames ?? Array.Empty<string>(), readinessMode);
+            return new XenogermPlanSaveRecord(id, name, desiredGeneDefNames ?? [], readinessMode);
         }
 
         private static void AssertInvalidRecord(XenogermPlanSaveRecord saveRecord)
@@ -238,11 +235,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void RoundTrip_PreservesDisabledNotificationSettingAndReadyBaseline()
         {
-            var source = new XenogermPlan(
-                "Plan",
-                Array.Empty<GeneDef>(),
-                PlanReadinessMode.Coverage,
-                readinessNotificationsEnabled: false);
+            var source = new XenogermPlan("Plan", [], PlanReadinessMode.Coverage, readinessNotificationsEnabled: false);
             source.UpdateReadinessNotificationState(true);
 
             var record = XenogermPlanSaveRecord.FromPlan(source);
@@ -260,7 +253,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void RoundTrip_PreservesEnabledNotificationSettingAndNonReadyBaseline()
         {
-            var source = new XenogermPlan("Plan", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var source = new XenogermPlan("Plan", [], PlanReadinessMode.Coverage);
             source.UpdateReadinessNotificationState(false);
 
             var record = XenogermPlanSaveRecord.FromPlan(source);
@@ -278,11 +271,7 @@ namespace XenogermPlanner.Tests.Plans
         [Test]
         public void LegacyRecordDefaultsToEnabledNotificationsWithoutBaseline()
         {
-            var record = new XenogermPlanSaveRecord(
-                "stable-id",
-                "Plan",
-                Array.Empty<string>(),
-                (int)PlanReadinessMode.Coverage);
+            var record = new XenogermPlanSaveRecord("stable-id", "Plan", [], (int)PlanReadinessMode.Coverage);
 
             bool restored = record.TryCreatePlan(
                 PlanTestData.CreateResolver(),
@@ -301,7 +290,7 @@ namespace XenogermPlanner.Tests.Plans
             var record = new XenogermPlanSaveRecord(
                 "stable-id",
                 "Plan",
-                Array.Empty<string>(),
+                [],
                 (int)PlanReadinessMode.Coverage,
                 readinessNotificationsEnabled: true,
                 hasReadinessNotificationBaseline: false,

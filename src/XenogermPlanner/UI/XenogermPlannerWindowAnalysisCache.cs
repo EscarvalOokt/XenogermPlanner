@@ -12,9 +12,6 @@ namespace XenogermPlanner.UI
 {
     internal sealed class XenogermPlannerWindowAssemblerAnalysis
     {
-        internal PlanAssemblerLiveState LiveState { get; }
-        internal PlanAssemblerReadinessResult ReadinessResult { get; }
-
         internal XenogermPlannerWindowAssemblerAnalysis(
             PlanAssemblerLiveState liveState,
             PlanAssemblerReadinessResult readinessResult)
@@ -22,58 +19,64 @@ namespace XenogermPlanner.UI
             LiveState = liveState ?? throw new ArgumentNullException(nameof(liveState));
             ReadinessResult = readinessResult ?? throw new ArgumentNullException(nameof(readinessResult));
         }
+
+        internal PlanAssemblerLiveState LiveState { get; }
+        internal PlanAssemblerReadinessResult ReadinessResult { get; }
     }
 
     internal sealed class XenogermPlannerWindowAnalysisCache
     {
         internal const int LiveStateRefreshIntervalTicks = 30;
 
-        private readonly Func<int> _getCurrentTick;
+        private readonly Func<XenogermPlan, PlanAssemblerLiveState, PlanAssemblerReadinessResult>
+            _analyzeAssemblerReadiness;
+
+        private readonly Func<IEnumerable<GeneDef>, PlanPotentialDonorScopeSnapshot, PlanPotentialDonorAnalysisResult>
+            _analyzePotentialDonors;
 
         private readonly Func<XenogermPlan, PlanGenepackInventorySnapshot, PlanReadinessResult>
             _analyzeProductReadiness;
 
         private readonly Func<IEnumerable<GeneDef>, PlanGeneTargetAnalysisResult> _analyzeTarget;
-        private readonly Func<Map, PlanPotentialDonorScopeSnapshot> _scanPotentialDonorScope;
+        private readonly Func<Genepack, IReadOnlyList<GeneDef>> _getAssemblerGenepackGenes;
 
-        private readonly Func<IEnumerable<GeneDef>, PlanPotentialDonorScopeSnapshot, PlanPotentialDonorAnalysisResult>
-            _analyzePotentialDonors;
+        private readonly Func<int> _getCurrentTick;
 
         private readonly Func<Map, IReadOnlyList<Building_GeneAssembler>> _getSelectableAssemblers;
         private readonly Func<Building_GeneAssembler, PlanAssemblerLiveState> _readAssemblerLiveState;
+        private readonly Func<Map, PlanPotentialDonorScopeSnapshot> _scanPotentialDonorScope;
+        private Building_GeneAssembler _assembler;
+        private XenogermPlannerWindowAssemblerAnalysis _assemblerAnalysis;
+        private object _assemblerDesiredGenesKey;
+        private AssemblerAnalysisInputSnapshot _assemblerInputSnapshot;
+        private Map _assemblerMap;
 
-        private readonly Func<XenogermPlan, PlanAssemblerLiveState, PlanAssemblerReadinessResult>
-            _analyzeAssemblerReadiness;
-
-        private XenogermPlan _productPlan;
-        private object _productDesiredGenesKey;
-        private object _productUnresolvedGenesKey;
-        private PlanReadinessMode _productReadinessMode;
-        private PlanGenepackInventorySnapshot _productInventorySnapshot;
-        private PlanReadinessResult _productReadinessResult;
-
-        private object _targetDesiredGenesKey;
-        private PlanGeneTargetAnalysisResult _targetAnalysisResult;
+        private XenogermPlan _assemblerPlan;
+        private PlanReadinessMode _assemblerReadinessMode;
+        private int _assemblerRefreshTick;
+        private object _assemblerUnresolvedGenesKey;
+        private bool _hasAssemblerRefreshTick;
+        private bool _hasPotentialDonorRefreshTick;
+        private bool _hasSelectableAssemblerRefreshTick;
+        private PlanPotentialDonorAnalysisResult _potentialDonorAnalysisResult;
 
         private Map _potentialDonorMap;
         private PlanReadinessResult _potentialDonorReadinessResult;
         private int _potentialDonorRefreshTick;
-        private bool _hasPotentialDonorRefreshTick;
-        private PlanPotentialDonorAnalysisResult _potentialDonorAnalysisResult;
+        private object _productDesiredGenesKey;
+        private PlanGenepackInventorySnapshot _productInventorySnapshot;
+
+        private XenogermPlan _productPlan;
+        private PlanReadinessMode _productReadinessMode;
+        private PlanReadinessResult _productReadinessResult;
+        private object _productUnresolvedGenesKey;
 
         private Map _selectableAssemblerMap;
         private int _selectableAssemblerRefreshTick;
-        private bool _hasSelectableAssemblerRefreshTick;
         private IReadOnlyList<Building_GeneAssembler> _selectableAssemblers;
+        private PlanGeneTargetAnalysisResult _targetAnalysisResult;
 
-        private XenogermPlan _assemblerPlan;
-        private object _assemblerDesiredGenesKey;
-        private object _assemblerUnresolvedGenesKey;
-        private PlanReadinessMode _assemblerReadinessMode;
-        private Building_GeneAssembler _assembler;
-        private int _assemblerRefreshTick;
-        private bool _hasAssemblerRefreshTick;
-        private XenogermPlannerWindowAssemblerAnalysis _assemblerAnalysis;
+        private object _targetDesiredGenesKey;
 
         internal XenogermPlannerWindowAnalysisCache() : this(
             () => Find.TickManager?.TicksGame ?? 0,
@@ -96,7 +99,8 @@ namespace XenogermPlanner.UI
                 analyzePotentialDonors,
             Func<Map, IReadOnlyList<Building_GeneAssembler>> getSelectableAssemblers,
             Func<Building_GeneAssembler, PlanAssemblerLiveState> readAssemblerLiveState,
-            Func<XenogermPlan, PlanAssemblerLiveState, PlanAssemblerReadinessResult> analyzeAssemblerReadiness)
+            Func<XenogermPlan, PlanAssemblerLiveState, PlanAssemblerReadinessResult> analyzeAssemblerReadiness,
+            Func<Genepack, IReadOnlyList<GeneDef>> getAssemblerGenepackGenes = null)
         {
             _getCurrentTick = getCurrentTick ?? throw new ArgumentNullException(nameof(getCurrentTick));
             _analyzeProductReadiness = analyzeProductReadiness ??
@@ -112,6 +116,8 @@ namespace XenogermPlanner.UI
                                       throw new ArgumentNullException(nameof(readAssemblerLiveState));
             _analyzeAssemblerReadiness = analyzeAssemblerReadiness ??
                                          throw new ArgumentNullException(nameof(analyzeAssemblerReadiness));
+            _getAssemblerGenepackGenes = getAssemblerGenepackGenes ??
+                                         (genepack => genepack.GeneSet?.GenesListForReading);
         }
 
         internal PlanReadinessResult GetProductReadiness(
@@ -124,12 +130,12 @@ namespace XenogermPlanner.UI
             if (inventorySnapshot == null)
                 throw new ArgumentNullException(nameof(inventorySnapshot));
 
-            if (_productReadinessResult != null && ReferenceEquals(_productPlan, plan) &&
+            if (_productReadinessResult != null &&
+                ReferenceEquals(_productPlan, plan) &&
                 ReferenceEquals(_productDesiredGenesKey, plan.DesiredGenes) &&
                 ReferenceEquals(_productUnresolvedGenesKey, plan.UnresolvedDesiredGeneDefNames) &&
-                _productReadinessMode == plan.ReadinessMode && ReferenceEquals(
-                    _productInventorySnapshot,
-                    inventorySnapshot))
+                _productReadinessMode == plan.ReadinessMode &&
+                ReferenceEquals(_productInventorySnapshot, inventorySnapshot))
             {
                 return _productReadinessResult;
             }
@@ -181,11 +187,10 @@ namespace XenogermPlanner.UI
 
             int currentTick = _getCurrentTick();
 
-            if (_potentialDonorAnalysisResult != null && ReferenceEquals(_potentialDonorMap, map) &&
-                ReferenceEquals(_potentialDonorReadinessResult, readinessResult) && !ShouldRefresh(
-                    _hasPotentialDonorRefreshTick,
-                    _potentialDonorRefreshTick,
-                    currentTick))
+            if (_potentialDonorAnalysisResult != null &&
+                ReferenceEquals(_potentialDonorMap, map) &&
+                ReferenceEquals(_potentialDonorReadinessResult, readinessResult) &&
+                !ShouldRefresh(_hasPotentialDonorRefreshTick, _potentialDonorRefreshTick, currentTick))
             {
                 return _potentialDonorAnalysisResult;
             }
@@ -211,10 +216,9 @@ namespace XenogermPlanner.UI
         {
             int currentTick = _getCurrentTick();
 
-            if (_selectableAssemblers != null && ReferenceEquals(_selectableAssemblerMap, map) && !ShouldRefresh(
-                    _hasSelectableAssemblerRefreshTick,
-                    _selectableAssemblerRefreshTick,
-                    currentTick))
+            if (_selectableAssemblers != null &&
+                ReferenceEquals(_selectableAssemblerMap, map) &&
+                !ShouldRefresh(_hasSelectableAssemblerRefreshTick, _selectableAssemblerRefreshTick, currentTick))
             {
                 return _selectableAssemblers;
             }
@@ -233,7 +237,8 @@ namespace XenogermPlanner.UI
 
         internal XenogermPlannerWindowAssemblerAnalysis GetAssemblerAnalysis(
             XenogermPlan plan,
-            Building_GeneAssembler assembler)
+            Building_GeneAssembler assembler,
+            Map map)
         {
             if (plan == null)
                 throw new ArgumentNullException(nameof(plan));
@@ -243,11 +248,15 @@ namespace XenogermPlanner.UI
 
             int currentTick = _getCurrentTick();
 
-            if (_assemblerAnalysis != null && ReferenceEquals(_assemblerPlan, plan) &&
-                ReferenceEquals(_assemblerDesiredGenesKey, plan.DesiredGenes) &&
-                ReferenceEquals(_assemblerUnresolvedGenesKey, plan.UnresolvedDesiredGeneDefNames) &&
-                _assemblerReadinessMode == plan.ReadinessMode && ReferenceEquals(_assembler, assembler) &&
-                !ShouldRefresh(_hasAssemblerRefreshTick, _assemblerRefreshTick, currentTick))
+            bool sameRequest = _assemblerAnalysis != null &&
+                               ReferenceEquals(_assemblerPlan, plan) &&
+                               ReferenceEquals(_assemblerDesiredGenesKey, plan.DesiredGenes) &&
+                               ReferenceEquals(_assemblerUnresolvedGenesKey, plan.UnresolvedDesiredGeneDefNames) &&
+                               _assemblerReadinessMode == plan.ReadinessMode &&
+                               ReferenceEquals(_assembler, assembler) &&
+                               ReferenceEquals(_assemblerMap, map);
+
+            if (sameRequest && !ShouldRefresh(_hasAssemblerRefreshTick, _assemblerRefreshTick, currentTick))
             {
                 return _assemblerAnalysis;
             }
@@ -255,6 +264,14 @@ namespace XenogermPlanner.UI
             PlanAssemblerLiveState liveState = _readAssemblerLiveState(assembler) ??
                                                throw new InvalidOperationException(
                                                    "Assembler live-state reader returned a null result.");
+
+            if (sameRequest && _assemblerInputSnapshot.Matches(liveState, _getAssemblerGenepackGenes))
+            {
+                _assemblerRefreshTick = currentTick;
+                return _assemblerAnalysis;
+            }
+
+            var inputSnapshot = new AssemblerAnalysisInputSnapshot(liveState, _getAssemblerGenepackGenes);
 
             PlanAssemblerReadinessResult readinessResult = _analyzeAssemblerReadiness(plan, liveState) ??
                                                            throw new InvalidOperationException(
@@ -267,6 +284,8 @@ namespace XenogermPlanner.UI
             _assemblerUnresolvedGenesKey = plan.UnresolvedDesiredGeneDefNames;
             _assemblerReadinessMode = plan.ReadinessMode;
             _assembler = assembler;
+            _assemblerMap = map;
+            _assemblerInputSnapshot = inputSnapshot;
             _assemblerRefreshTick = currentTick;
             _hasAssemblerRefreshTick = true;
             _assemblerAnalysis = analysis;
@@ -291,10 +310,17 @@ namespace XenogermPlanner.UI
             _hasSelectableAssemblerRefreshTick = false;
             _selectableAssemblers = null;
 
+            InvalidateAssemblerAnalysis();
+        }
+
+        internal void InvalidateAssemblerAnalysis()
+        {
             _assemblerPlan = null;
             _assemblerDesiredGenesKey = null;
             _assemblerUnresolvedGenesKey = null;
             _assembler = null;
+            _assemblerMap = null;
+            _assemblerInputSnapshot = null;
             _hasAssemblerRefreshTick = false;
             _assemblerAnalysis = null;
         }
@@ -309,7 +335,8 @@ namespace XenogermPlanner.UI
 
         private static bool ShouldRefresh(bool hasRefreshTick, int refreshTick, int currentTick)
         {
-            return !hasRefreshTick || currentTick < refreshTick ||
+            return !hasRefreshTick ||
+                   currentTick < refreshTick ||
                    currentTick - refreshTick >= LiveStateRefreshIntervalTicks;
         }
     }

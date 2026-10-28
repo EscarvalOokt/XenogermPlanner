@@ -5,13 +5,6 @@ namespace XenogermPlanner.Analysis
 {
     public sealed class PlanGeneConflictDiagnostic
     {
-        public GeneDef FirstGene { get; }
-        public GeneDef SecondGene { get; }
-        public PlanGeneConflictKind Kind { get; }
-        public GeneDef OverridingGene { get; }
-        public GeneDef OverriddenGene { get; }
-        public bool HasPredictedWinner => OverridingGene != null;
-
         internal PlanGeneConflictDiagnostic(
             GeneDef firstGene,
             GeneDef secondGene,
@@ -35,9 +28,17 @@ namespace XenogermPlanner.Analysis
             OverriddenGene = overriddenGene;
         }
 
+        public GeneDef FirstGene { get; }
+        public GeneDef SecondGene { get; }
+        public PlanGeneConflictKind Kind { get; }
+        public GeneDef OverridingGene { get; }
+        public GeneDef OverriddenGene { get; }
+        public bool HasPredictedWinner => OverridingGene != null;
+
         private static void ValidateKind(PlanGeneConflictKind kind)
         {
-            if (kind != PlanGeneConflictKind.Ordinary && kind != PlanGeneConflictKind.RandomChosen &&
+            if (kind != PlanGeneConflictKind.Ordinary &&
+                kind != PlanGeneConflictKind.RandomChosen &&
                 kind != PlanGeneConflictKind.Mixed)
             {
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unsupported gene conflict kind.");

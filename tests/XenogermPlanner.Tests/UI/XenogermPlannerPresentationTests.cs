@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using Escarval.RimWorld.UI;
 using NUnit.Framework;
 using RimWorld;
@@ -43,7 +43,7 @@ namespace XenogermPlanner.Tests.UI
         [Test]
         public void GetReadinessDiagnosticTranslationKey_ExactPayloadConflictUsesConflictDiagnostic()
         {
-            var result = PlanReadinessResult.CreateNotReady(Array.Empty<GeneDef>(), Array.Empty<GeneDef>(), true);
+            var result = PlanReadinessResult.CreateNotReady([], [], true);
 
             string translationKey = XenogermPlannerPresentation.GetReadinessDiagnosticTranslationKey(result);
 
@@ -53,7 +53,7 @@ namespace XenogermPlanner.Tests.UI
         [Test]
         public void GetReadinessDiagnosticTranslationKey_ReadyHasNoDiagnostic()
         {
-            var result = PlanReadinessResult.CreateReady(Array.Empty<GeneDef>());
+            var result = PlanReadinessResult.CreateReady([]);
 
             string translationKey = XenogermPlannerPresentation.GetReadinessDiagnosticTranslationKey(result);
 
@@ -65,7 +65,7 @@ namespace XenogermPlanner.Tests.UI
         {
             var missingGene = new GeneDef();
 
-            var result = PlanReadinessResult.CreateNotReady(Array.Empty<GeneDef>(), new[] { missingGene }, false);
+            var result = PlanReadinessResult.CreateNotReady([], [missingGene], false);
 
             string translationKey = XenogermPlannerPresentation.GetReadinessDiagnosticTranslationKey(result);
 
@@ -85,7 +85,7 @@ namespace XenogermPlanner.Tests.UI
         [Test]
         public void GetAssemblerScopeDiagnosticTranslationKey_ExactPayloadConflictUsesAssemblerDiagnostic()
         {
-            var result = PlanReadinessResult.CreateNotReady(Array.Empty<GeneDef>(), Array.Empty<GeneDef>(), true);
+            var result = PlanReadinessResult.CreateNotReady([], [], true);
 
             string translationKey = XenogermPlannerPresentation.GetAssemblerScopeDiagnosticTranslationKey(result);
 
@@ -134,15 +134,12 @@ namespace XenogermPlanner.Tests.UI
             var availableDiagnostic = new PlanGeneCoverageDiagnostic(
                 availableGene,
                 PlanGeneCoverageState.Available,
-                new[] { availableComposition });
+                [availableComposition]);
             var conflictDiagnostic = new PlanGeneCoverageDiagnostic(
                 conflictGene,
                 PlanGeneCoverageState.ExactPayloadConflict,
-                new[] { conflictComposition });
-            var missingDiagnostic = new PlanGeneCoverageDiagnostic(
-                missingGene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
+                [conflictComposition]);
+            var missingDiagnostic = new PlanGeneCoverageDiagnostic(missingGene, PlanGeneCoverageState.Missing, []);
 
             Assert.That(
                 XenogermPlannerPresentation.GetGeneCoverageStateTranslationKey(availableDiagnostic),
@@ -170,15 +167,12 @@ namespace XenogermPlanner.Tests.UI
             var availableDiagnostic = new PlanGeneCoverageDiagnostic(
                 availableGene,
                 PlanGeneCoverageState.Available,
-                new[] { availableComposition });
+                [availableComposition]);
             var conflictDiagnostic = new PlanGeneCoverageDiagnostic(
                 conflictGene,
                 PlanGeneCoverageState.ExactPayloadConflict,
-                new[] { conflictComposition });
-            var missingDiagnostic = new PlanGeneCoverageDiagnostic(
-                missingGene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
+                [conflictComposition]);
+            var missingDiagnostic = new PlanGeneCoverageDiagnostic(missingGene, PlanGeneCoverageState.Missing, []);
 
             Assert.That(
                 XenogermPlannerPresentation.GetGeneCoverageStateTooltipTranslationKey(availableDiagnostic),
@@ -256,11 +250,10 @@ namespace XenogermPlanner.Tests.UI
         public void GetGeneRandomChoiceGroupTranslationKey_UsesGroupKey()
         {
             var diagnostic = new PlanGeneRandomChoiceGroupDiagnostic(
-                new[]
-                {
-                    CreateGene("First", "First"),
-                    CreateGene("Second", "Second")
-                });
+            [
+                CreateGene("First", "First"),
+                CreateGene("Second", "Second")
+            ]);
 
             Assert.That(
                 XenogermPlannerPresentation.GetGeneRandomChoiceGroupTranslationKey(diagnostic),
@@ -296,6 +289,27 @@ namespace XenogermPlanner.Tests.UI
         }
 
         [Test]
+        public void GetAssemblerBlockerTranslationKey_UsesMetabolismTooLowKey()
+        {
+            Assert.That(
+                XenogermPlannerPresentation.GetAssemblerBlockerTranslationKey(
+                    PlanAssemblerBlockerReason.MetabolismTooLow),
+                Is.EqualTo("XenogermPlanner.AssemblerBlocker.MetabolismTooLow"));
+        }
+
+        [Test]
+        public void SearchIncomplete_HasItsOwnStatusLabelAndWarningColor()
+        {
+            Assert.That(
+                XenogermPlannerPresentation.GetAssemblerReadinessStatusTranslationKey(
+                    PlanAssemblerReadinessStatus.SearchIncomplete),
+                Is.EqualTo("XenogermPlanner.AssemblerReadinessStatus.SearchIncomplete"));
+            Assert.That(
+                XenogermPlannerWidgets.GetAssemblerReadinessStatusColor(PlanAssemblerReadinessStatus.SearchIncomplete),
+                Is.EqualTo(RimWorldUiStyle.Colors.Warning));
+        }
+
+        [Test]
         public void GetSortedGeneDiagnostics_UsesPresentationOrderDeterministically()
         {
             GeneDef alpha = CreateGene("Z", "Alpha");
@@ -308,22 +322,23 @@ namespace XenogermPlanner.Tests.UI
                 PlanGeneConflictKind.RandomChosen,
                 null,
                 null);
-            var laterGroup = new PlanGeneRandomChoiceGroupDiagnostic(new[] { beta, gamma });
-            var earlierGroup = new PlanGeneRandomChoiceGroupDiagnostic(new[] { alpha, gamma });
+            var laterGroup = new PlanGeneRandomChoiceGroupDiagnostic([beta, gamma]);
+            var earlierGroup = new PlanGeneRandomChoiceGroupDiagnostic([alpha, gamma]);
             var laterPrerequisite = new PlanGenePrerequisiteDiagnostic(gamma, beta);
             var earlierPrerequisite = new PlanGenePrerequisiteDiagnostic(alpha, beta);
 
             Assert.That(
-                XenogermPlannerPresentation.GetSortedGeneConflictDiagnostics(new[] { laterConflict, earlierConflict }),
-                Is.EqualTo(new[] { earlierConflict, laterConflict }));
+                XenogermPlannerPresentation.GetSortedGeneConflictDiagnostics([laterConflict, earlierConflict]),
+                Is.EqualTo([earlierConflict, laterConflict]));
             Assert.That(
-                XenogermPlannerPresentation.GetSortedGeneRandomChoiceGroupDiagnostics(
-                    new[] { laterGroup, earlierGroup }),
-                Is.EqualTo(new[] { earlierGroup, laterGroup }));
+                XenogermPlannerPresentation.GetSortedGeneRandomChoiceGroupDiagnostics([laterGroup, earlierGroup]),
+                Is.EqualTo([earlierGroup, laterGroup]));
             Assert.That(
                 XenogermPlannerPresentation.GetSortedGenePrerequisiteDiagnostics(
-                    new[] { laterPrerequisite, earlierPrerequisite }),
-                Is.EqualTo(new[] { earlierPrerequisite, laterPrerequisite }));
+                [
+                    laterPrerequisite, earlierPrerequisite
+                ]),
+                Is.EqualTo([earlierPrerequisite, laterPrerequisite]));
         }
 
         [Test]
@@ -334,22 +349,20 @@ namespace XenogermPlanner.Tests.UI
             GeneDef firstTie = CreateGene("GeneA", "Same");
 
             List<GeneDef> sortedGenes = XenogermPlannerPresentation.GetSortedGenes(
-                new[]
-                {
-                    secondTie,
-                    firstByName,
-                    firstTie
-                });
+            [
+                secondTie,
+                firstByName,
+                firstTie
+            ]);
 
             Assert.That(
                 sortedGenes,
                 Is.EqualTo(
-                    new[]
-                    {
-                        firstByName,
-                        firstTie,
-                        secondTie
-                    }));
+                [
+                    firstByName,
+                    firstTie,
+                    secondTie
+                ]));
         }
 
         [Test]
@@ -369,9 +382,9 @@ namespace XenogermPlanner.Tests.UI
                 out List<GeneDef> nonArchiteGenes,
                 out List<GeneDef> architeGenes);
 
-            Assert.That(nonArchiteGenes, Is.EqualTo(new[] { nonArchiteGene }));
-            Assert.That(architeGenes, Is.EqualTo(new[] { architeGene }));
-            Assert.That(genes, Is.EqualTo(new[] { architeGene, nonArchiteGene }));
+            Assert.That(nonArchiteGenes, Is.EqualTo([nonArchiteGene]));
+            Assert.That(architeGenes, Is.EqualTo([architeGene]));
+            Assert.That(genes, Is.EqualTo([architeGene, nonArchiteGene]));
         }
 
         [Test]
@@ -388,37 +401,34 @@ namespace XenogermPlanner.Tests.UI
             architeFirstTie.biostatArc = 1;
 
             XenogermPlannerPresentation.GetSortedGenepackGeneGroups(
-                new[]
-                {
+                [
                     architeSecondTie,
                     nonArchiteSecondTie,
                     architeFirstByName,
                     nonArchiteFirstByName,
                     architeFirstTie,
                     nonArchiteFirstTie
-                },
+                ],
                 out List<GeneDef> nonArchiteGenes,
                 out List<GeneDef> architeGenes);
 
             Assert.That(
                 nonArchiteGenes,
                 Is.EqualTo(
-                    new[]
-                    {
-                        nonArchiteFirstByName,
-                        nonArchiteFirstTie,
-                        nonArchiteSecondTie
-                    }));
+                [
+                    nonArchiteFirstByName,
+                    nonArchiteFirstTie,
+                    nonArchiteSecondTie
+                ]));
 
             Assert.That(
                 architeGenes,
                 Is.EqualTo(
-                    new[]
-                    {
-                        architeFirstByName,
-                        architeFirstTie,
-                        architeSecondTie
-                    }));
+                [
+                    architeFirstByName,
+                    architeFirstTie,
+                    architeSecondTie
+                ]));
         }
 
         [Test]
@@ -426,40 +436,26 @@ namespace XenogermPlanner.Tests.UI
         {
             GeneDef alphaGene = CreateGene("GeneAlpha", "Alpha");
             GeneDef betaGene = CreateGene("GeneBeta", "Beta");
-            var betaTwoCopies = new PlanGenepackCompositionDiagnostic(
-                new[] { betaGene },
-                2,
-                true,
-                Array.Empty<GeneDef>());
-            var alphaThreeCopies = new PlanGenepackCompositionDiagnostic(
-                new[] { alphaGene },
-                3,
-                true,
-                Array.Empty<GeneDef>());
-            var betaOneCopy = new PlanGenepackCompositionDiagnostic(
-                new[] { betaGene },
-                1,
-                true,
-                Array.Empty<GeneDef>());
+            var betaTwoCopies = new PlanGenepackCompositionDiagnostic([betaGene], 2, true, []);
+            var alphaThreeCopies = new PlanGenepackCompositionDiagnostic([alphaGene], 3, true, []);
+            var betaOneCopy = new PlanGenepackCompositionDiagnostic([betaGene], 1, true, []);
 
             List<PlanGenepackCompositionDiagnostic> sortedCompositions =
                 XenogermPlannerPresentation.GetSortedGenepackCompositions(
-                    new[]
-                    {
-                        betaTwoCopies,
-                        alphaThreeCopies,
-                        betaOneCopy
-                    });
+                [
+                    betaTwoCopies,
+                    alphaThreeCopies,
+                    betaOneCopy
+                ]);
 
             Assert.That(
                 sortedCompositions,
                 Is.EqualTo(
-                    new[]
-                    {
-                        alphaThreeCopies,
-                        betaOneCopy,
-                        betaTwoCopies
-                    }));
+                [
+                    alphaThreeCopies,
+                    betaOneCopy,
+                    betaTwoCopies
+                ]));
         }
 
         [Test]
@@ -501,14 +497,8 @@ namespace XenogermPlanner.Tests.UI
         {
             GeneDef secondTieGene = CreateGene("GeneB", "same");
             GeneDef firstTieGene = CreateGene("GeneA", "Same");
-            var secondTieDiagnostic = new PlanGeneCoverageDiagnostic(
-                secondTieGene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
-            var firstTieDiagnostic = new PlanGeneCoverageDiagnostic(
-                firstTieGene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
+            var secondTieDiagnostic = new PlanGeneCoverageDiagnostic(secondTieGene, PlanGeneCoverageState.Missing, []);
+            var firstTieDiagnostic = new PlanGeneCoverageDiagnostic(firstTieGene, PlanGeneCoverageState.Missing, []);
             var diagnostics = new List<PlanGeneCoverageDiagnostic>
             {
                 secondTieDiagnostic,
@@ -540,8 +530,8 @@ namespace XenogermPlanner.Tests.UI
             Assert.That(descendingRows[0].Diagnostic, Is.SameAs(secondTieDiagnostic));
             Assert.That(descendingRows[1].Diagnostic, Is.SameAs(firstTieDiagnostic));
             Assert.That(descendingRows[2].UnresolvedGeneDefName, Is.EqualTo("AlphaUnavailable"));
-            Assert.That(diagnostics, Is.EqualTo(new[] { secondTieDiagnostic, firstTieDiagnostic }));
-            Assert.That(unresolvedGeneDefNames, Is.EqualTo(new[] { "AlphaUnavailable" }));
+            Assert.That(diagnostics, Is.EqualTo([secondTieDiagnostic, firstTieDiagnostic]));
+            Assert.That(unresolvedGeneDefNames, Is.EqualTo(["AlphaUnavailable"]));
         }
 
         [Test]
@@ -560,19 +550,19 @@ namespace XenogermPlanner.Tests.UI
             var availableDiagnostic = new PlanGeneCoverageDiagnostic(
                 availableGene,
                 PlanGeneCoverageState.Available,
-                new[] { availableComposition });
+                [availableComposition]);
             var conflictDiagnostic = new PlanGeneCoverageDiagnostic(
                 conflictGene,
                 PlanGeneCoverageState.ExactPayloadConflict,
-                new[] { conflictComposition });
+                [conflictComposition]);
             var secondMissingDiagnostic = new PlanGeneCoverageDiagnostic(
                 secondMissingGene,
                 PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
+                []);
             var firstMissingDiagnostic = new PlanGeneCoverageDiagnostic(
                 firstMissingGene,
                 PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
+                []);
             var lookup = new Dictionary<PlanGenepackCompositionDiagnostic, IReadOnlyList<Genepack>>
             {
                 { availableComposition, CreateGenepacks(1) },
@@ -580,14 +570,13 @@ namespace XenogermPlanner.Tests.UI
             };
 
             List<GeneCoverageTableRow> ascendingRows = XenogermPlannerPresentation.GetSortedGeneCoverageRows(
-                new[]
-                {
+                [
                     secondMissingDiagnostic,
                     conflictDiagnostic,
                     availableDiagnostic,
                     firstMissingDiagnostic
-                },
-                new[] { "Unavailable" },
+                ],
+                ["Unavailable"],
                 lookup,
                 new GeneCoverageSortState(GeneCoverageSortColumn.Availability, descending: false));
 
@@ -598,14 +587,13 @@ namespace XenogermPlanner.Tests.UI
             Assert.That(ascendingRows[4].AvailabilityState, Is.EqualTo(GeneCoverageAvailabilityState.Unavailable));
 
             List<GeneCoverageTableRow> descendingRows = XenogermPlannerPresentation.GetSortedGeneCoverageRows(
-                new[]
-                {
+                [
                     secondMissingDiagnostic,
                     conflictDiagnostic,
                     availableDiagnostic,
                     firstMissingDiagnostic
-                },
-                new[] { "Unavailable" },
+                ],
+                ["Unavailable"],
                 lookup,
                 new GeneCoverageSortState(GeneCoverageSortColumn.Availability, descending: true));
 
@@ -627,15 +615,12 @@ namespace XenogermPlanner.Tests.UI
             var alphaDiagnostic = new PlanGeneCoverageDiagnostic(
                 alphaGene,
                 PlanGeneCoverageState.Available,
-                new[] { alphaComposition });
+                [alphaComposition]);
             var betaDiagnostic = new PlanGeneCoverageDiagnostic(
                 betaGene,
                 PlanGeneCoverageState.Available,
-                new[] { betaComposition });
-            var missingDiagnostic = new PlanGeneCoverageDiagnostic(
-                missingGene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
+                [betaComposition]);
+            var missingDiagnostic = new PlanGeneCoverageDiagnostic(missingGene, PlanGeneCoverageState.Missing, []);
             var productLookup = new Dictionary<PlanGenepackCompositionDiagnostic, IReadOnlyList<Genepack>>
             {
                 { alphaComposition, CreateGenepacks(2) },
@@ -650,8 +635,8 @@ namespace XenogermPlanner.Tests.UI
             var descendingState = new GeneCoverageSortState(GeneCoverageSortColumn.GenepackCount, descending: true);
 
             List<GeneCoverageTableRow> ascendingProductRows = XenogermPlannerPresentation.GetSortedGeneCoverageRows(
-                new[] { betaDiagnostic, missingDiagnostic, alphaDiagnostic },
-                new[] { "Unavailable" },
+                [betaDiagnostic, missingDiagnostic, alphaDiagnostic],
+                ["Unavailable"],
                 productLookup,
                 ascendingState);
 
@@ -661,8 +646,8 @@ namespace XenogermPlanner.Tests.UI
             Assert.That(ascendingProductRows[3].Diagnostic, Is.SameAs(alphaDiagnostic));
 
             List<GeneCoverageTableRow> productRows = XenogermPlannerPresentation.GetSortedGeneCoverageRows(
-                new[] { betaDiagnostic, missingDiagnostic, alphaDiagnostic },
-                new[] { "Unavailable" },
+                [betaDiagnostic, missingDiagnostic, alphaDiagnostic],
+                ["Unavailable"],
                 productLookup,
                 descendingState);
 
@@ -674,8 +659,8 @@ namespace XenogermPlanner.Tests.UI
             Assert.That(productRows[3].UnresolvedGeneDefName, Is.EqualTo("Unavailable"));
 
             List<GeneCoverageTableRow> assemblerRows = XenogermPlannerPresentation.GetSortedGeneCoverageRows(
-                new[] { betaDiagnostic, missingDiagnostic, alphaDiagnostic },
-                new[] { "Unavailable" },
+                [betaDiagnostic, missingDiagnostic, alphaDiagnostic],
+                ["Unavailable"],
                 assemblerLookup,
                 descendingState);
 
@@ -692,45 +677,34 @@ namespace XenogermPlanner.Tests.UI
             GeneDef oneGene = CreateGene("One", "One");
             GeneDef threeGene = CreateGene("Three", "Three");
             GeneDef coveredGene = CreateGene("Covered", "Covered");
-            var zeroDiagnostic = new PlanGeneCoverageDiagnostic(
-                zeroGene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
-            var oneDiagnostic = new PlanGeneCoverageDiagnostic(
-                oneGene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
-            var threeDiagnostic = new PlanGeneCoverageDiagnostic(
-                threeGene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
+            var zeroDiagnostic = new PlanGeneCoverageDiagnostic(zeroGene, PlanGeneCoverageState.Missing, []);
+            var oneDiagnostic = new PlanGeneCoverageDiagnostic(oneGene, PlanGeneCoverageState.Missing, []);
+            var threeDiagnostic = new PlanGeneCoverageDiagnostic(threeGene, PlanGeneCoverageState.Missing, []);
             PlanGenepackCompositionDiagnostic coveredComposition = CreateComposition(coveredGene, 1);
             var coveredDiagnostic = new PlanGeneCoverageDiagnostic(
                 coveredGene,
                 PlanGeneCoverageState.Available,
-                new[] { coveredComposition });
+                [coveredComposition]);
             var donorAnalysis = PlanPotentialDonorAnalysisResult.CreateAvailable(
-                new[]
-                {
-                    new PlanPotentialDonorGeneDiagnostic(zeroGene, Array.Empty<Pawn>()),
-                    new PlanPotentialDonorGeneDiagnostic(oneGene, new[] { PlanPotentialDonorTestData.CreatePawn() }),
-                    new PlanPotentialDonorGeneDiagnostic(
-                        threeGene,
-                        new[]
-                        {
-                            PlanPotentialDonorTestData.CreatePawn(),
-                            PlanPotentialDonorTestData.CreatePawn(),
-                            PlanPotentialDonorTestData.CreatePawn()
-                        })
-                });
+            [
+                new PlanPotentialDonorGeneDiagnostic(zeroGene, []),
+                new PlanPotentialDonorGeneDiagnostic(oneGene, [PlanPotentialDonorTestData.CreatePawn()]),
+                new PlanPotentialDonorGeneDiagnostic(
+                    threeGene,
+                    [
+                        PlanPotentialDonorTestData.CreatePawn(),
+                        PlanPotentialDonorTestData.CreatePawn(),
+                        PlanPotentialDonorTestData.CreatePawn()
+                    ])
+            ]);
             var lookup = new Dictionary<PlanGenepackCompositionDiagnostic, IReadOnlyList<Genepack>>
             {
                 { coveredComposition, CreateGenepacks(1) }
             };
 
             List<GeneCoverageTableRow> ascendingRows = XenogermPlannerPresentation.GetSortedGeneCoverageRows(
-                new[] { coveredDiagnostic, threeDiagnostic, zeroDiagnostic, oneDiagnostic },
-                new[] { "Unavailable" },
+                [coveredDiagnostic, threeDiagnostic, zeroDiagnostic, oneDiagnostic],
+                ["Unavailable"],
                 lookup,
                 donorAnalysis,
                 new GeneCoverageSortState(GeneCoverageSortColumn.PotentialDonorCount, descending: false));
@@ -747,8 +721,8 @@ namespace XenogermPlanner.Tests.UI
             Assert.That(ascendingRows[4].PotentialDonorCount, Is.Null);
 
             List<GeneCoverageTableRow> descendingRows = XenogermPlannerPresentation.GetSortedGeneCoverageRows(
-                new[] { coveredDiagnostic, threeDiagnostic, zeroDiagnostic, oneDiagnostic },
-                new[] { "Unavailable" },
+                [coveredDiagnostic, threeDiagnostic, zeroDiagnostic, oneDiagnostic],
+                ["Unavailable"],
                 lookup,
                 donorAnalysis,
                 new GeneCoverageSortState(GeneCoverageSortColumn.PotentialDonorCount, descending: true));
@@ -765,14 +739,11 @@ namespace XenogermPlanner.Tests.UI
         {
             GeneDef gene = CreateGene("Gene", "Gene");
             PlanGenepackCompositionDiagnostic composition = CreateComposition(gene, 3);
-            var diagnostic = new PlanGeneCoverageDiagnostic(
-                gene,
-                PlanGeneCoverageState.Available,
-                new[] { composition });
+            var diagnostic = new PlanGeneCoverageDiagnostic(gene, PlanGeneCoverageState.Available, [composition]);
 
             List<GeneCoverageTableRow> rows = XenogermPlannerPresentation.GetSortedGeneCoverageRows(
-                new[] { diagnostic },
-                Array.Empty<string>(),
+                [diagnostic],
+                [],
                 EmptyGenepackLookup(),
                 new GeneCoverageSortState(GeneCoverageSortColumn.GenepackCount, descending: false));
 
@@ -785,29 +756,23 @@ namespace XenogermPlanner.Tests.UI
         {
             GeneDef betaGene = CreateGene("Beta", "Beta");
             GeneDef alphaGene = CreateGene("Alpha", "Alpha");
-            var betaDiagnostic = new PlanGeneCoverageDiagnostic(
-                betaGene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
-            var alphaDiagnostic = new PlanGeneCoverageDiagnostic(
-                alphaGene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
-            PlanGeneCoverageDiagnostic[] diagnostics = new[] { betaDiagnostic, alphaDiagnostic };
+            var betaDiagnostic = new PlanGeneCoverageDiagnostic(betaGene, PlanGeneCoverageState.Missing, []);
+            var alphaDiagnostic = new PlanGeneCoverageDiagnostic(alphaGene, PlanGeneCoverageState.Missing, []);
+            PlanGeneCoverageDiagnostic[] diagnostics = [betaDiagnostic, alphaDiagnostic];
 
             List<GeneCoverageTableRow> first = XenogermPlannerPresentation.GetSortedGeneCoverageRows(
                 diagnostics,
-                Array.Empty<string>(),
+                [],
                 EmptyGenepackLookup(),
                 GeneCoverageSortState.Default);
             List<GeneCoverageTableRow> second = XenogermPlannerPresentation.GetSortedGeneCoverageRows(
                 diagnostics,
-                Array.Empty<string>(),
+                [],
                 EmptyGenepackLookup(),
                 GeneCoverageSortState.Default);
             List<GeneCoverageTableRow> empty = XenogermPlannerPresentation.GetSortedGeneCoverageRows(
-                Array.Empty<PlanGeneCoverageDiagnostic>(),
-                Array.Empty<string>(),
+                [],
+                [],
                 EmptyGenepackLookup(),
                 GeneCoverageSortState.Default);
 
@@ -825,11 +790,11 @@ namespace XenogermPlanner.Tests.UI
             Pawn alpha = PlanPotentialDonorTestData.CreatePawn();
 
             List<Pawn> sorted = XenogermPlannerPresentation.GetSortedPotentialDonors(
-                new[] { beta, alpha },
+                [beta, alpha],
                 donor => ReferenceEquals(donor, alpha) ? "Alpha" : "Beta",
                 donor => ReferenceEquals(donor, alpha) ? 2 : 1);
 
-            Assert.That(sorted, Is.EqualTo(new[] { alpha, beta }));
+            Assert.That(sorted, Is.EqualTo([alpha, beta]));
         }
 
         [Test]
@@ -839,11 +804,11 @@ namespace XenogermPlanner.Tests.UI
             Pawn earlier = PlanPotentialDonorTestData.CreatePawn();
 
             List<Pawn> sorted = XenogermPlannerPresentation.GetSortedPotentialDonors(
-                new[] { later, earlier },
+                [later, earlier],
                 _ => "Same name",
                 donor => ReferenceEquals(donor, earlier) ? 10 : 20);
 
-            Assert.That(sorted, Is.EqualTo(new[] { earlier, later }));
+            Assert.That(sorted, Is.EqualTo([earlier, later]));
         }
 
         [Test]
@@ -858,8 +823,8 @@ namespace XenogermPlanner.Tests.UI
                 donor => ReferenceEquals(donor, first) ? "Zulu" : "Alpha",
                 _ => 0);
 
-            Assert.That(input, Is.EqualTo(new[] { first, second }));
-            Assert.That(sorted, Is.EqualTo(new[] { second, first }));
+            Assert.That(input, Is.EqualTo([first, second]));
+            Assert.That(sorted, Is.EqualTo([second, first]));
         }
 
         [Test]
@@ -867,7 +832,7 @@ namespace XenogermPlanner.Tests.UI
         {
             Assert.Throws<ArgumentException>(
                 (Action)(() => XenogermPlannerPresentation.GetSortedPotentialDonors(
-                    new Pawn[] { null },
+                    [null],
                     _ => string.Empty,
                     _ => 0)));
         }
@@ -877,12 +842,9 @@ namespace XenogermPlanner.Tests.UI
         {
             GeneDef gene = CreateGene("Missing", "Missing");
             Pawn donor = PlanPotentialDonorTestData.CreatePawn();
-            var coverageDiagnostic = new PlanGeneCoverageDiagnostic(
-                gene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
-            var donorDiagnostic = new PlanPotentialDonorGeneDiagnostic(gene, new[] { donor });
-            var analysis = PlanPotentialDonorAnalysisResult.CreateAvailable(new[] { donorDiagnostic });
+            var coverageDiagnostic = new PlanGeneCoverageDiagnostic(gene, PlanGeneCoverageState.Missing, []);
+            var donorDiagnostic = new PlanPotentialDonorGeneDiagnostic(gene, [donor]);
+            var analysis = PlanPotentialDonorAnalysisResult.CreateAvailable([donorDiagnostic]);
 
             bool found = XenogermPlannerPresentation.TryGetPotentialDonorDiagnostic(
                 coverageDiagnostic,
@@ -901,11 +863,9 @@ namespace XenogermPlanner.Tests.UI
             var coverageDiagnostic = new PlanGeneCoverageDiagnostic(
                 gene,
                 PlanGeneCoverageState.Available,
-                new[] { composition });
-            var donorDiagnostic = new PlanPotentialDonorGeneDiagnostic(
-                gene,
-                new[] { PlanPotentialDonorTestData.CreatePawn() });
-            var analysis = PlanPotentialDonorAnalysisResult.CreateAvailable(new[] { donorDiagnostic });
+                [composition]);
+            var donorDiagnostic = new PlanPotentialDonorGeneDiagnostic(gene, [PlanPotentialDonorTestData.CreatePawn()]);
+            var analysis = PlanPotentialDonorAnalysisResult.CreateAvailable([donorDiagnostic]);
 
             bool found = XenogermPlannerPresentation.TryGetPotentialDonorDiagnostic(
                 coverageDiagnostic,
@@ -920,10 +880,7 @@ namespace XenogermPlanner.Tests.UI
         public void TryGetPotentialDonorDiagnostic_DoesNotReturnUnavailableAnalysis()
         {
             GeneDef gene = CreateGene("Missing", "Missing");
-            var coverageDiagnostic = new PlanGeneCoverageDiagnostic(
-                gene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
+            var coverageDiagnostic = new PlanGeneCoverageDiagnostic(gene, PlanGeneCoverageState.Missing, []);
 
             bool found = XenogermPlannerPresentation.TryGetPotentialDonorDiagnostic(
                 coverageDiagnostic,
@@ -939,14 +896,11 @@ namespace XenogermPlanner.Tests.UI
         {
             GeneDef requestedGene = CreateGene("Requested", "Requested");
             GeneDef otherGene = CreateGene("Other", "Other");
-            var coverageDiagnostic = new PlanGeneCoverageDiagnostic(
-                requestedGene,
-                PlanGeneCoverageState.Missing,
-                Array.Empty<PlanGenepackCompositionDiagnostic>());
+            var coverageDiagnostic = new PlanGeneCoverageDiagnostic(requestedGene, PlanGeneCoverageState.Missing, []);
             var donorDiagnostic = new PlanPotentialDonorGeneDiagnostic(
                 otherGene,
-                new[] { PlanPotentialDonorTestData.CreatePawn() });
-            var analysis = PlanPotentialDonorAnalysisResult.CreateAvailable(new[] { donorDiagnostic });
+                [PlanPotentialDonorTestData.CreatePawn()]);
+            var analysis = PlanPotentialDonorAnalysisResult.CreateAvailable([donorDiagnostic]);
 
             bool found = XenogermPlannerPresentation.TryGetPotentialDonorDiagnostic(
                 coverageDiagnostic,
@@ -972,28 +926,26 @@ namespace XenogermPlanner.Tests.UI
             GeneDef lowPriorityGene = CreateCatalogGene("GeneLow", lowPriorityCategory, 0);
 
             List<GeneDef> sortedGenes = XenogermPlannerPresentation.GetGenesInCatalogOrder(
-                new[]
-                {
-                    lowPriorityGene,
-                    categoryBGene,
-                    categoryALater,
-                    categoryATieSecond,
-                    highPriorityGene,
-                    categoryATieFirst
-                });
+            [
+                lowPriorityGene,
+                categoryBGene,
+                categoryALater,
+                categoryATieSecond,
+                highPriorityGene,
+                categoryATieFirst
+            ]);
 
             Assert.That(
                 sortedGenes,
                 Is.EqualTo(
-                    new[]
-                    {
-                        highPriorityGene,
-                        categoryATieFirst,
-                        categoryATieSecond,
-                        categoryALater,
-                        categoryBGene,
-                        lowPriorityGene
-                    }));
+                [
+                    highPriorityGene,
+                    categoryATieFirst,
+                    categoryATieSecond,
+                    categoryALater,
+                    categoryBGene,
+                    lowPriorityGene
+                ]));
         }
 
         [TestCase(4, "+4")]
@@ -1032,17 +984,14 @@ namespace XenogermPlanner.Tests.UI
         {
             Assert.That(
                 XenogermPlannerPresentation.GetTemplateCreationDisabledTranslationKey(
-                    PlanReadinessResult.CreateReady(Array.Empty<GeneDef>())),
+                    PlanReadinessResult.CreateReady([])),
                 Is.Null);
         }
 
         [Test]
         public void GetTemplateCreationDisabledTranslationKey_UsesExactConflictReason()
         {
-            var result = PlanReadinessResult.CreateNotReady(
-                Array.Empty<GeneDef>(),
-                Array.Empty<GeneDef>(),
-                hasExactPayloadConflict: true);
+            var result = PlanReadinessResult.CreateNotReady([], [], hasExactPayloadConflict: true);
 
             Assert.That(
                 XenogermPlannerPresentation.GetTemplateCreationDisabledTranslationKey(result),
@@ -1147,12 +1096,12 @@ namespace XenogermPlanner.Tests.UI
             PlanTraderAdvisoryOfferSnapshot firstOffer = CreateTraderOffer(gene);
             PlanTraderAdvisoryOfferSnapshot secondOffer = CreateTraderOffer(gene);
             PlanTraderAdvisoryNotification notification = CreateTraderNotification(
-                new PlanTraderAdvisoryNotificationOffer(firstOffer, new[] { alphaSecond, alphaFirst }),
-                new PlanTraderAdvisoryNotificationOffer(secondOffer, new[] { alphaSecond, beta }));
+                new PlanTraderAdvisoryNotificationOffer(firstOffer, [alphaSecond, alphaFirst]),
+                new PlanTraderAdvisoryNotificationOffer(secondOffer, [alphaSecond, beta]));
 
             List<XenogermPlan> affectedPlans = XenogermPlannerPresentation.GetTraderAdvisoryAffectedPlans(notification);
 
-            Assert.That(affectedPlans, Is.EqualTo(new[] { alphaFirst, alphaSecond, beta }));
+            Assert.That(affectedPlans, Is.EqualTo([alphaFirst, alphaSecond, beta]));
             Assert.That(notification.OfferCount, Is.EqualTo(2));
         }
 
@@ -1161,9 +1110,9 @@ namespace XenogermPlanner.Tests.UI
         [TestCase("   ")]
         public void GetFilteredPlans_EmptyQueryReturnsAllPlansInOriginalOrder(string query)
         {
-            var first = new XenogermPlan("First", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
-            var second = new XenogermPlan("Second", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
-            XenogermPlan[] plans = new[] { first, second };
+            var first = new XenogermPlan("First", [], PlanReadinessMode.Coverage);
+            var second = new XenogermPlan("Second", [], PlanReadinessMode.Coverage);
+            XenogermPlan[] plans = [first, second];
 
             List<XenogermPlan> filtered = XenogermPlannerPresentation.GetFilteredPlans(plans, query);
 
@@ -1173,37 +1122,33 @@ namespace XenogermPlanner.Tests.UI
         [Test]
         public void GetFilteredPlans_PartialQueryMatchesDisplayNameIgnoringCaseAndOuterWhitespace()
         {
-            var matching = new XenogermPlan("Underslave research", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
-            var other = new XenogermPlan("Worker", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var matching = new XenogermPlan("Underslave research", [], PlanReadinessMode.Coverage);
+            var other = new XenogermPlan("Worker", [], PlanReadinessMode.Coverage);
 
-            List<XenogermPlan> filtered = XenogermPlannerPresentation.GetFilteredPlans(
-                new[] { other, matching },
-                "  SLAVE  ");
+            List<XenogermPlan> filtered = XenogermPlannerPresentation.GetFilteredPlans([other, matching], "  SLAVE  ");
 
-            Assert.That(filtered, Is.EqualTo(new[] { matching }));
+            Assert.That(filtered, Is.EqualTo([matching]));
         }
 
         [Test]
         public void GetFilteredPlans_MultipleMatchesPreserveOrderAndDuplicateIdentities()
         {
-            var first = new XenogermPlan("Alpha", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
-            var second = new XenogermPlan("Alpha", Array.Empty<GeneDef>(), PlanReadinessMode.ExactPayload);
-            var third = new XenogermPlan("Alphabet", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var first = new XenogermPlan("Alpha", [], PlanReadinessMode.Coverage);
+            var second = new XenogermPlan("Alpha", [], PlanReadinessMode.ExactPayload);
+            var third = new XenogermPlan("Alphabet", [], PlanReadinessMode.Coverage);
 
-            List<XenogermPlan> filtered = XenogermPlannerPresentation.GetFilteredPlans(
-                new[] { first, second, third },
-                "alpha");
+            List<XenogermPlan> filtered = XenogermPlannerPresentation.GetFilteredPlans([first, second, third], "alpha");
 
-            Assert.That(filtered, Is.EqualTo(new[] { first, second, third }));
+            Assert.That(filtered, Is.EqualTo([first, second, third]));
             Assert.That(filtered[0].Id, Is.Not.EqualTo(filtered[1].Id));
         }
 
         [Test]
         public void GetFilteredPlans_NoMatchReturnsEmptyList()
         {
-            var plan = new XenogermPlan("Alpha", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("Alpha", [], PlanReadinessMode.Coverage);
 
-            List<XenogermPlan> filtered = XenogermPlannerPresentation.GetFilteredPlans(new[] { plan }, "Beta");
+            List<XenogermPlan> filtered = XenogermPlannerPresentation.GetFilteredPlans([plan], "Beta");
 
             Assert.That(filtered, Is.Empty);
         }
@@ -1215,29 +1160,29 @@ namespace XenogermPlanner.Tests.UI
             var plan = new XenogermPlan(
                 "stable-id",
                 "Tracked plan",
-                new[] { gene },
-                Array.Empty<string>(),
+                [gene],
+                [],
                 PlanReadinessMode.ExactPayload,
                 readinessNotificationsEnabled: false,
                 hasReadinessNotificationBaseline: true,
                 lastReadinessNotificationStateWasReady: true);
 
-            List<XenogermPlan> filtered = XenogermPlannerPresentation.GetFilteredPlans(new[] { plan }, "tracked");
+            List<XenogermPlan> filtered = XenogermPlannerPresentation.GetFilteredPlans([plan], "tracked");
 
-            Assert.That(filtered, Is.EqualTo(new[] { plan }));
+            Assert.That(filtered, Is.EqualTo([plan]));
             Assert.That(plan.Id, Is.EqualTo("stable-id"));
             Assert.That(plan.Name, Is.EqualTo("Tracked plan"));
             Assert.That(plan.ReadinessMode, Is.EqualTo(PlanReadinessMode.ExactPayload));
             Assert.That(plan.ReadinessNotificationsEnabled, Is.False);
             Assert.That(plan.HasReadinessNotificationBaseline, Is.True);
             Assert.That(plan.LastReadinessNotificationStateWasReady, Is.True);
-            Assert.That(plan.DesiredGenes, Is.EquivalentTo(new[] { gene }));
+            Assert.That(plan.DesiredGenes, Is.EquivalentTo([gene]));
         }
 
         [Test]
         public void GetPlanDisplayName_NamedPlanReturnsCurrentNameWithoutChangingState()
         {
-            var plan = new XenogermPlan("Named plan", Array.Empty<GeneDef>(), PlanReadinessMode.Coverage);
+            var plan = new XenogermPlan("Named plan", [], PlanReadinessMode.Coverage);
             string id = plan.Id;
 
             string displayName = XenogermPlannerPresentation.GetPlanDisplayName(plan);
@@ -1272,12 +1217,12 @@ namespace XenogermPlanner.Tests.UI
 
         private static XenogermPlan CreatePlanWithId(string id, string name, params GeneDef[] genes)
         {
-            return new XenogermPlan(id, name, genes, Array.Empty<string>(), PlanReadinessMode.Coverage);
+            return new XenogermPlan(id, name, genes, [], PlanReadinessMode.Coverage);
         }
 
         private static T CreateUninitialized<T>() where T : class
         {
-            return (T)FormatterServices.GetUninitializedObject(typeof(T));
+            return (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
         }
 
         private static PlanGenepackCompositionDiagnostic CreateExactPayloadConflictComposition(
@@ -1286,19 +1231,15 @@ namespace XenogermPlanner.Tests.UI
             int physicalPackCount)
         {
             return new PlanGenepackCompositionDiagnostic(
-                new[] { gene, additionalGene },
+                [gene, additionalGene],
                 physicalPackCount,
                 isExactPayloadEligible: false,
-                additionalGenes: new[] { additionalGene });
+                additionalGenes: [additionalGene]);
         }
 
         private static PlanGenepackCompositionDiagnostic CreateComposition(GeneDef gene, int physicalPackCount)
         {
-            return new PlanGenepackCompositionDiagnostic(
-                new[] { gene },
-                physicalPackCount,
-                true,
-                Array.Empty<GeneDef>());
+            return new PlanGenepackCompositionDiagnostic([gene], physicalPackCount, true, []);
         }
 
         private static IReadOnlyList<Genepack> CreateGenepacks(int count)
@@ -1354,16 +1295,16 @@ namespace XenogermPlanner.Tests.UI
             switch (status)
             {
                 case PlanReadinessStatus.Ready:
-                    return PlanReadinessResult.CreateReady(Array.Empty<GeneDef>());
+                    return PlanReadinessResult.CreateReady([]);
 
                 case PlanReadinessStatus.NotReady:
-                    return PlanReadinessResult.CreateNotReady(Array.Empty<GeneDef>(), Array.Empty<GeneDef>(), false);
+                    return PlanReadinessResult.CreateNotReady([], [], false);
 
                 case PlanReadinessStatus.EmptyTarget:
                     return PlanReadinessResult.CreateEmptyTarget();
 
                 case PlanReadinessStatus.Degraded:
-                    return PlanReadinessResult.CreateDegraded(Array.Empty<GeneDef>(), Array.Empty<GeneDef>());
+                    return PlanReadinessResult.CreateDegraded([], []);
 
                 case PlanReadinessStatus.Unavailable:
                     return PlanReadinessResult.CreateUnavailable(PlanReadinessUnavailableReason.NoActiveMap);
